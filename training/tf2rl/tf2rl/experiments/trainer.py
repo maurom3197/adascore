@@ -127,16 +127,17 @@ class Trainer:
         replay_buffer = get_replay_buffer(
             self._policy, self._env, self._use_prioritized_rb,
             self._use_nstep_rb, self._n_step)
-	
+
         obs = self._env.reset(n_episode)
 
         while total_steps < self._max_steps:
-            if total_steps < self._policy.n_warmup or np.random.rand() <= self._policy.epsilon:
+            if total_steps < self._policy.n_warmup:
                 action = self._env.action_space.sample()
+
             else:
                 action = self._policy.get_action(obs)
 
-            next_obs, reward, done, _ = self._env.step(action)
+            next_obs, reward, done, _ = self._env.step(action, episode_steps)
 
             if self._show_progress:
                 self._env.render()
@@ -238,9 +239,9 @@ class Trainer:
             frames = []
             obs = self._test_env.reset(i+n_episode)
             avg_test_steps += 1
-            for _ in range(self._episode_max_steps):
+            for episode_step in range(self._episode_max_steps):
                 action = self._policy.get_action(obs, test=True)
-                next_obs, reward, done, _ = self._test_env.step(action)
+                next_obs, reward, done, _ = self._test_env.step(action, episode_step)
                 avg_test_steps += 1
                 if self._save_test_path:
                     replay_buffer.add(obs=obs, act=action,

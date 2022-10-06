@@ -57,13 +57,9 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
             ('max_lin_vel', configParams['max_lin_vel']),
             ('min_lin_vel', configParams['min_lin_vel']),
             ('max_ang_vel', configParams['max_ang_vel']),
-            ('min_ang_vel', -configParams['min_ang_vel']),
-            ('sensor', configParams['sensor']),
-            ('visual_data', configParams['visual_data']),
-            ('features', configParams['features']),
-            ('channels', configParams['channels']),
-            ('image_width', configParams['image_width']),
-            ('image_height', configParams['image_height']),
+            ('min_ang_vel', configParams['min_ang_vel']),
+            ('tflite_flag', configParams['tflite_flag']),
+            ('tflite_model_path', configParams['tflite_model_path'])
             ])
 
         qos = QoSProfile(depth=10)
@@ -72,20 +68,27 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
         self.policy_trainer = self.get_parameter('policy_trainer').get_parameter_value().string_value
         self.training_params = self.get_parameter('trainer_params').get_parameter_value().string_value
         self.training_params = os.path.join(trainer_params, self.training_params)
-        self.sensor = self.get_parameter('sensor').get_parameter_value().string_value
         self.min_ang_vel = self.get_parameter('min_ang_vel').get_parameter_value().double_value
         self.min_lin_vel = self.get_parameter('min_lin_vel').get_parameter_value().double_value
         self.max_ang_vel = self.get_parameter('max_ang_vel').get_parameter_value().double_value
         self.max_lin_vel = self.get_parameter('max_lin_vel').get_parameter_value().double_value
-        self.visual_data = self.get_parameter('visual_data').get_parameter_value().string_value
-        self.features = self.get_parameter('features').get_parameter_value().integer_value
-        self.channels = self.get_parameter('channels').get_parameter_value().integer_value
-        self.image_width = self.get_parameter('image_width').get_parameter_value().integer_value
-        self.image_height = self.get_parameter('image_height').get_parameter_value().integer_value
 
-        self.set_parser_list()
-        self.trainer = self.instantiate_agent()
+        self.tflite_flag = self.get_parameter('tflite_flag').get_parameter_value().bool_value
+        self.tflite_model_path = self.get_parameter('tflite_model_path').get_parameter_value().string_value
 
+        if self.tflite_flag:
+            self.actor_fp16 = tf.lite.Interpreter(model_path='~/inference/actor_fp16.tflite')
+            self.actor_fp16.allocate_tensors()
+            self.input_index_image = self.actor_fp16.get_input_details()[0]["index"]
+            self.input_index_state = self.actor_fp16.get_input_details()[1]["index"]
+            self.output_index = self.actor_fp16.get_output_details()[0]["index"]
+            self.commands = [0.0,0.0]
+            self.step_counter = 0
+            self.done = False
+
+        else:
+            self.set_parser_list()
+            self.trainer = self.instantiate_agent()
 
     def instantiate_agent(self):
         """
@@ -143,7 +146,6 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
         # OFF-POLICY ALGORITHM TRAINER
         if self.policy_trainer == 'off-policy':
             parser = Trainer.get_argument()
-            
             if self.train_policy == 'DDPG':
                 self.get_logger().debug('Parsing DDPG parameters...')
                 parser = DDPG.get_argument(parser)
@@ -153,10 +155,12 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action=self.action_space.high,
+                    min_action=self.action_space.low,
                     lr_actor = 3e-4,
                     lr_critic = 3e-4,
-                    actor_units = (256, 256),
-                    critic_units = (256, 256),
+                    actor_units = (256, 128, 128),
+                    critic_units = (256, 128, 128),
+                    subclassing=False,
                     sigma = 0.2,
                     tau = 0.01,
                     gpu = self.param_dict["training_params"]["--gpu"],
@@ -175,6 +179,7 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action=self.action_space.high,
+                    min_action=self.action_space.low,
                     lr_actor = 3e-4,
                     lr_critic = 3e-4,
                     sigma = 0.2,
@@ -187,7 +192,8 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
                     actor_update_freq = 2,
                     policy_noise = 0.2,
                     noise_clip = 0.5,
-                    critic_units = (256, 256))
+                    actor_units = (256, 128, 128),
+                    critic_units = (256, 128, 128))
                 self.get_logger().info('Instanciate TD3 agent...')
             
             if self.train_policy == 'SAC':
@@ -199,9 +205,9 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action = self.action_space.high,
+                    min_action=self.action_space.low,
                     lr=2e-4,
                     lr_alpha=3e-4,
-                    num_layers_sac=2,
                     actor_units=(256, 256),
                     critic_units=(256, 256),
                     tau=5e-3,
@@ -216,8 +222,6 @@ class Pic4rlTraining_Lidar(Pic4rlEnvironmentLidar):
                 self.get_logger().info('Instanciate SAC agent...')
 
             trainer = Trainer(policy, self, args, test_env=None)
-            #self.get_logger().info('Starting process...')
-            #trainer()
 
         # ON-POLICY ALGORITHM TRAINER
         if self.policy_trainer == 'on-policy':

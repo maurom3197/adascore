@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Dense
 
 from tf2rl.algos.policy_base import OffPolicyAgent
 from tf2rl.misc.target_update_ops import update_target_variables
-from tf2rl.networks.actor_critic_networks import Actor, CriticQ
+from tf2rl.networks.actor_critic_networks import Actor, ActorAPPL, ConvActor, CriticQ, ConvMixCriticQ
 
 
 class DDPG(OffPolicyAgent):
@@ -23,12 +23,14 @@ class DDPG(OffPolicyAgent):
             state_shape,
             action_dim,
             name="DDPG",
-            max_action=(1.,1.),
+            max_action=(0.5,1.),
             min_action=(0.,-1.),
             lr_actor=0.001,
             lr_critic=0.001,
             actor_units=(256, 128, 128),
             critic_units=(256, 128, 128),
+            network='mlp',
+            subclassing=True,
             sigma=0.15,
             tau=0.005,
             n_warmup=int(1e4),
@@ -60,21 +62,31 @@ class DDPG(OffPolicyAgent):
         """
         super().__init__(name=name, memory_capacity=memory_capacity, n_warmup=n_warmup, **kwargs)
 
-        # Define and initialize Actor network
-        self.actor = Actor(state_shape, action_dim, max_action, min_action, actor_units)
-        self.actor_target = Actor(
-            state_shape, action_dim, max_action, min_action, actor_units)
-        self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=lr_actor)
-        update_target_variables(self.actor_target.weights,
-                                self.actor.weights, tau=1.)
+        if not subclassing:
+            # Define and initialize Actor network
+            if network=='mlp':
+                self.actor = ActorAPPL(state_shape, action_dim, max_action, min_action, actor_units)
+                self.actor_target = ActorAPPL(state_shape, action_dim, max_action, min_action, actor_units)
+            elif network=='conv':
+                self.actor = ConvActor(state_shape, action_dim, max_action, min_action, actor_units)
+                self.actor_target = ConvActor(state_shape, action_dim, max_action, min_action, actor_units)
+            self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=lr_actor)
+            update_target_variables(self.actor_target.weights,
+                                    self.actor.weights, tau=1.)
+            self.actor.model().summary()
 
-        # Define and initialize Critic network
-        self.critic = CriticQ(state_shape, action_dim, critic_units=critic_units, name="critic")
-        self.critic_target = CriticQ(state_shape, action_dim, critic_units=critic_units, name="target_critic")
-        self.critic_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=lr_critic)
-        update_target_variables(
-            self.critic_target.weights, self.critic.weights, tau=1.)
+            # Define and initialize Critic network
+            if network=='mlp':
+                self.critic = CriticQ(state_shape, action_dim, critic_units)
+                self.critic_target = CriticQ(state_shape, action_dim, critic_units)
+            elif network=='conv':
+                self.critic = ConvMixCriticQ(state_shape, action_dim, critic_units, name="qf")
+                self.critic_target = ConvMixCriticQ(state_shape, action_dim, critic_units, name="target_qf")  
+            self.critic_optimizer = tf.keras.optimizers.Adam(
+                learning_rate=lr_critic)
+            update_target_variables(
+                self.critic_target.weights, self.critic.weights, tau=1.)
+            self.critic.model().summary()
 
         # Set hyperparameters
         self.sigma = sigma
@@ -95,6 +107,13 @@ class DDPG(OffPolicyAgent):
         Returns:
             tf.Tensor or np.ndarray or float: Selected action
         """
+
+        # Eps-greedy exploration policy
+        if np.random.rand() <= self.epsilon and not test:
+            rnd_action = np.random.random()*(self.actor.max_action - self.actor.min_action)+self.actor.min_action
+            #print("rnd_action",rnd_action)
+            return np.asarray(rnd_action, np.float32)
+
         is_single_state = len(state.shape) == 1
         if not tensor:
             assert isinstance(state, np.ndarray)
@@ -104,7 +123,7 @@ class DDPG(OffPolicyAgent):
             tf.constant(state), self.sigma * (1. - test),
             tf.constant(self.actor.max_action, dtype=tf.float32))
 
-        #print("action : ", action)
+        #print("Predicted action: ", action)
         if tensor:
             return action
         else:
@@ -117,11 +136,17 @@ class DDPG(OffPolicyAgent):
             if sigma > 0.:
                 action += tf.random.normal(shape=action.shape,
                                            mean=0., stddev=sigma, dtype=tf.float32)
-            
-            # v = tf.clip_by_value(action[:,0], self.actor.min_action[0], self.actor.max_action[0])
-            # w = tf.clip_by_value(action[:,1], self.actor.min_action[1], self.actor.max_action[1])
-            # action = tf.stack([v,w], axis = 1)
-            return action
+
+            # clip values in [min_action, max_action]
+            for i in range(self.actor.action_dim):
+                act = tf.clip_by_value(action[:,i], self.actor.min_action[i], self.actor.max_action[i])
+                act = tf.expand_dims(act, -1)
+                if i == 0:
+                    action_clip = act
+                else:
+                    action_clip = tf.concat([action_clip, act], axis=1)
+
+            return action_clip
 
     def train(self, states, actions, next_states, rewards, done, weights=None):
         """

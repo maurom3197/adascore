@@ -28,12 +28,13 @@ class SAC(OffPolicyAgent):
             state_shape,
             action_dim,
             name="SAC",
-            max_action=1.,
+            max_action=(0.5,1.0),
+            min_action=(0.,-1.),
             lr=3e-4,
             lr_alpha=3e-4,
-            num_layers_sac = 2,
             actor_units=(256, 256),
             critic_units=(256, 256),
+            network='mlp',
             tau=5e-3,
             alpha=.2,
             auto_alpha=False,
@@ -70,8 +71,8 @@ class SAC(OffPolicyAgent):
         super().__init__(
             name=name, memory_capacity=memory_capacity, n_warmup=n_warmup, **kwargs)
 
-        self._setup_actor(state_shape, action_dim, num_layers_sac, actor_units, lr, max_action)
-        self._setup_critic_q(state_shape, action_dim, num_layers_sac, critic_units, lr)
+        self._setup_actor(state_shape, action_dim, actor_units, lr, max_action, min_action, network)
+        self._setup_critic_q(state_shape, action_dim, critic_units, lr)
 
         # Set hyper-parameters
         self.tau = tau
@@ -93,29 +94,29 @@ class SAC(OffPolicyAgent):
 
         self.state_ndim = len(state_shape)
 
-    def _setup_actor(self, state_shape, action_dim, num_layers, actor_units, lr, max_action=1.):
-        if state_shape[-1] <= 1024:
+    def _setup_actor(self, state_shape, action_dim, actor_units, lr, max_action, min_action, network='mlp'):
+        if network=='mlp':
             self.actor = GaussianActor(
-                state_shape, action_dim, max_action, squash=True, num_layers=num_layers, units=actor_units)
-        else:
+                state_shape, action_dim, max_action, min_action, squash=True, units=actor_units)
+        elif network=='conv':
             self.actor = ConvGaussianActor(
-                state_shape, action_dim, max_action, squash=True, num_layers=num_layers, units=actor_units)
+                state_shape, action_dim, max_action, min_action, squash=True, units=actor_units)
         self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
-        self.actor.model().summary()
+        #self.actor.model().summary()
 
-    def _setup_critic_q(self, state_shape, action_dim, num_layers, critic_units, lr):
-        if state_shape[-1] <= 1024:
-            self.qf1 = CriticQ(state_shape, action_dim,num_layers=num_layers, critic_units=critic_units, name="qf1")
+    def _setup_critic_q(self, state_shape, action_dim, critic_units, lr, network='mlp'):
+        if network=='mlp':
+            self.qf1 = CriticQ(state_shape, action_dim,  critic_units=critic_units, name="qf1")
             self.qf1.model().summary()
-            self.qf2 = CriticQ(state_shape, action_dim, num_layers=num_layers, critic_units=critic_units, name="qf2")
-            self.qf1_target = CriticQ(state_shape, action_dim, num_layers=num_layers, critic_units=critic_units, name="qf1_target")
-            self.qf2_target = CriticQ(state_shape, action_dim, num_layers=num_layers, critic_units=critic_units, name="qf2_target")
-        else:
-            self.qf1 = ConvMixCriticQ(state_shape, action_dim,num_layers=num_layers, critic_units=critic_units, name="qf1")
+            self.qf2 = CriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2")
+            self.qf1_target = CriticQ(state_shape, action_dim,  critic_units=critic_units, name="qf1_target")
+            self.qf2_target = CriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2_target")
+        elif network=='conv':
+            self.qf1 = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf1")
             self.qf1.model().summary()
-            self.qf2 = ConvMixCriticQ(state_shape, action_dim, num_layers=num_layers, critic_units=critic_units, name="qf2")
-            self.qf1_target = ConvMixCriticQ(state_shape, action_dim, num_layers=num_layers, critic_units=critic_units, name="qf1_target")
-            self.qf2_target = ConvMixCriticQ(state_shape, action_dim, num_layers=num_layers, critic_units=critic_units, name="qf2_target")
+            self.qf2 = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2")
+            self.qf1_target = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf1_target")
+            self.qf2_target = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2_target")
         update_target_variables(self.qf1_target.weights, self.qf1.weights, tau=1.)
         update_target_variables(self.qf2_target.weights, self.qf2.weights, tau=1.)
         self.qf1_optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
@@ -132,7 +133,12 @@ class SAC(OffPolicyAgent):
         Returns:
             tf.Tensor or float: Selected action
         """
-
+        # Eps-greedy exploration policy
+        if np.random.rand() <= self.epsilon and not test:
+            rnd_action = np.random.random()*(self.actor._max_action - self.actor._min_action)+self.actor._min_action
+            #print("rnd_action",rnd_action)
+            return np.asarray(rnd_action, np.float32)
+            
         assert isinstance(state, np.ndarray)
         is_single_state = len(state.shape) == self.state_ndim
 

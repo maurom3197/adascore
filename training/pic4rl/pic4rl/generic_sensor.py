@@ -53,7 +53,7 @@ class Sensors():
 
     def activate_sensors(self):
         if self.param["imu_enabled"]=="true":
-            self.node.get_logger().info(self.param["imu_enabled"]+' subscription')
+            self.node.get_logger().info('IMU subscription done')
             self.imu_sub = self.node.create_subscription(
 			Imu,
 			self.param["sensors_topic"]["imu_topic"], 
@@ -63,7 +63,7 @@ class Sensors():
             self.imu_process = ImuSensor()
 
         if self.param["camera_enabled"]=="true":
-            self.node.get_logger().info('Depth subscription')
+            self.node.get_logger().info('Depth subscription done')
             self.depth_sub = self.node.create_subscription(
 			    Image,
 			    self.param["sensors_topic"]["depth_topic"], 
@@ -71,7 +71,7 @@ class Sensors():
 			    10)
             self.depth_process = DepthCamera(self.param["depth_param"]["width"], self.param["depth_param"]["height"], self.param["depth_param"]["dist_cutoff"],self.param["depth_param"]["show_image"])
 
-            self.node.get_logger().info('RGB subscription')
+            self.node.get_logger().info('RGB subscription done')
             self.rgb_sub = self.node.create_subscription(
 			    Image,
 			    self.param["sensors_topic"]["rgb_topic"], 
@@ -80,7 +80,7 @@ class Sensors():
             self.rgb_process = RGBCamera(self.param["rgb_param"]["width"], self.param["rgb_param"]["height"], self.param["rgb_param"]["show_image"])
             
         if self.param["lidar_enabled"]=="true":
-            self.node.get_logger().debug('Laser subscription')
+            self.node.get_logger().info('Laser scan subscription done')
             self.laser_sub = self.node.create_subscription(
 			LaserScan,
 			self.param["sensors_topic"]["laser_topic"], 
@@ -92,10 +92,10 @@ class Sensors():
                 self.param["robot_type"],
                 self.param["robot_radius"],
                 self.param["robot_size"],
-                self.param["collision_tollerance"]
+                self.param["collision_tolerance"]
                 )
         
-        self.node.get_logger().info('Odometry subscription')
+        self.node.get_logger().info('Odometry subscription done')
         self.odom_sub = self.node.create_subscription(
 			Odometry,
 			self.param["sensors_topic"]["odom_topic"], 
@@ -163,10 +163,10 @@ class Sensors():
     def get_laser(self):
         if self.laser_sub is None:
             self.node.get_logger().warn('NO laser subscription')
-            return None, None, None
+            return None
         if self.laser_data is None:
             self.node.get_logger().warn('NO laser data')
-            return None, None, None
+            return None
 
         data, min_obstacle_distance, collision = self.laser_process.process_data(self.laser_data)
         return data, min_obstacle_distance, collision

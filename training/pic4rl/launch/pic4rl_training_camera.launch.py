@@ -30,5 +30,5 @@ def generate_launch_description():
     
     return launch.LaunchDescription([
         sim,
-        TimerAction(period=5., actions=[pic4rl_training])
+        TimerAction(period=10., actions=[pic4rl_training])
     ])

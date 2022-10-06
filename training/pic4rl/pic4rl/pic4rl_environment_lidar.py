@@ -11,17 +11,14 @@ import sys
 import time
 import yaml
 
-from gazebo_msgs.srv import DeleteEntity
-from gazebo_msgs.srv import SpawnEntity
-from geometry_msgs.msg import Pose
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
 from ament_index_python.packages import get_package_share_directory
 from pic4rl.generic_sensor import Sensors
+
 
 class Pic4rlEnvironmentLidar(Node):
     def __init__(self):
@@ -29,26 +26,46 @@ class Pic4rlEnvironmentLidar(Node):
         """
         super().__init__('pic4rl_env_lidar')
         # rclpy.logging.set_logger_level('pic4rl_env_lidar', 10)
-        goals_path = os.path.join(get_package_share_directory('pic4rl'), 'goals_and_poses')
-        configFilepath = os.path.join(get_package_share_directory('pic4rl'), 'config', 'main_param.yaml')
+        goals_path      = os.path.join(
+            get_package_share_directory('pic4rl'), 'goals_and_poses')
+        configFilepath  = os.path.join(
+            get_package_share_directory('pic4rl'), 'config', 'main_param.yaml')
+        self.entity_path = os.path.join(
+            get_package_share_directory("gazebo_sim"), 
+            'models/goal_box/model.sdf'
+            )
+        
         with open(configFilepath, 'r') as file:
             configParams = yaml.safe_load(file)['main_node']['ros__parameters']
 
-        self.declare_parameters(namespace='',
-        parameters=[
-            ('data_path', configParams['data_path']),
-            ('change_goal_and_pose', configParams['change_goal_and_pose']),
-            ('timeout_steps', configParams['timeout_steps']),
-            ('robot_name', configParams['robot_name']),
-            ('lidar_points', configParams["laser_param"]["num_points"]),
-            ])
+        self.declare_parameters(
+            namespace   = '',
+            parameters  = [
+                ('data_path', configParams['data_path']),
+                ('change_goal_and_pose', configParams['change_goal_and_pose']),
+                ('timeout_steps', configParams['timeout_steps']),
+                ('robot_name', configParams['robot_name']),
+                ('goal_tolerance', configParams['goal_tolerance']),
+                ('lidar_dist', configParams['laser_param']['max_distance']),
+                ('lidar_points', configParams['laser_param']['num_points'])
+                ]
+            )
 
-        self.data_path = self.get_parameter('data_path').get_parameter_value().string_value
-        self.data_path = os.path.join(goals_path, self.data_path)
-        self.change_episode = self.get_parameter('change_goal_and_pose').get_parameter_value().integer_value
-        self.timeout_steps = self.get_parameter('timeout_steps').get_parameter_value().integer_value
-        self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value
-        self.lidar_points = self.get_parameter('lidar_points').get_parameter_value().integer_value
+        self.data_path      = self.get_parameter(
+            'data_path').get_parameter_value().string_value
+        self.data_path      = os.path.join(goals_path, self.data_path)
+        self.change_episode = self.get_parameter(
+            'change_goal_and_pose').get_parameter_value().integer_value
+        self.timeout_steps  = self.get_parameter(
+            'timeout_steps').get_parameter_value().integer_value
+        self.robot_name     = self.get_parameter(
+            'robot_name').get_parameter_value().string_value
+        self.goal_tolerance     = self.get_parameter(
+            'goal_tolerance').get_parameter_value().double_value
+        self.lidar_distance = self.get_parameter(
+            'lidar_dist').get_parameter_value().double_value
+        self.lidar_points   = self.get_parameter(
+            'lidar_points').get_parameter_value().integer_value
 
         qos = QoSProfile(depth=10)
         self.sensors = Sensors(self)
@@ -57,18 +74,18 @@ class Pic4rlEnvironmentLidar(Node):
             'cmd_vel',
             qos)
 
-        self.reset_world_client = self.create_client(Empty, 'reset_world')
-        self.pause_physics_client = self.create_client(Empty, 'pause_physics')
-        self.unpause_physics_client = self.create_client(Empty, 'unpause_physics')
+        self.reset_world_client     = self.create_client(
+            Empty, 'reset_world')
+        self.pause_physics_client   = self.create_client(
+            Empty, 'pause_physics')
+        self.unpause_physics_client = self.create_client(
+            Empty, 'unpause_physics')
 
-        self.entity_path = os.path.join(get_package_share_directory("gazebo_sim"), 'models', 
-            'goal_box', 'model.sdf')
-        self.init_step = True
-        self.episode_step = 0
-        self.starting_episodes = 400
-        self.previous_twist = None
-        self.episode = 0
-        self.collision_count = 0
+        self.episode_step       = 0
+        self.starting_episodes  = 400
+        self.previous_twist     = Twist()
+        self.episode            = 0
+        self.collision_count    = 0
 
         self.initial_pose, self.goals, self.poses = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
@@ -76,12 +93,15 @@ class Pic4rlEnvironmentLidar(Node):
 
         self.get_logger().info("PIC4RL_Environment: Starting process")
 
-    def step(self, action):
+    def step(self, action, episode_step=0):
         """
         """
         twist = Twist()
         twist.linear.x = float(action[0])
         twist.angular.z = float(action[1])
+
+        self.episode_step = episode_step
+        self.get_logger().debug("Episode step : " + str(episode_step))
 
         observation, reward, done = self._step(twist)
         info = None
@@ -105,7 +125,6 @@ class Pic4rlEnvironmentLidar(Node):
 
             self.get_logger().debug("getting observation...")
             observation = self.get_observation(twist, lidar_measurements, goal_info, robot_pose)
-
         else:
             reward = None
             observation = None
@@ -143,7 +162,9 @@ class Pic4rlEnvironmentLidar(Node):
         sensor_data["odom"] = self.sensors.get_odom()
         
         if sensor_data["scan"] is None:
-            sensor_data["scan"] = np.squeeze(np.ones((1,36))*15.0).tolist()
+            #sensor_data["scan"] = np.squeeze(np.ones(
+            #    (1, self.lidar_points))*self.lidar_distance).tolist()
+            sensor_data["scan"] = (np.ones(self.lidar_points)*self.lidar_distance).tolist()
         if sensor_data["odom"] is None:
             sensor_data["odom"] = [0.0,0.0,0.0]
 
@@ -153,14 +174,14 @@ class Pic4rlEnvironmentLidar(Node):
         return lidar_measurements, goal_info, robot_pose, collision
 
     def process_odom(self, odom):
+        """
+        """
+        goal_dx = self.goal_pose[0]-odom[0]
+        goal_dy = self.goal_pose[1]-odom[1]
 
-        goal_distance = math.sqrt(
-            (self.goal_pose[0]-odom[0])**2
-            + (self.goal_pose[1]-odom[1])**2)
+        goal_distance = np.hypot(goal_dx, goal_dy)
 
-        path_theta = math.atan2(
-            self.goal_pose[1]-odom[1],
-            self.goal_pose[0]-odom[0])
+        path_theta = math.atan2(goal_dy, goal_dx)
 
         goal_angle = path_theta - odom[2]
 
@@ -176,8 +197,9 @@ class Pic4rlEnvironmentLidar(Node):
         return goal_info, robot_pose
 
     def check_events(self, lidar_measurements, goal_info, robot_pose, collision):
-
-        if  collision:
+        """
+        """
+        if collision:
             self.collision_count += 1
             if self.collision_count >= 3:
                 self.collision_count = 0
@@ -186,7 +208,7 @@ class Pic4rlEnvironmentLidar(Node):
             else:
                 return False, "collision"
 
-        if goal_info[0] < 0.45:
+        if goal_info[0] < self.goal_tolerance:
             self.get_logger().info('Goal')
             return True, "goal"
 
@@ -201,7 +223,7 @@ class Pic4rlEnvironmentLidar(Node):
         """
         """
         reward = (self.previous_goal_info[0] - goal_info[0])*30 
-        yaw_reward = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi)))*0.4
+        yaw_reward = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi)))*0.6
 
         reward += yaw_reward
 
@@ -217,8 +239,10 @@ class Pic4rlEnvironmentLidar(Node):
         """
         """
         state_list = goal_info
+        
         for point in lidar_measurements:
             state_list.append(float(point))
+
         state = np.array(state_list,dtype = np.float32)
 
         return state
@@ -226,15 +250,10 @@ class Pic4rlEnvironmentLidar(Node):
     def update_state(self,twist,lidar_measurements, goal_info, robot_pose, done, event):
         """
         """
-        self.episode_step += 1
         self.previous_twist = twist
         self.previous_lidar_measurements = lidar_measurements
         self.previous_goal_info = goal_info
         self.previous_robot_pose = robot_pose
-
-        if done:
-            self.init_step = True
-            self.episode_step = 0
 
     def reset(self, n_episode):
         """
@@ -278,8 +297,8 @@ class Pic4rlEnvironmentLidar(Node):
         else:
             self.get_goal(index)
 
-        position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])
-        pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}}'"
+        position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])+",z: "+str(0.1)+"}"
+        pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}'"
         subprocess.run(
             "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
             shell=True,
@@ -316,11 +335,17 @@ class Pic4rlEnvironmentLidar(Node):
         else:
             x, y , yaw = tuple(self.poses[index])
 
+        qz = np.sin(yaw/2)
+        qw = np.cos(yaw/2)
+
         self.get_logger().info("New robot pose: (x,y,yaw) : " + str(self.poses[index]))
 
-        pose = "'{state: {name: '"+self.robot_name+"',pose: {position: {x: "+str(x)+",y: "+str(y)+"}}}}'"
+        position = "position: {x: "+str(x)+",y: "+str(y)+"}"
+        orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
+        pose = position+", "+orientation
+        state = "'{state: {name: '"+self.robot_name+"',pose: {"+pose+"}}}'"
         subprocess.run(
-            "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
+            "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+state,
             shell=True,
             stdout=subprocess.DEVNULL
             )

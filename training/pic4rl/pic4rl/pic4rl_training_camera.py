@@ -45,9 +45,9 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
         rclpy.logging.set_logger_level('pic4rl_training', 10)
 
         trainer_params = os.path.join(get_package_share_directory('pic4rl'), 'config')
-        configFilepath = os.path.join(trainer_params, 'ros_params.yaml')
+        configFilepath = os.path.join(trainer_params, 'main_param.yaml')
         with open(configFilepath, 'r') as file:
-            configParams = yaml.safe_load(file)['pic4rl_training']['ros__parameters']
+            configParams = yaml.safe_load(file)['main_node']['ros__parameters']
 
         self.declare_parameters(namespace='',
         parameters=[
@@ -57,17 +57,11 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
             ('max_lin_vel', configParams['max_lin_vel']),
             ('min_lin_vel', configParams['min_lin_vel']),
             ('max_ang_vel', configParams['max_ang_vel']),
-            ('min_ang_vel', -configParams['min_ang_vel']),
-            ('sensor', configParams['sensor']),
-            ('lidar_points', configParams['lidar_points']),
-            ('visual_data', configParams['visual_data']),
-            ('features', configParams['features']),
-            ('channels', configParams['channels']),
-            ('image_width', configParams['image_width']),
-            ('image_height', configParams['image_height']),
+            ('min_ang_vel', configParams['min_ang_vel']),
             ('tflite_flag', configParams['tflite_flag']),
             ('tflite_model_path', configParams['tflite_model_path'])
             ])
+
 
         qos = QoSProfile(depth=10)
 
@@ -75,22 +69,12 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
         self.policy_trainer = self.get_parameter('policy_trainer').get_parameter_value().string_value
         self.training_params = self.get_parameter('trainer_params').get_parameter_value().string_value
         self.training_params = os.path.join(trainer_params, self.training_params)
-        self.sensor = self.get_parameter('sensor').get_parameter_value().string_value
         self.min_ang_vel = self.get_parameter('min_ang_vel').get_parameter_value().double_value
         self.min_lin_vel = self.get_parameter('min_lin_vel').get_parameter_value().double_value
         self.max_ang_vel = self.get_parameter('max_ang_vel').get_parameter_value().double_value
         self.max_lin_vel = self.get_parameter('max_lin_vel').get_parameter_value().double_value
-        self.lidar_points = self.get_parameter('lidar_points').get_parameter_value().integer_value
-        self.visual_data = self.get_parameter('visual_data').get_parameter_value().string_value
-        self.features = self.get_parameter('features').get_parameter_value().integer_value
-        self.channels = self.get_parameter('channels').get_parameter_value().integer_value
-        self.image_width = self.get_parameter('image_width').get_parameter_value().integer_value
-        self.image_height = self.get_parameter('image_height').get_parameter_value().integer_value
-
         self.tflite_flag = self.get_parameter('tflite_flag').get_parameter_value().bool_value
         self.tflite_model_path = self.get_parameter('tflite_model_path').get_parameter_value().string_value
-
-        
 
         if self.tflite_flag:
             self.actor_fp16 = tf.lite.Interpreter(model_path='~/inference/actor_fp16.tflite')
@@ -105,8 +89,6 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
         else:
             self.set_parser_list()
             self.trainer = self.instantiate_agent()
-
-        #self.pic4_environment = Pic4rlEnvironmentLidar()
 
     def instantiate_agent(self):
         """
@@ -178,10 +160,13 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action=self.action_space.high,
+                    min_action=self.action_space.low,
                     lr_actor = 3e-4,
                     lr_critic = 3e-4,
-                    actor_units = (256, 256),
-                    critic_units = (256, 256),
+                    actor_units = (256, 128, 128),
+                    critic_units = (256, 128, 128),
+                    network='conv',
+                    subclassing=False,
                     sigma = 0.2,
                     tau = 0.01,
                     gpu = self.param_dict["training_params"]["--gpu"],
@@ -200,6 +185,7 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action=self.action_space.high,
+                    min_action=self.action_space.low,
                     lr_actor = 3e-4,
                     lr_critic = 3e-4,
                     sigma = 0.2,
@@ -212,7 +198,9 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
                     actor_update_freq = 2,
                     policy_noise = 0.2,
                     noise_clip = 0.5,
-                    critic_units = (256, 256))
+                    actor_units = (256, 256),
+                    critic_units = (256, 256),
+                    network='conv')
                 self.get_logger().info('Instantiate TD3 agent...')
             
             if self.train_policy == 'SAC':
@@ -224,11 +212,12 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action = self.action_space.high,
+                    min_action=self.action_space.low,
                     lr=2e-4,
                     lr_alpha=3e-4,
-                    num_layers_sac=2,
                     actor_units=(256, 256),
                     critic_units=(256, 256),
+                    network='conv',
                     tau=5e-3,
                     alpha=.2,
                     auto_alpha=False, 
@@ -249,6 +238,7 @@ class Pic4rlTraining_Camera(Pic4rlEnvironmentCamera):
                     obs_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action = self.action_space.high,
+                    min_action=self.action_space.low,
                     n_conv_layers=4,
                     n_conv_filters=32,
                     feature_dim=50,

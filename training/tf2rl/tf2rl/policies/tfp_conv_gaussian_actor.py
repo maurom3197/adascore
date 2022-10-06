@@ -12,8 +12,8 @@ class ConvGaussianActor(tf.keras.Model):
     EPS = 1e-6
 
     def __init__(self, state_shape, action_dim, max_action, num_conv_layers=4, conv_filters=(32,64), filt_size = (3,3),
-                 num_layers=2, units = (256,256), 
-                 hidden_activation="relu", state_independent_std=False,
+                 units = (256,256), hidden_activation="relu",
+                 state_independent_std=False,
                  squash=False, name='gaussian_policy'):
         super().__init__(name=name)
 
@@ -43,7 +43,7 @@ class ConvGaussianActor(tf.keras.Model):
         self.conv_layers.append(GlobalAveragePooling2D())
 
         self.base_layers = []
-        for i in range(num_layers):
+        for i in range(len(units)):
             unit = units[i]
             self.base_layers.append(layers.Dense(unit, activation=hidden_activation))
 

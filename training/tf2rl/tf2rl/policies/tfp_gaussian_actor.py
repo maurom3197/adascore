@@ -10,7 +10,7 @@ class GaussianActor(tf.keras.Model):
     LOG_STD_CAP_MIN = -20  # np.e**-10 = 4.540e-05
     EPS = 1e-6
 
-    def __init__(self, state_shape, action_dim, max_action, units=(512, 256, 256), num_layers=3,
+    def __init__(self, state_shape, action_dim, max_action, min_action, units=(256, 256),
                  hidden_activation="relu", state_independent_std=False,
                  squash=False, name='gaussian_policy'):
         super().__init__(name=name)
@@ -21,7 +21,7 @@ class GaussianActor(tf.keras.Model):
 
         self.state_input = Input(shape=state_shape)
         self.base_layers = []
-        for i in range(num_layers):
+        for i in range(len(units)):
             unit = units[i]
             self.base_layers.append(layers.Dense(unit, activation=hidden_activation))
 
@@ -34,6 +34,7 @@ class GaussianActor(tf.keras.Model):
             self.out_logstd = layers.Dense(action_dim, name="L_logstd")
 
         self._max_action = max_action
+        self._min_action = min_action
 
         dummy_state = tf.constant(np.zeros(shape=(1,) + state_shape, dtype=np.float32))
         self(dummy_state)
@@ -85,8 +86,10 @@ class GaussianActor(tf.keras.Model):
         else:
             actions = raw_actions
 
-        actions = tf.multiply(actions,tf.constant([self._max_action[0]*0.5, self._max_action[1]], dtype=tf.float32))
-        actions += tf.constant([self._max_action[0]*0.5, 0.], dtype=tf.float32)
+        act_width = (self._max_action - self._min_action)*0.5
+        act_bias = (self._max_action + self._min_action)*0.5
+        actions = tf.multiply(actions,act_width)
+        actions += act_bias
         return actions, log_pis
 
     def compute_log_probs(self, states, actions):

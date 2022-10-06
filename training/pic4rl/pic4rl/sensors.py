@@ -38,26 +38,26 @@ class LaserScanSensor():
             robot_type, 
             robot_radius, 
             robot_size, 
-            collision_tollerance
+            collision_tolerance
             ):
 
         self.max_dist = max_dist
         self.num_points = num_points
         self.get_collision_vector(robot_type, robot_radius, 
-            robot_size, collision_tollerance)
+            robot_size, collision_tolerance)
 
     def get_collision_vector(self, robot_type, robot_radius, 
-            robot_size, collision_tollerance):
+            robot_size, collision_tolerance):
         """
         """
         if robot_type == "circular":
-            self.collision_vector = np.full(360, robot_radius + collision_tollerance)
+            self.collision_vector = np.full(360, robot_radius + collision_tolerance)
 
         elif robot_type == "rectangular":
-            sL = robot_size[0]/2 + collision_tollerance # Rover lenght semiaxis
-            sW = robot_size[1]/2 + collision_tollerance # Rover width semiaxis
+            sL = robot_size[0]/2 + collision_tolerance # Rover lenght semiaxis
+            sW = robot_size[1]/2 + collision_tolerance # Rover width semiaxis
 
-            degrees = np.arange(0, math.pi*2, math.pi/180)
+            degrees = np.arange(0.0001, math.pi*2, math.pi/180)
             vec1 = sL/np.cos(degrees)
             vec2 = sW/np.sin(degrees)
 
