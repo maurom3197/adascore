@@ -1101,12 +1101,12 @@
           <mass>72.5</mass>
           <pose>0 0 0 0 -0 0</pose>
           <inertia>
-            <ixx>1</ixx>
+            <ixx>40</ixx>
             <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>1</iyy>
+            <ixz>40</ixz>
+            <iyy>30</iyy>
             <iyz>0</iyz>
-            <izz>1</izz>
+            <izz>50</izz>
           </inertia>
         </inertial>
         <collision name='collision'>
@@ -1144,6 +1144,7 @@
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
       </link>
+      <static>1</static>
       <pose>-8.58998 8.74947 -0 -0 -0 -0.826166</pose>
     </model>
     <model name='aws_robomaker_residential_TVCabinet_01_clone_clone'>

@@ -95,6 +95,13 @@ class TD3(DDPG):
         self._actor_update_freq = actor_update_freq
         self._it = tf.Variable(0, dtype=tf.int32)
 
+        # Set hyperparameters
+        self.sigma = sigma
+        self.tau = tau
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_min = epsilon_min
+
     @tf.function
     def _train_body(self, states, actions, next_states, rewards, dones, weights):
         with tf.device(self.device):

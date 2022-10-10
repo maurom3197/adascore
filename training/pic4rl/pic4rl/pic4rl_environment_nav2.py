@@ -36,7 +36,7 @@ class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
         super().__init__('pic4rl_env_applr')
         
-        rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
+        #rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')
         configFilepath  = os.path.join(
@@ -57,6 +57,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 ('timeout_steps', configParams['timeout_steps']),
                 ('robot_name', configParams['robot_name']),
                 ('goal_tolerance', configParams['goal_tolerance']),
+                ('update_frequency', configParams['applr_param']['update_frequency']),
                 ('lidar_dist', configParams['laser_param']['max_distance']),
                 ('lidar_points', configParams['laser_param']['num_points'])
                 ]
@@ -73,6 +74,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             'robot_name').get_parameter_value().string_value
         self.goal_tolerance     = self.get_parameter(
             'goal_tolerance').get_parameter_value().double_value
+        self.params_update_freq   = self.get_parameter(
+            'update_frequency').get_parameter_value().double_value
         self.lidar_distance = self.get_parameter(
             'lidar_dist').get_parameter_value().double_value
         self.lidar_points   = self.get_parameter(
@@ -118,7 +121,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             'goal_box', 'model.sdf')
 
         self.episode_step = 0
-        self.starting_episodes = 12
+        self.starting_episodes = 20
         self.previous_twist = None
         self.episode = 0
         self.collision_count = 0
@@ -131,6 +134,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.navigator = BasicNavigator()
 
         self.get_logger().info("PIC4RL_Environment: Starting process")
+        self.get_logger().info("Navigation params update at: " + str(self.params_update_freq)+' Hz')
 
     def step(self, action, episode_step=0):
         """
@@ -152,12 +156,14 @@ class Pic4rlEnvironmentAPPLR(Node):
     def _step(self, dwb_params=None, reset_step = False):
         """
         """
+        rclpy.spin_once(self)
         self.get_logger().debug("sending action...")
 
         self.send_action(dwb_params)
 
         self.get_logger().debug("getting sensor data...")
         lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
+        #rclpy.spin_once(self)
 
         self.get_logger().debug("checking events...")
         done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
@@ -319,11 +325,13 @@ class Pic4rlEnvironmentAPPLR(Node):
         state_list.append(goal_info[1])
 
         # DWB previous parameters
-        self.get_logger().debug('dwb_params : '+str(dwb_params))
+        
         state_list.extend(dwb_params)
         state = np.array(state_list, dtype = np.float32)
-        #print('State: ', state)
-        self.get_logger().debug('state shape: '+str(state.shape))
+        self.get_logger().debug('goal angle: '+str(goal_info[1]))
+        self.get_logger().debug('min obstacle lidar_distance: '+str(self.min_obstacle_distance))
+        self.get_logger().debug('dwb_params : '+str(dwb_params))
+        self.get_logger().debug('goal shape: '+str(state.shape))
 
         return state
 
@@ -337,16 +345,17 @@ class Pic4rlEnvironmentAPPLR(Node):
     def send_action(self,dwb_params):
 
         #self.get_logger().debug("unpausing...")
-        self.unpause()
+        #self.unpause()
 
-        self.get_dwb_params()
+        #self.get_dwb_params()
         self.send_params_action(dwb_params)
-        time.sleep(0.14)
+        self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
+        time.sleep(1/self.params_update_freq)
 
-        self.get_dwb_params()
+        #self.get_dwb_params()
 
         #self.get_logger().debug("pausing...")
-        self.pause()
+        #self.pause()
 
     def update_state(self,lidar_measurements, goal_info, robot_pose, dwb_params, done, event):
         """

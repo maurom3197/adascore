@@ -58,7 +58,7 @@ class Sensors():
 			Imu,
 			self.param["sensors_topic"]["imu_topic"], 
 			self.imu_cb,
-			10)
+			1)
 
             self.imu_process = ImuSensor()
 
@@ -68,7 +68,7 @@ class Sensors():
 			    Image,
 			    self.param["sensors_topic"]["depth_topic"], 
 			    self.depth_camera_cb,
-			    10)
+			    1)
             self.depth_process = DepthCamera(self.param["depth_param"]["width"], self.param["depth_param"]["height"], self.param["depth_param"]["dist_cutoff"],self.param["depth_param"]["show_image"])
 
             self.node.get_logger().info('RGB subscription done')
@@ -76,7 +76,7 @@ class Sensors():
 			    Image,
 			    self.param["sensors_topic"]["rgb_topic"], 
 			    self.rgb_camera_cb,
-			    10)
+			    1)
             self.rgb_process = RGBCamera(self.param["rgb_param"]["width"], self.param["rgb_param"]["height"], self.param["rgb_param"]["show_image"])
             
         if self.param["lidar_enabled"]=="true":
@@ -85,7 +85,7 @@ class Sensors():
 			LaserScan,
 			self.param["sensors_topic"]["laser_topic"], 
 			self.laser_scan_cb,
-			10)
+			1)
             self.laser_process = LaserScanSensor(
                 self.param["laser_param"]["max_distance"], 
                 self.param["laser_param"]["num_points"], 
@@ -100,7 +100,7 @@ class Sensors():
 			Odometry,
 			self.param["sensors_topic"]["odom_topic"], 
 			self.odometry_cb,
-			10)
+			1)
         self.odom_process = OdomSensor()
 
     def imu_cb(self, msg):

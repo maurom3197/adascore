@@ -18,10 +18,10 @@ main_node:
     data_path: "new_indoor.json"
 
     # Training parameters
-    policy: 'DDPG' # training policy
+    policy: 'TD3' # training policy
     policy_trainer: 'off-policy' # trainer off-policy / on-policy
     trainer_params: 'training_params.yaml'
-    change_goal_and_pose: 10
+    change_goal_and_pose: 20
     timeout_steps: 700
     collision_check: 0.36
     tflite_flag: False
@@ -29,6 +29,8 @@ main_node:
     
     # Sensors parameters
     sensor: 'applr' # lidar or rgb_camera or depth_camera
+    applr_param:
+      update_frequency: 5.0 # update the controller parameters at this frequency
     visual_data: 'features'
     features: 12544
     channels: 1
