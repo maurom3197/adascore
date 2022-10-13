@@ -15,30 +15,30 @@ This project aims at developing an adptative social navigation algorithm. Inspir
 - pic4rl_training(pic4rl_environment(Node))
 - Navigator(Node)
 
-**Config files: **
+**Config files:**
 - main_param.yaml (simulation, sensors, topics, policy selection, params update frequency)
 - training_params.yaml (rl training settings)
 
-COMMANDS:
-**terminal 1: launch gazebo simulation**
+**COMMANDS:**
+- **terminal 1: launch gazebo simulation**
 ros2 launch gazebo_sim simulation.launch.py
-
-**terminal 2: start trainer**
+- **terminal 2: start trainer**
 ros2 run pic4rl pic4rl_trainer
-
-**terminal 3: launch nav2**
- ros2 launch pic4nav nav.launch.py 
+- **terminal 3: launch nav2**
+ros2 launch pic4nav nav.launch.py 
 
 **TO DO**
+
 In the .bashrc export the gazebo models path:
-_export GAZEBO\_MODEL\_PATH=$GAZEBO\_MODEL\_PATH=:<YOUR_WORKSPACE_DIR>/src/APPLR_social_nav/simulation/gazebo_sim/models _
-_export GAZEBO\_MODEL\_PATH=$GAZEBO\_MODEL\_PATH=:<YOUR_WORKSPACE_DIR>/src/APPLR_social_nav/simulation/gazebo_sim _
+
+- _export GAZEBO\_MODEL\_PATH=$GAZEBO\_MODEL\_PATH=:<YOUR_WORKSPACE_DIR>/src/APPLR_social_nav/simulation/gazebo_sim/models _
+- _export GAZEBO\_MODEL\_PATH=$GAZEBO\_MODEL\_PATH=:<YOUR_WORKSPACE_DIR>/src/APPLR_social_nav/simulation/gazebo_sim _
 
 **Tested software versions**
-ROS2 Foxy
-Nav2 Foxy branch
-TensorFlow 2.6.x
-Keras 2.6.x
+- ROS2 Foxy
+- Nav2 Foxy branch
+- TensorFlow 2.6.x
+- Keras 2.6.x
 
 **Try to build tf2rl setup.py:**
 - go in the directory: ~/APPLR_social_nav/training/tf2rl
