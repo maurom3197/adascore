@@ -86,7 +86,6 @@ class Pic4rlEnvironmentLidar(Node):
             Empty, 'unpause_physics')
 
         self.episode_step       = 0
-        self.starting_episodes  = 400
         self.previous_twist     = Twist()
         self.episode            = 0
         self.collision_count    = 0

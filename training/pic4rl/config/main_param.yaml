@@ -29,7 +29,7 @@ main_node:
     tflite_model_path: '~/inference/actor_fp16.tflite'
     
     # Sensors parameters
-    sensor: 'applr' # lidar or rgb_camera or depth_camera
+    sensor: 'camera' # lidar or rgb_camera or depth_camera
     applr_param:
       update_frequency: 5.0 # update the controller parameters at this frequency
     visual_data: 'features'

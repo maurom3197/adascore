@@ -191,8 +191,25 @@ class Pic4rlEnvironmentAPPLR(Node):
         rclpy.spin_once(self)
         while None in self.sensors.sensor_msg.values():
             rclpy.spin_once(self)
-            self.get_logger().debug("spin once...")
         self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
+
+    def send_action(self,dwb_params):
+
+        #self.get_logger().debug("unpausing...")
+        #self.unpause()
+
+        #self.get_dwb_params()
+        self.send_params_action(dwb_params)
+        self.frequency_control()
+
+        #self.get_dwb_params()
+
+        #self.get_logger().debug("pausing...")
+        #self.pause()
+
+    def frequency_control(self):
+        self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
+        time.sleep(1/self.params_update_freq)
 
     def get_sensor_data(self):
         """
@@ -352,23 +369,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         data = json.load(open(self.data_path,'r'))
 
         return data["initial_pose"], data["goals"], data["poses"]
-
-    def send_action(self,dwb_params):
-
-        #self.get_logger().debug("unpausing...")
-        #self.unpause()
-
-        #self.get_dwb_params()
-        self.send_params_action(dwb_params)
-
-        #self.get_dwb_params()
-
-        #self.get_logger().debug("pausing...")
-        #self.pause()
-
-    def frequency_control(self):
-        self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
-        time.sleep(1/self.params_update_freq)
 
     def update_state(self,lidar_measurements, goal_info, robot_pose, dwb_params, done, event):
         """
