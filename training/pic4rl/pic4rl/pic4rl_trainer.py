@@ -33,7 +33,6 @@ def main(args=None):
     elif configParams['sensor'] == 'applr':
         pic4rl_training= Pic4rlTraining_APPLR()
 
-
     pic4rl_training.threadFunc()
 
     pic4rl_training.destroy_node()

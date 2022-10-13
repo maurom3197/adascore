@@ -36,7 +36,6 @@ class Sensors():
         self.laser_process = None
         self.odom_process = None
         self.node = node
-        self.callbacks_count = 0
         self.sensor_msg = {}
         self.sensors = self.activate_sensors()
         self.bridge = CvBridge()
@@ -63,7 +62,6 @@ class Sensors():
 			1)
 
             self.imu_process = ImuSensor()
-            self.callbacks_count += 1
             self.sensor_msg['imu'] = 'None'
 
         if self.param["camera_enabled"]=="true":
@@ -74,7 +72,6 @@ class Sensors():
 			    self.depth_camera_cb,
 			    1)
             self.depth_process = DepthCamera(self.param["depth_param"]["width"], self.param["depth_param"]["height"], self.param["depth_param"]["dist_cutoff"],self.param["depth_param"]["show_image"])
-            self.callbacks_count += 1
             self.sensor_msg['depth'] = 'None'
 
        #      self.node.get_logger().info('RGB subscription done')
@@ -101,7 +98,6 @@ class Sensors():
                 self.param["robot_size"],
                 self.param["collision_tolerance"]
                 )
-            self.callbacks_count += 1
             self.sensor_msg['scan'] = 'None'
         
         self.node.get_logger().info('Odometry subscription done')
@@ -111,7 +107,6 @@ class Sensors():
 			self.odometry_cb,
 			1)
         self.odom_process = OdomSensor()
-        self.callbacks_count += 1
         self.sensor_msg['odom'] = 'None'
 
         self.node.get_logger().info('Callbacks count activated: ' + str(self.callbacks_count))
