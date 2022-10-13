@@ -26,8 +26,7 @@ class Pic4rlEnvironmentCamera(Node):
         ##########"""
         super().__init__('pic4rl_env_camera')
 
-        #rclpy.logging.set_logger_level('pic4rl_env_camera', 10)
-
+        rclpy.logging.set_logger_level('pic4rl_env_camera', 10)
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')
         configFilepath  = os.path.join(
@@ -179,13 +178,12 @@ class Pic4rlEnvironmentCamera(Node):
         """
         """
         sensor_data = {"depth":None}
-        sensor_data["scan"], collision = self.sensors.get_laser()
+        sensor_data["scan"], min_obstacle_distance, collision = self.sensors.get_laser()
         sensor_data["odom"] = self.sensors.get_odom()
         sensor_data["depth"] = self.sensors.get_depth()
 
         self.get_logger().debug("dove si blocca...")
         if sensor_data["scan"] is None:
-            #sensor_data["scan"] = np.squeeze(np.ones((1,self.lidar_points))*self.lidar_distance).tolist()
             sensor_data["scan"] = (np.ones(self.lidar_points)*self.lidar_distance).tolist()
         if sensor_data["odom"] is None:
             sensor_data["odom"] = [0.0,0.0,0.0]

@@ -109,8 +109,6 @@ class Sensors():
         self.odom_process = OdomSensor()
         self.sensor_msg['odom'] = 'None'
 
-        self.node.get_logger().info('Callbacks count activated: ' + str(self.callbacks_count))
-
     def imu_cb(self, msg):
         self.imu_data = msg
         self.sensor_msg['imu'] = msg
