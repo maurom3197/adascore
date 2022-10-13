@@ -22,10 +22,11 @@ robot_pose, goal_pose = goal_and_poses["initial_pose"], goal_and_poses["goals"][
 
 x_rob = '-x '+str(robot_pose[0])
 y_rob = '-y '+str(robot_pose[1])
-z_rob = '-z '+str(0.1)
+z_rob = '-z '+str(0.07)
 
 x_goal = '-x '+str(goal_pose[0])
 y_goal = '-y '+str(goal_pose[1])
+z_goal = '-z '+str(0.01)
 
 world_path = os.path.join(get_package_share_directory("gazebo_sim"), 
     'worlds', configParams["world_name"])
@@ -59,7 +60,7 @@ def generate_launch_description():
         package='gazebo_ros',
         executable='spawn_entity.py',
         output='screen',
-        arguments=['-entity', 'goal', '-file', goal_entity, x_goal, y_goal,]
+        arguments=['-entity', 'goal', '-file', goal_entity, x_goal, y_goal, z_goal]
     )
     
     gazebo = launch.actions.ExecuteProcess(

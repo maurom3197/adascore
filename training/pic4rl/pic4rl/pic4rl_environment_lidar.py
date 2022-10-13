@@ -306,7 +306,7 @@ class Pic4rlEnvironmentLidar(Node):
         else:
             self.get_goal(index)
 
-        position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])+",z: "+str(0.1)+"}"
+        position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])+",z: "+str(0.01)+"}"
         pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}'"
         subprocess.run(
             "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
@@ -349,7 +349,7 @@ class Pic4rlEnvironmentLidar(Node):
 
         self.get_logger().info("New robot pose: (x,y,yaw) : " + str(self.poses[index]))
 
-        position = "position: {x: "+str(x)+",y: "+str(y)+"}"
+        position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(0.06)+"}"
         orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
         pose = position+", "+orientation
         state = "'{state: {name: '"+self.robot_name+"',pose: {"+pose+"}}}'"
@@ -365,7 +365,8 @@ class Pic4rlEnvironmentLidar(Node):
         req = Empty.Request()
         while not self.pause_physics_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
-        self.pause_physics_client.call_async(req) 
+        future = self.pause_physics_client.call_async(req) 
+        rclpy.spin_until_future_complete(self, future)
 
     def unpause(self):
         """
@@ -373,4 +374,5 @@ class Pic4rlEnvironmentLidar(Node):
         req = Empty.Request()
         while not self.unpause_physics_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
-        self.unpause_physics_client.call_async(req)
+        future = self.unpause_physics_client.call_async(req)
+        rclpy.spin_until_future_complete(self, future)

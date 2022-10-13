@@ -425,7 +425,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().info("New robot pose: (x,y,yaw) : " + str(x)+' '+str(y)+' '+str(yaw))
 
-        pose = "'{state: {name: '"+self.robot_name+"',pose: {position: {x: "+str(x)+",y: "+str(y)+",z: 0.1}}}}'"
+        pose = "'{state: {name: '"+self.robot_name+"',pose: {position: {x: "+str(x)+",y: "+str(y)+",z: 0.07}}}}'"
         subprocess.run(
             "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
             shell=True,
@@ -441,7 +441,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.get_goal(index)
 
         # RESPAWN GOAL in GAZEBO
-        position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])
+        position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])+",z: "+str(0.01)+"}"
         pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}}'"
         subprocess.run(
             "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
