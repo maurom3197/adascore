@@ -44,6 +44,7 @@ class Pic4rlEnvironmentCamera(Node):
         parameters=[
             ('data_path', configParams['data_path']),
             ('change_goal_and_pose', configParams['change_goal_and_pose']),
+            ('starting_episodes', configParams['starting_episodes']),
             ('timeout_steps', configParams['timeout_steps']),
             ('robot_name', configParams['robot_name']),
             ('goal_tolerance', configParams['goal_tolerance']),
@@ -59,6 +60,7 @@ class Pic4rlEnvironmentCamera(Node):
         self.data_path = self.get_parameter('data_path').get_parameter_value().string_value
         self.data_path = os.path.join(goals_path, self.data_path)
         self.change_episode = self.get_parameter('change_goal_and_pose').get_parameter_value().integer_value
+        self.starting_episodes = self.get_parameter('starting_episodes').get_parameter_value().integer_value
         self.timeout_steps = self.get_parameter('timeout_steps').get_parameter_value().integer_value
         self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value
         self.goal_tolerance = self.get_parameter('goal_tolerance').get_parameter_value().double_value
@@ -72,6 +74,7 @@ class Pic4rlEnvironmentCamera(Node):
 
         qos = QoSProfile(depth=10)
         self.sensors = Sensors(self)
+        self.spin_sensors_callbacks()
         self.cmd_vel_pub = self.create_publisher(
             Twist,
             'cmd_vel',
@@ -118,9 +121,11 @@ class Pic4rlEnvironmentCamera(Node):
     def _step(self, twist=Twist(), reset_step = False):
         """
         """     
+        self.get_logger().debug("sending action...")
         self.send_action(twist)
-
+        
         self.get_logger().debug("getting sensor data...")
+        self.spin_sensors_callbacks()
         lidar_measurements, depth_image, goal_info, robot_pose, collision = self.get_sensor_data()
 
         self.get_logger().debug("checking events...")
@@ -147,6 +152,15 @@ class Pic4rlEnvironmentCamera(Node):
         data = json.load(open(self.data_path,'r'))
 
         return data["initial_pose"], data["goals"], data["poses"]
+
+    def spin_sensors_callbacks(self):
+        """
+        """
+        rclpy.spin_once(self)
+        while None in self.sensors.sensor_msg.values():
+            rclpy.spin_once(self)
+            self.get_logger().debug("spin once...")
+        self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
 
     def send_action(self,twist):
         """

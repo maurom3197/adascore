@@ -25,7 +25,7 @@ class Pic4rlEnvironmentLidar(Node):
         """
         """
         super().__init__('pic4rl_env_lidar')
-        # rclpy.logging.set_logger_level('pic4rl_env_lidar', 10)
+        rclpy.logging.set_logger_level('pic4rl_env_lidar', 10)
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')
         configFilepath  = os.path.join(
@@ -43,6 +43,7 @@ class Pic4rlEnvironmentLidar(Node):
             parameters  = [
                 ('data_path', configParams['data_path']),
                 ('change_goal_and_pose', configParams['change_goal_and_pose']),
+                ('starting_episodes', configParams['starting_episodes']),
                 ('timeout_steps', configParams['timeout_steps']),
                 ('robot_name', configParams['robot_name']),
                 ('goal_tolerance', configParams['goal_tolerance']),
@@ -56,6 +57,8 @@ class Pic4rlEnvironmentLidar(Node):
         self.data_path      = os.path.join(goals_path, self.data_path)
         self.change_episode = self.get_parameter(
             'change_goal_and_pose').get_parameter_value().integer_value
+        self.starting_episodes = self.get_parameter(
+            'starting_episodes').get_parameter_value().integer_value
         self.timeout_steps  = self.get_parameter(
             'timeout_steps').get_parameter_value().integer_value
         self.robot_name     = self.get_parameter(
@@ -69,6 +72,7 @@ class Pic4rlEnvironmentLidar(Node):
 
         qos = QoSProfile(depth=10)
         self.sensors = Sensors(self)
+        self.spin_sensors_callbacks()
         self.cmd_vel_pub = self.create_publisher(
             Twist,
             'cmd_vel',
@@ -89,7 +93,6 @@ class Pic4rlEnvironmentLidar(Node):
 
         self.initial_pose, self.goals, self.poses = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
-        self.get_logger().info("Terminate getting goals")
 
         self.get_logger().info("PIC4RL_Environment: Starting process")
 
@@ -111,9 +114,11 @@ class Pic4rlEnvironmentLidar(Node):
     def _step(self, twist=Twist(), reset_step = False):
         """
         """
+        self.get_logger().debug("sending action...")
         self.send_action(twist)
 
         self.get_logger().debug("getting sensor data...")
+        self.spin_sensors_callbacks()
         lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
 
         self.get_logger().debug("checking events...")
@@ -140,6 +145,15 @@ class Pic4rlEnvironmentLidar(Node):
 
         return data["initial_pose"], data["goals"], data["poses"]
 
+    def spin_sensors_callbacks(self):
+        """
+        """
+        rclpy.spin_once(self)
+        while None in self.sensors.sensor_msg.values():
+            rclpy.spin_once(self)
+            self.get_logger().debug("spin once...")
+        self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
+
     def send_action(self,twist):
         """
         """
@@ -158,12 +172,10 @@ class Pic4rlEnvironmentLidar(Node):
         """
         """
         sensor_data = {}
-        sensor_data["scan"], collision = self.sensors.get_laser()
+        sensor_data["scan"], min_obstacle_distance, collision = self.sensors.get_laser()
         sensor_data["odom"] = self.sensors.get_odom()
         
         if sensor_data["scan"] is None:
-            #sensor_data["scan"] = np.squeeze(np.ones(
-            #    (1, self.lidar_points))*self.lidar_distance).tolist()
             sensor_data["scan"] = (np.ones(self.lidar_points)*self.lidar_distance).tolist()
         if sensor_data["odom"] is None:
             sensor_data["odom"] = [0.0,0.0,0.0]
@@ -281,10 +293,10 @@ class Pic4rlEnvironmentLidar(Node):
         if self.episode % self.change_episode == 0.:
             self.index = int(np.random.uniform()*len(self.poses)) -1 
 
-        self.get_logger().debug("Respawing robot ...")
+        self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
     
-        self.get_logger().debug("Respawing goal ...")
+        self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
 
         self.get_logger().debug("Environment reset performed ...")

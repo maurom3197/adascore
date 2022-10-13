@@ -69,7 +69,7 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
             ('max_lin_vel', configParams['max_lin_vel']),
             ('min_lin_vel', configParams['min_lin_vel']),
             ('max_ang_vel', configParams['max_ang_vel']),
-            ('min_ang_vel', -configParams['min_ang_vel']),
+            ('min_ang_vel', configParams['min_ang_vel']),
             ])
 
         qos = QoSProfile(depth=10)
@@ -118,6 +118,8 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
             dtype=np.float32
         )
         self.get_logger().info('action space shape: {}'.format(self.action_space.high.size))
+        self.get_logger().info('action space max values: {}'.format(self.action_space.high))
+        self.get_logger().info('action space min values: {}'.format(self.action_space.low))
 
         state = []
         for i in range(self.lidar_points):

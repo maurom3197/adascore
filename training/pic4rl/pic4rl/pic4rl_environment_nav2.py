@@ -36,7 +36,7 @@ class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
         super().__init__('pic4rl_env_applr')
         
-        #rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
+        rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')
         configFilepath  = os.path.join(
@@ -54,6 +54,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             parameters  = [
                 ('data_path', configParams['data_path']),
                 ('change_goal_and_pose', configParams['change_goal_and_pose']),
+                ('starting_episodes', configParams['starting_episodes']),
                 ('timeout_steps', configParams['timeout_steps']),
                 ('robot_name', configParams['robot_name']),
                 ('goal_tolerance', configParams['goal_tolerance']),
@@ -68,6 +69,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.data_path      = os.path.join(goals_path, self.data_path)
         self.change_episode = self.get_parameter(
             'change_goal_and_pose').get_parameter_value().integer_value
+        self.starting_episodes = self.get_parameter(
+            'starting_episodes').get_parameter_value().integer_value
         self.timeout_steps  = self.get_parameter(
             'timeout_steps').get_parameter_value().integer_value
         self.robot_name     = self.get_parameter(
@@ -83,6 +86,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)
+        self.spin_sensors_callbacks()
         qos = QoSProfile(depth=10)
         # init goal publisher
         self.goal_pub = self.create_publisher(
@@ -121,7 +125,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             'goal_box', 'model.sdf')
 
         self.episode_step = 0
-        self.starting_episodes = 20
         self.previous_twist = None
         self.episode = 0
         self.collision_count = 0
@@ -156,14 +159,13 @@ class Pic4rlEnvironmentAPPLR(Node):
     def _step(self, dwb_params=None, reset_step = False):
         """
         """
-        rclpy.spin_once(self)
         self.get_logger().debug("sending action...")
 
         self.send_action(dwb_params)
 
         self.get_logger().debug("getting sensor data...")
+        self.spin_sensors_callbacks()
         lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
-        #rclpy.spin_once(self)
 
         self.get_logger().debug("checking events...")
         done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
@@ -182,6 +184,15 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.update_state(lidar_measurements, goal_info, robot_pose, dwb_params, done, event)
 
         return observation, reward, done
+
+    def spin_sensors_callbacks(self):
+        """
+        """
+        rclpy.spin_once(self)
+        while None in self.sensors.sensor_msg.values():
+            rclpy.spin_once(self)
+            self.get_logger().debug("spin once...")
+        self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
 
     def get_sensor_data(self):
         """
@@ -349,13 +360,15 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         #self.get_dwb_params()
         self.send_params_action(dwb_params)
-        self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
-        time.sleep(1/self.params_update_freq)
 
         #self.get_dwb_params()
 
         #self.get_logger().debug("pausing...")
         #self.pause()
+
+    def frequency_control(self):
+        self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
+        time.sleep(1/self.params_update_freq)
 
     def update_state(self,lidar_measurements, goal_info, robot_pose, dwb_params, done, event):
         """
@@ -392,10 +405,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         if self.episode % self.change_episode == 0.:
             self.index = int(np.random.uniform()*len(self.poses)) -1 
 
-        self.get_logger().debug("Respawing robot ...")
+        self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
     
-        self.get_logger().debug("Respawing goal ...")
+        self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
 
         self.get_logger().debug("Resetting navigator ...")
@@ -490,9 +503,9 @@ class Pic4rlEnvironmentAPPLR(Node):
 
     def send_params_action(self, dwb_params):
         controller_params = dwb_params[:-1]
-        self.get_logger().info('setting controller_params to: '+str(controller_params))
+        self.get_logger().debug('setting controller_params to: '+str(controller_params))
         costmap_param = dwb_params[-1]
-        self.get_logger().info('setting inflation_radius to: '+str(costmap_param))
+        self.get_logger().debug('setting inflation_radius to: '+str(costmap_param))
 
         self.set_req_controller = SetParameters.Request()
         future = self.send_set_request_controller(controller_params)

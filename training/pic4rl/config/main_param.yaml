@@ -22,6 +22,7 @@ main_node:
     policy_trainer: 'off-policy' # trainer off-policy / on-policy
     trainer_params: 'training_params.yaml'
     change_goal_and_pose: 20
+    starting_episodes: 20
     timeout_steps: 700
     collision_check: 0.36
     tflite_flag: False
