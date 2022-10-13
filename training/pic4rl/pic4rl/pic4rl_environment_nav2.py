@@ -200,6 +200,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         #self.get_dwb_params()
         self.send_params_action(dwb_params)
+        self.compute_frequency()
         self.frequency_control()
 
         #self.get_dwb_params()
@@ -207,9 +208,17 @@ class Pic4rlEnvironmentAPPLR(Node):
         #self.get_logger().debug("pausing...")
         #self.pause()
 
+    def compute_frequency(self,):
+        t1=time.perf_counter()
+        step_time = t1-self.t0
+        self.t0 = t1
+        action_hz = 1./(step_time)
+        self.get_logger().info('Sending action at '+str(action_hz))
+
     def frequency_control(self):
         self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
         time.sleep(1/self.params_update_freq)
+
 
     def get_sensor_data(self):
         """
