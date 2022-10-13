@@ -16,6 +16,7 @@ class GaussianActor(tf.keras.Model):
         super().__init__(name=name)
 	
         self.model_name = name
+        self.action_dim = action_dim
         self._state_independent_std = state_independent_std
         self._squash = squash
 

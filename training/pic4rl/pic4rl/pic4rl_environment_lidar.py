@@ -150,7 +150,6 @@ class Pic4rlEnvironmentLidar(Node):
         rclpy.spin_once(self)
         while None in self.sensors.sensor_msg.values():
             rclpy.spin_once(self)
-            self.get_logger().debug("spin once...")
         self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
 
     def send_action(self,twist):
@@ -161,7 +160,6 @@ class Pic4rlEnvironmentLidar(Node):
 
         #self.get_logger().debug("publishing twist...")
         self.cmd_vel_pub.publish(twist)
-
         time.sleep(0.1)
 
         #self.get_logger().debug("pausing...")

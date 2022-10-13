@@ -20,6 +20,7 @@ class Actor(tf.keras.Model):
 
         self.model_name = name
         self.state_input = Input(shape=state_shape)
+        self.action_dim = action_dim
         #self.l1 = Dense(units[0], name="L1")
         #self.l2 = Dense(units[1], name="L2")
         #self.l3 = Dense(units[2], name="L3")
@@ -98,6 +99,7 @@ class ConvActor(tf.keras.Model):
 
         self.model_name = name
         self.state_input = Input(shape=state_shape)
+        self.action_dim = action_dim
 
         self.image_shape = (112,112,1,)
         self.state_info_shape = state_shape[-1]-(self.image_shape[0]*self.image_shape[1])
