@@ -94,12 +94,12 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         action=[
         [self.min_lin_vel, self.max_lin_vel], # max vel_x
         [self.min_ang_vel, self.max_ang_vel], # max vel_theta
-        [5, 30], # vx_samples
+        [5, 25], # vx_samples
         [10, 30], #v_theta samples
         [0.008, 0.08], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
-        [0.3, 0.7], # inflation radius
+        [0.3, 1.0], # inflation radius
         ]
 
         low_action = []
@@ -130,12 +130,12 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         state = state + [
         [self.min_lin_vel, self.max_lin_vel], # max vel_x
         [self.min_ang_vel, self.max_ang_vel], # max vel_theta
-        [5, 30], # vx_samples
+        [5, 25], # vx_samples
         [10, 30], #v_theta samples
         [0.008, 0.08], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
-        [0.3, 0.7], # inflation radius
+        [0.3, 1.0], # inflation radius
         ]
 
         if len(state)>0:

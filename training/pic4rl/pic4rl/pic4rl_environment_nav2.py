@@ -36,7 +36,7 @@ class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
         super().__init__('pic4rl_env_applr')
         
-        rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
+        #rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')
         configFilepath  = os.path.join(
@@ -129,10 +129,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.episode = 0
         self.collision_count = 0
         self.min_obstacle_distance = 4.0
+        self.t0 = 0.0
 
         self.initial_pose, self.goals, self.poses = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
-        self.init_dwb_params = [0.35, 1.0, 20, 20, 0.02, 32.0, 24.0, 0.55]
+        self.init_dwb_params = [0.4, 1.5, 20, 20, 0.02, 32.0, 24.0, 0.55]
         self.n_navigation_aborted = 0
         self.navigator = BasicNavigator()
 
@@ -213,10 +214,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         step_time = t1-self.t0
         self.t0 = t1
         action_hz = 1./(step_time)
-        self.get_logger().info('Sending action at '+str(action_hz))
+        self.get_logger().debug('Sending action at '+str(action_hz))
 
     def frequency_control(self):
-        self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
+        #self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
         time.sleep(1/self.params_update_freq)
 
 
@@ -426,38 +427,44 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Environment reset performed ...")
 
     def respawn_robot(self, index):
-
+        """
+        """
         if self.episode <= self.starting_episodes:
             x, y, yaw = tuple(self.initial_pose)
         else:
-            x, y, yaw = tuple(self.poses[index])
+            x, y , yaw = tuple(self.poses[index])
 
-        self.get_logger().info("New robot pose: (x,y,yaw) : " + str(x)+' '+str(y)+' '+str(yaw))
+        qz = np.sin(yaw/2)
+        qw = np.cos(yaw/2)
 
-        pose = "'{state: {name: '"+self.robot_name+"',pose: {position: {x: "+str(x)+",y: "+str(y)+",z: 0.07}}}}'"
+        self.get_logger().info("New robot pose: (x,y,yaw) : " + str(self.poses[index]))
+
+        position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(0.07)+"}"
+        orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
+        pose = position+", "+orientation
+        state = "'{state: {name: '"+self.robot_name+"',pose: {"+pose+"}}}'"
         subprocess.run(
-            "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
+            "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+state,
             shell=True,
             stdout=subprocess.DEVNULL
             )
-        time.sleep(0.2)
+        time.sleep(0.25)
 
     def respawn_goal(self, index):
-        # GET GOAL
+        """
+        """
         if self.episode <= self.starting_episodes:
             self.get_random_goal()
         else:
             self.get_goal(index)
 
-        # RESPAWN GOAL in GAZEBO
         position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])+",z: "+str(0.01)+"}"
-        pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}}'"
+        pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}'"
         subprocess.run(
             "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
             shell=True,
             stdout=subprocess.DEVNULL
             )
-        time.sleep(0.2)
 
     def reset_navigator(self, index):
         init_pose = PoseStamped()
