@@ -204,8 +204,8 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
                     actor_update_freq = 2,
                     policy_noise = 0.2,
                     noise_clip = 0.5,
-                    actor_units = (256, 128, 128),
-                    critic_units = (256, 128, 128))
+                    actor_units = (256, 256),
+                    critic_units = (256, 256))
                 self.get_logger().info('Instanciate TD3 agent...')
             
             if self.train_policy == 'SAC':

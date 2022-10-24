@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Dense
 
 from tf2rl.algos.policy_base import OffPolicyAgent
 from tf2rl.misc.target_update_ops import update_target_variables
-from tf2rl.networks.actor_critic_networks import Actor, ActorAPPL, ConvActor, CriticQ, ConvMixCriticQ
+from tf2rl.networks.actor_critic_networks import Actor, Actor_tanh, ConvActor, CriticQ, ConvMixCriticQ
 
 
 class DDPG(OffPolicyAgent):
@@ -65,8 +65,8 @@ class DDPG(OffPolicyAgent):
         if not subclassing:
             # Define and initialize Actor network
             if network=='mlp':
-                self.actor = ActorAPPL(state_shape, action_dim, max_action, min_action, actor_units)
-                self.actor_target = ActorAPPL(state_shape, action_dim, max_action, min_action, actor_units)
+                self.actor = Actor_tanh(state_shape, action_dim, max_action, min_action, actor_units)
+                self.actor_target = Actor_tanh(state_shape, action_dim, max_action, min_action, actor_units)
             elif network=='conv':
                 self.actor = ConvActor(state_shape, action_dim, max_action, min_action, actor_units)
                 self.actor_target = ConvActor(state_shape, action_dim, max_action, min_action, actor_units)

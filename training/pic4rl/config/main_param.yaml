@@ -31,7 +31,7 @@ main_node:
     # Sensors parameters
     sensor: 'applr' # lidar or rgb_camera or depth_camera
     applr_param:
-      update_frequency: 5.0 # update the controller parameters at this frequency
+      update_frequency: 10.0 # update the controller parameters at this frequency
     visual_data: 'features'
     features: 12544
     channels: 1

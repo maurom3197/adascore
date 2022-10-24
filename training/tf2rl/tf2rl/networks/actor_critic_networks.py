@@ -56,7 +56,7 @@ class Actor(tf.keras.Model):
     def model(self):
         return tf.keras.Model(inputs = self.state_input, outputs = self.call(self.state_input), name = self.model_name)
 
-class ActorAPPL(tf.keras.Model):
+class Actor_tanh(tf.keras.Model):
     def __init__(self, state_shape, action_dim, max_action, min_action, units=(256, 256), name="Actor"):
         super().__init__(name=name)
         

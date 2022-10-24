@@ -12,7 +12,6 @@ from pic4rl.pic4rl_training_nav2 import Pic4rlTraining_APPLR
 from ament_index_python.packages import get_package_share_directory
 
 
-
 def main(args=None):
     """
     """
