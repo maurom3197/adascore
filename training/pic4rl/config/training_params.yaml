@@ -1,6 +1,6 @@
 training_params:
 # Trainer parameters
-    --max-steps: 2000000 # (int) The maximum steps for training. The default is ``int(1e6)``
+    --max-steps: 1000000 # (int) The maximum steps for training. The default is ``int(1e6)``
     --episode-max-steps: 500 # (int) The maximum steps for an episode. The default is ``int(1e3)``
     --n-experiments: 1 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
@@ -9,7 +9,7 @@ training_params:
 #    --model-dir: '/root/applr_ws/src/training/pic4rl/models/' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
-    --logdir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/results/' # (str) Output directory name. The default is ``"results"``
+    --logdir: '/home/noe/appl/applr_ws/src/APPLR_social_nav/training/pic4rl/results/' # (str) Output directory name. The default is ``"results"``
 #    --evaluate: # Whether evaluate trained model
     --test-interval: 20000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
@@ -22,7 +22,7 @@ training_params:
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
     --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
 
-    --batch-size: 64 # (int) Batch size for training. The default is ``32``.
+    --batch-size: 128 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
 
 # For all off-policy algos (DDPG, TD3, SAC)

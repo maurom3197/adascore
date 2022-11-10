@@ -145,6 +145,9 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': use_sim_time},
                         {'autostart': autostart},
-                        {'node_names': lifecycle_nodes}]),
+                        {'node_names': lifecycle_nodes},
+                        {'bond_timeout:': 5.0},
+                        {'bond_respawn_max_duration:': 10.0}]),
 
+                        
     ])

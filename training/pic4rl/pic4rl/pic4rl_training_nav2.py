@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
 import tensorflow as tf
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -123,7 +123,7 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
 
         state = []
         for i in range(self.lidar_points):
-            state = state + [[0., 4.]]
+            state = state + [[0., 2.]]
 
         state = state + [[-math.pi, math.pi]] # goal angle or yaw
 

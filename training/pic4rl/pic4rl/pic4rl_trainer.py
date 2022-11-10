@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import yaml
 import rclpy
 import threading

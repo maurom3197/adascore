@@ -43,6 +43,8 @@ class BasicNavigator(Node):
 
     def __init__(self):
         super().__init__(node_name='basic_navigator')
+        #rclpy.logging.set_logger_level('basic_navigator', 10)
+
         self.initial_pose = PoseStamped()
         self.initial_pose.header.frame_id = 'odom'
         self.goal_handle = None

@@ -1,8 +1,8 @@
 simulation_node:
   ros__parameters:
-    models_path_gazebo: "/home/simone/.gazebo/models/vine_plant3/model.sdf"
-    models_path_robot: "/home/simone/my_ws/src/ROS2Jackal/jackal_description/urdf/jackal.urdf.xacro"
-    models_path_terrain: "/home/simone/.gazebo/models/real_terrain_with_gravel/model.sdf"
+    models_path_gazebo: "/home/noe/.gazebo/models/vine_plant3/model.sdf"
+    models_path_robot: "/home/noe/appl/appl_ws/src/APPLR_social_nav/jackal_urdf/urdf/jackal.urdf.xacro"
+    models_path_terrain: "/home/noe/.gazebo/models/real_terrain_with_gravel/model.sdf"
     terrain_flag: False
     min_num_rows: 2 #MUST NOT go under 2
     max_num_rows: 3

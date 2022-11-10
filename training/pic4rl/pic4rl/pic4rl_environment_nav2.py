@@ -134,7 +134,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.initial_pose, self.goals, self.poses = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
         self.init_dwb_params = [0.4, 1.5, 20, 20, 0.02, 32.0, 24.0, 0.55]
-        self.n_navigation_aborted = 0
+        self.n_navigation_end = 0
         self.navigator = BasicNavigator()
 
         self.get_logger().info("PIC4RL_Environment: Starting process")
@@ -146,9 +146,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Env step : " + str(episode_step))
         self.episode_step = episode_step
 
-        self.get_logger().debug("Action received: "+str(action))
+        #self.get_logger().debug("Action received: "+str(action))
         dwb_params = action.tolist()
-        self.get_logger().debug("dwb_params: "+str(dwb_params))
+        #self.get_logger().debug("dwb_params: "+str(dwb_params))
         dwb_params[2] = int(dwb_params[2])
         dwb_params[3] = int(dwb_params[3])
 
@@ -183,6 +183,13 @@ class Pic4rlEnvironmentAPPLR(Node):
             observation = None
 
         self.update_state(lidar_measurements, goal_info, robot_pose, dwb_params, done, event)
+
+        if done:
+            self.navigator.cancelNav()
+            subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
 
         return observation, reward, done
 
@@ -267,25 +274,24 @@ class Pic4rlEnvironmentAPPLR(Node):
         return goal_info, robot_pose
 
     def check_events(self, lidar_measurements, goal_info, robot_pose, collision):
+        # get action feedback from navigator
+        feedback = self.navigator.getFeedback()
+        #self.get_logger().debug('Navigator feedback: '+str(feedback))
+        # check if navigation is complete
         if self.navigator.isNavComplete():
             result = self.check_navigation()
-            if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED) and not self.n_navigation_aborted == -1:
+            if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED):
                 self.send_goal(self.goal_pose)
-                self.n_navigation_aborted = self.n_navigation_aborted +1
-                if self.n_navigation_aborted == 20:
-                    self.navigator.cancelNav()
-                    subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
-                    shell=True,
-                    stdout=subprocess.DEVNULL
-                    )
-                    self.n_navigation_aborted = -1
-                    self.get_logger().info('Navigation aborted more than 10 times navigation in pause till next episode')  
+                self.n_navigation_end = self.n_navigation_end +1
+                if self.n_navigation_end == 20:
+                    self.get_logger().info('Navigation aborted more than 20 times navigation in pause till next episode')  
                     return True, "nav2 failed"  
                 
             if result == NavigationResult.SUCCEEDED:
-                self.get_logger().info('Goal')
+                self.get_logger().info('Goal reached')
                 return True, "goal"
 
+        # check collision
         if  collision:
             self.collision_count += 1
             if self.collision_count >= 3:
@@ -295,16 +301,9 @@ class Pic4rlEnvironmentAPPLR(Node):
             else:
                 return False, "collision"
 
-        #if result == NavigationResult.SUCCEEDED:
-        # if goal_info[0] < 0.40:
-        #     self.get_logger().info('Goal')
-        #     time.sleep(1.5)
-        #     result = self.check_navigation()
-        #     return True, "goal"
-
+        # check timeout steps
         if self.episode_step >= self.timeout_steps:
-            self.get_logger().info('Timeout')
-            print('step : ', self.episode_step)
+            self.get_logger().info('Timeout. Step: '+str(self.episode_step))
             return True, "timeout"
 
         return False, "None"
@@ -342,9 +341,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug('sparse reward: '+str(reward))
 
         if event == "goal":
-            reward += 5
+            reward += 10
         elif event == "collision":
-            reward += -5
+            reward += -100
         elif event == "None":
             reward += -1
 
@@ -366,10 +365,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         
         state_list.extend(dwb_params)
         state = np.array(state_list, dtype = np.float32)
-        self.get_logger().debug('goal angle: '+str(goal_info[1]))
-        self.get_logger().debug('min obstacle lidar_distance: '+str(self.min_obstacle_distance))
-        self.get_logger().debug('dwb_params : '+str(dwb_params))
-        self.get_logger().debug('goal shape: '+str(state.shape))
+        #self.get_logger().debug('goal angle: '+str(goal_info[1]))
+        #self.get_logger().debug('min obstacle lidar_distance: '+str(self.min_obstacle_distance))
+        #self.get_logger().debug('dwb_params : '+str(dwb_params))
+        #self.get_logger().debug('state shape: '+str(state.shape))
 
         return state
 
@@ -395,11 +394,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().info("Initializing new episode ...\n")
         self.new_episode()
         self.get_logger().debug("Performing null step to reset variables")
-
         dwb_params = self.init_dwb_params
         _,_,_, = self._step(dwb_params,reset_step = True)
         observation,_,_, = self._step(dwb_params)
-
         return observation
     
     def new_episode(self):
@@ -448,7 +445,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             shell=True,
             stdout=subprocess.DEVNULL
             )
-        time.sleep(0.25)
 
     def respawn_goal(self, index):
         """
@@ -484,20 +480,34 @@ class Pic4rlEnvironmentAPPLR(Node):
         init_pose.pose.orientation.y = 0.0
         init_pose.pose.orientation.z = z
         init_pose.pose.orientation.w = w
-        if self.n_navigation_aborted == -1:
-            subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 0}'",
-                    shell=True,
-                    stdout=subprocess.DEVNULL
-                    )
-        self.n_navigation_aborted = 0
+        #if self.n_navigation_end == -1:
+            # self.get_logger().debug("Resetting LifeCycleNodes...")
+            # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 3}'",
+            #         shell=True,
+            #         stdout=subprocess.DEVNULL
+            #         )
+        self.get_logger().debug("Restarting LifeCycleNodes...")
+        subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 0}'",
+                shell=True,
+                stdout=subprocess.DEVNULL
+                )
+        time.sleep(0.1)
+
+        self.n_navigation_end = 0
         self.get_logger().debug("Setting navigator initial Pose...")
         self.navigator.setInitialPose(init_pose)
-        self.get_logger().debug("Clearing all costmaps...")
-        self.navigator.clearAllCostmaps()
+        if self.episode % 10 == 0:
+            self.get_logger().debug("Clearing all costmaps...")
+            self.navigator.clearAllCostmaps()
+        else:
+            self.get_logger().debug("Clearing local costmap...")
+            self.navigator.clearLocalCostmap()
         self.get_logger().debug("wait until Nav2Active...")
         self.navigator.waitUntilNav2Active()
+
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
+        #self.send_goal(self.goal_pose)
 
     ### DWB PARAMS CLIENTS METHODS ###
     # set_parameter #
@@ -592,9 +602,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         goal_pose.pose.orientation.z = 0.0
         goal_pose.pose.orientation.w = 1.0
 
+        self.goal_pub.publish(goal_pose)
         self.navigator.goToPose(goal_pose)
-        #self.goal_pub.publish(goal_pose)
-
+        
     def get_random_goal(self):
 
         x = random.randrange(-29, 38) / 10.0

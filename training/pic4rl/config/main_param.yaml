@@ -46,7 +46,7 @@ main_node:
       imu_topic: "/imu/data"
       odom_topic: "/odom"
     laser_param:
-      max_distance: 4.0 # Meters
+      max_distance: 2.0 # Meters
       num_points: 36 # int divider of 360
     depth_param:
       dist_cutoff: 5.0 # Meters
