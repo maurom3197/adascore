@@ -21,7 +21,10 @@ training_params:
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
     --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
-
+    --policy: 'TD3' # training policy
+    --policy_trainer: 'off-policy' # trainer off-policy / on-policy
+    --change_goal_and_pose: 20
+    --starting_episodes: 400
     --batch-size: 128 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
 

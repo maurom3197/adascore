@@ -44,6 +44,7 @@ class SAC(OffPolicyAgent):
             epsilon = 1.0, 
             epsilon_decay = 0.998, 
             epsilon_min = 0.05,
+            log_level = 20,
             **kwargs):
         """
         Initialize SAC
@@ -107,13 +108,15 @@ class SAC(OffPolicyAgent):
     def _setup_critic_q(self, state_shape, action_dim, critic_units, lr, network='mlp'):
         if network=='mlp':
             self.qf1 = CriticQ(state_shape, action_dim,  critic_units=critic_units, name="qf1")
-            self.qf1.model().summary()
+            if self.log_level < 20:
+            	self.qf1.model().summary()
             self.qf2 = CriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2")
             self.qf1_target = CriticQ(state_shape, action_dim,  critic_units=critic_units, name="qf1_target")
             self.qf2_target = CriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2_target")
         elif network=='conv':
             self.qf1 = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf1")
-            self.qf1.model().summary()
+            if self.log_level < 20:
+            	self.qf1.model().summary()
             self.qf2 = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2")
             self.qf1_target = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf1_target")
             self.qf2_target = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2_target")

@@ -38,6 +38,7 @@ class TD3(DDPG):
             epsilon = 1.0, 
             epsilon_decay = 0.998, 
             epsilon_min = 0.05,
+            log_level= 20,
             **kwargs):
         """
         Initialize TD3
@@ -75,7 +76,8 @@ class TD3(DDPG):
         self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=lr_actor)
         update_target_variables(self.actor_target.weights,
                                 self.actor.weights, tau=1.)
-        self.actor.model().summary()
+        if log_level < 20:
+                self.actor.model().summary()
 
         if network=='mlp':
             self.critic = CriticTD3(state_shape, action_dim, critic_units, name="Q1_Q2")
@@ -87,7 +89,8 @@ class TD3(DDPG):
                 learning_rate=lr_critic)
         update_target_variables(
             self.critic_target.weights, self.critic.weights, tau=1.)
-        self.critic.model().summary()
+        if log_level < 20:
+                self.critic.model().summary()
 
         self._policy_noise = policy_noise
         self._noise_clip = noise_clip

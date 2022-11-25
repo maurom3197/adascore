@@ -13,7 +13,7 @@ from tf2rl.misc.prepare_output_dir import prepare_output_dir
 from tf2rl.misc.initialize_logger import initialize_logger
 from tf2rl.envs.normalizer import EmpiricalNormalizer
 
-
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 if tf.config.experimental.list_physical_devices('GPU'):
     for cur_device in tf.config.experimental.list_physical_devices("GPU"):
         print(cur_device)
@@ -128,7 +128,7 @@ class Trainer:
             self._policy, self._env, self._use_prioritized_rb,
             self._use_nstep_rb, self._n_step)
 
-        obs = self._env.reset(n_episode)
+        obs = self._env.reset(n_episode, total_steps)
 
         while total_steps < self._max_steps:
             if total_steps < self._policy.n_warmup:
@@ -158,11 +158,11 @@ class Trainer:
             if done or episode_steps == self._episode_max_steps:
                 replay_buffer.on_episode_end()
                 n_episode += 1
-                obs = self._env.reset(n_episode)
                 
                 fps = episode_steps / (time.perf_counter() - episode_start_time)
                 self.logger.info("Total Epi: {0: 5} Steps: {1: 5} Episode Steps: {2: 5} Return: {3: 5.4f} Eps: {4: 5} FPS: {5:5.2f}".format(
                     n_episode, total_steps, episode_steps, episode_return, self._policy.epsilon, fps))
+                obs = self._env.reset(n_episode, total_steps)
                 tf.summary.scalar(name="Common/training_return", data=episode_return)
                 tf.summary.scalar(name="Common/training_episode_length", data=episode_steps)
 
@@ -237,7 +237,7 @@ class Trainer:
         for i in range(self._test_episodes):
             episode_return = 0.
             frames = []
-            obs = self._test_env.reset(i+n_episode)
+            obs = self._test_env.reset(n_episode, total_steps, evaluate=True)
             avg_test_steps += 1
             for episode_step in range(self._episode_max_steps):
                 action = self._policy.get_action(obs, test=True)
@@ -331,6 +331,18 @@ class Trainer:
                             help='Normalize observation')
         parser.add_argument('--logdir', type=str, default='results',
                             help='Output directory')
+        parser.add_argument('--policy', type=str, default='DQN',
+                            help='Policy used for training')
+        parser.add_argument('--policy_trainer', type=str, default='off-policy',
+                            help='Policy type, on-policy or off-policy')
+        parser.add_argument('--change_goal_and_pose', type=int, default='20',
+                            help='How many step for each goal-pose pair')
+        parser.add_argument('--starting_episodes', type=int, default='400',
+                            help='How many episodes with random goals')
+        parser.add_argument('--tflite_flag', type=bool, default='False',
+                            help='Use or not tflite models')
+        parser.add_argument('--tflite_model_path', type=str, default='~/inference/actor_fp16.tflite',
+                            help='Path of tflite model')
         # test settings
         parser.add_argument('--evaluate', action='store_true',
                             help='Evaluate trained model')

@@ -9,58 +9,60 @@ import json
 import random
 import sys
 import time
+import datetime
 import yaml
+import logging
+from pathlib import Path
 
-from gazebo_msgs.srv import DeleteEntity
-from gazebo_msgs.srv import SpawnEntity
 from geometry_msgs.msg import Pose,PoseStamped
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
 from ament_index_python.packages import get_package_share_directory
 from pic4rl.generic_sensor import Sensors
 
 from rclpy.parameter import Parameter
-#from rcl_interfaces.msg import Parameter
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
 from rcl_interfaces.msg import ParameterDescriptor, ParameterValue
 
-#from pic4rl.nav_param_client import DWBparamsClient
 from nav2_simple_commander.robot_navigator import BasicNavigator, NavigationResult
 
 class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
         super().__init__('pic4rl_env_applr')
-        
         #rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
+
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')
-        configFilepath  = os.path.join(
-            get_package_share_directory('pic4rl'), 'config', 'main_param.yaml')
+        main_params_path  = os.path.join(
+            get_package_share_directory('pic4rl'), 'config', 'main_params.yaml')
+        training_params_path= os.path.join(
+            get_package_share_directory('pic4rl'), 'config', 'training_params.yaml')
         self.entity_path = os.path.join(
             get_package_share_directory("gazebo_sim"), 
             'models/goal_box/model.sdf'
             )
         
-        with open(configFilepath, 'r') as file:
-            configParams = yaml.safe_load(file)['main_node']['ros__parameters']
+        with open(main_params_path, 'r') as main_params_file:
+            main_params = yaml.safe_load(main_params_file)['main_node']['ros__parameters']
+        with open(training_params_path, 'r') as train_param_file:
+            training_params = yaml.safe_load(train_param_file)['training_params']
 
         self.declare_parameters(
             namespace   = '',
             parameters  = [
-                ('data_path', configParams['data_path']),
-                ('change_goal_and_pose', configParams['change_goal_and_pose']),
-                ('starting_episodes', configParams['starting_episodes']),
-                ('timeout_steps', configParams['timeout_steps']),
-                ('robot_name', configParams['robot_name']),
-                ('goal_tolerance', configParams['goal_tolerance']),
+                ('data_path', main_params['data_path']),
+                ('change_goal_and_pose', training_params['--change_goal_and_pose']),
+                ('starting_episodes', training_params['--starting_episodes']),
+                ('timeout_steps', training_params['--episode-max-steps']),
+                ('robot_name', main_params['robot_name']),
+                ('goal_tolerance', main_params['goal_tolerance']),
                 ('update_frequency', configParams['applr_param']['update_frequency']),
-                ('lidar_dist', configParams['laser_param']['max_distance']),
-                ('lidar_points', configParams['laser_param']['num_points'])
+                ('lidar_dist', main_params['laser_param']['max_distance']),
+                ('lidar_points', main_params['laser_param']['num_points'])
                 ]
             )
 
@@ -83,6 +85,9 @@ class Pic4rlEnvironmentAPPLR(Node):
             'lidar_dist').get_parameter_value().double_value
         self.lidar_points   = self.get_parameter(
             'lidar_points').get_parameter_value().integer_value
+
+        # create log dir 
+        self.create_logdir(train_params['--policy'], main_param['sensor'], train_params['--logdir'])
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)
@@ -130,6 +135,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.collision_count = 0
         self.min_obstacle_distance = 4.0
         self.t0 = 0.0
+        self.evaluate = False
+        self.index = 0
 
         self.initial_pose, self.goals, self.poses = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
@@ -284,11 +291,14 @@ class Pic4rlEnvironmentAPPLR(Node):
                 self.send_goal(self.goal_pose)
                 self.n_navigation_end = self.n_navigation_end +1
                 if self.n_navigation_end == 20:
-                    self.get_logger().info('Navigation aborted more than 20 times navigation in pause till next episode')  
+                    self.get_logger().info('Navigation aborted more than 20 times... pausing Nav till next episode.') 
+                    self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: 'Nav failed'")
+                    logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Nav failed") 
                     return True, "nav2 failed"  
                 
             if result == NavigationResult.SUCCEEDED:
-                self.get_logger().info('Goal reached')
+                self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
+                logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
                 return True, "goal"
 
         # check collision
@@ -296,14 +306,16 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.collision_count += 1
             if self.collision_count >= 3:
                 self.collision_count = 0
-                self.get_logger().info('Collision')
+                self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Collision")
+                logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Collision")
                 return True, "collision"
             else:
                 return False, "collision"
 
         # check timeout steps
-        if self.episode_step >= self.timeout_steps:
-            self.get_logger().info('Timeout. Step: '+str(self.episode_step))
+        if self.episode_step == self.timeout_steps:
+            self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Timeout")
+            logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Timeout")
             return True, "timeout"
 
         return False, "None"
@@ -387,13 +399,19 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.previous_robot_pose = robot_pose
         self.previous_dwb_params = dwb_params
 
-    def reset(self, n_episode):
+    def reset(self, n_episode, tot_steps, evaluate=False):
         """
         """
         self.episode = n_episode
-        self.get_logger().info("Initializing new episode ...\n")
+        self.evaluate = evaluate
+        logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
+        print()
+        self.get_logger().info("Initializing new episode ...")
+        logging.info("Initializing new episode ...")
         self.new_episode()
         self.get_logger().debug("Performing null step to reset variables")
+        self.episode_step = 0
+
         dwb_params = self.init_dwb_params
         _,_,_, = self._step(dwb_params,reset_step = True)
         observation,_,_, = self._step(dwb_params)
@@ -434,7 +452,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         qz = np.sin(yaw/2)
         qw = np.cos(yaw/2)
 
-        self.get_logger().info("New robot pose: (x,y,yaw) : " + str(self.poses[index]))
+        self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1} robot pose [x,y,yaw]: {[x, y, yaw]}")
+        logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1} robot pose [x,y,yaw]: {[x, y, yaw]}")
 
         position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(0.07)+"}"
         orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
@@ -453,6 +472,9 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.get_random_goal()
         else:
             self.get_goal(index)
+
+        self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
+        logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
 
         position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])+",z: "+str(0.01)+"}"
         pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}'"
@@ -507,7 +529,6 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
-        #self.send_goal(self.goal_pose)
 
     ### DWB PARAMS CLIENTS METHODS ###
     # set_parameter #
@@ -676,3 +697,12 @@ class Pic4rlEnvironmentAPPLR(Node):
                     self.get_logger().info(
                         'Service call failed %r' % (e,))
                 break
+    
+    def create_logdir(self, policy, sensor, logdir):
+                """
+                """
+                self.logdir = f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S.%f')}_{sensor}_{policy}/"
+                Path(os.path.join(logdir, self.logdir)).mkdir(parents=True, exist_ok=True)
+                logging.basicConfig(
+                    filename=os.path.join(logdir, self.logdir, 'screen_logger.log'), 
+                    level=logging.INFO)

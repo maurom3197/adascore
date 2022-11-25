@@ -7,15 +7,25 @@ from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
+simulation_configFilepath = os.path.join(
+    get_package_share_directory("gazebo_sim"), 'config',
+    'sim_params.yaml'
+    )
+    
+with open(simulation_configFilepath, 'r') as file:
+    sim_configParams = yaml.safe_load(file)['sim_parameters']
+
+mode_package = sim_configParams["package_name"]
+
 configFilepath = os.path.join(
-    get_package_share_directory("pic4rl"), 'config',
-    'main_param.yaml'
+    get_package_share_directory(mode_package), 'config',
+    'main_params.yaml'
     )
 
 with open(configFilepath, 'r') as file:
     configParams = yaml.safe_load(file)['main_node']['ros__parameters']
 
-goals_path = os.path.join(get_package_share_directory('pic4rl'), 
+goals_path = os.path.join(get_package_share_directory(mode_package), 
     'goals_and_poses', configParams['data_path'])
 goal_and_poses = json.load(open(goals_path,'r'))
 robot_pose, goal_pose = goal_and_poses["initial_pose"], goal_and_poses["goals"][0]

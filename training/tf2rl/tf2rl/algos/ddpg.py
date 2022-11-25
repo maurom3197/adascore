@@ -38,6 +38,7 @@ class DDPG(OffPolicyAgent):
             epsilon = 1.0, 
             epsilon_decay = 0.998, 
             epsilon_min = 0.05, 
+            log_level = 20,
             **kwargs):
         """
         Initialize DDPG agent
@@ -73,7 +74,8 @@ class DDPG(OffPolicyAgent):
             self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=lr_actor)
             update_target_variables(self.actor_target.weights,
                                     self.actor.weights, tau=1.)
-            self.actor.model().summary()
+            if log_level < 20:
+                self.actor.model().summary()
 
             # Define and initialize Critic network
             if network=='mlp':
@@ -86,7 +88,8 @@ class DDPG(OffPolicyAgent):
                 learning_rate=lr_critic)
             update_target_variables(
                 self.critic_target.weights, self.critic.weights, tau=1.)
-            self.critic.model().summary()
+            if log_level < 20:
+                self.critic.model().summary()
 
         # Set hyperparameters
         self.sigma = sigma

@@ -22,6 +22,7 @@ class PPO(VPG):
             clip=True,
             clip_ratio=0.2,
             name="PPO",
+            log_level=20,
             **kwargs):
         """
         Initialize PPO

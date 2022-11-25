@@ -55,37 +55,11 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
     def __init__(self):
         super().__init__()
         rclpy.logging.set_logger_level('pic4rl_training', 10)
+        self.log_check()
+        train_params = self.parameters_declaration()
 
-        trainer_params = os.path.join(get_package_share_directory('pic4rl'), 'config')
-        configFilepath = os.path.join(trainer_params, 'main_param.yaml')
-        with open(configFilepath, 'r') as file:
-            configParams = yaml.safe_load(file)['main_node']['ros__parameters']
-
-        self.declare_parameters(namespace='',
-        parameters=[
-            ('policy', configParams['policy']),
-            ('policy_trainer', configParams['policy_trainer']),
-            ('trainer_params', configParams['trainer_params']),
-            ('max_lin_vel', configParams['max_lin_vel']),
-            ('min_lin_vel', configParams['min_lin_vel']),
-            ('max_ang_vel', configParams['max_ang_vel']),
-            ('min_ang_vel', configParams['min_ang_vel']),
-            ])
-
-        qos = QoSProfile(depth=10)
-
-        self.train_policy = self.get_parameter('policy').get_parameter_value().string_value
-        self.policy_trainer = self.get_parameter('policy_trainer').get_parameter_value().string_value
-        self.training_params = self.get_parameter('trainer_params').get_parameter_value().string_value
-        self.training_params = os.path.join(trainer_params, self.training_params)
-        self.min_ang_vel = self.get_parameter('min_ang_vel').get_parameter_value().double_value
-        self.min_lin_vel = self.get_parameter('min_lin_vel').get_parameter_value().double_value
-        self.max_ang_vel = self.get_parameter('max_ang_vel').get_parameter_value().double_value
-        self.max_lin_vel = self.get_parameter('max_lin_vel').get_parameter_value().double_value
-
-        self.set_parser_list()
+        self.set_parser_list(train_params)
         self.trainer = self.instantiate_agent()
-        self.get_logger().info('Starting process...')
 
     def instantiate_agent(self):
         """
@@ -162,31 +136,32 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
                 self.get_logger().debug('Parsing DDPG parameters...')
                 parser = DDPG.get_argument(parser)
                 args = parser.parse_args(self.parser_list)
-                print(args)
                 policy = DDPG(
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
                     max_action=self.action_space.high,
                     min_action=self.action_space.low,
-                    lr_actor = 3e-4,
-                    lr_critic = 3e-4,
-                    actor_units = (256, 128, 128),
-                    critic_units = (256, 128, 128),
+                    lr_actor = 2e-4,
+                    lr_critic = 2e-4,
+                    actor_units = (256, 256),
+                    critic_units = (256, 256),
                     subclassing=False,
                     sigma = 0.2,
                     tau = 0.01,
-                    gpu = self.param_dict["training_params"]["--gpu"],
-                    batch_size= self.param_dict["training_params"]["--batch-size"],
-                    n_warmup=self.param_dict["training_params"]["--n-warmup"],
-                    memory_capacity=self.param_dict["training_params"]["--memory-capacity"],
-                    epsilon = 1.0, epsilon_decay = 0.998, epsilon_min = 0.05)
+                    gpu = self.gpu,
+                    batch_size= self.batch_size,
+                    n_warmup=self.n_warmup,
+                    memory_capacity=self.memory_capacity,
+                    epsilon = 1.0, 
+                    epsilon_decay = 0.998, 
+                    epsilon_min = 0.05,
+                    log_level = self.log_level)
                 self.get_logger().info('Instanciate DDPG agent...')
 
             if self.train_policy == 'TD3':
                 self.get_logger().debug('Parsing TD3 parameters...')
                 parser = TD3.get_argument(parser)
                 args = parser.parse_args(self.parser_list)
-                print(args)
                 policy = TD3(
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
@@ -196,23 +171,25 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
                     lr_critic = 3e-4,
                     sigma = 0.2,
                     tau = 0.01,
-                    epsilon = 1.0, epsilon_decay = 0.998, epsilon_min = 0.05,
-                    gpu = self.param_dict["training_params"]["--gpu"],
-                    batch_size= self.param_dict["training_params"]["--batch-size"],
-                    n_warmup=self.param_dict["training_params"]["--n-warmup"],
-                    memory_capacity=self.param_dict["training_params"]["--memory-capacity"],
+                    epsilon = 1.0, 
+                    epsilon_decay = 0.998, 
+                    epsilon_min = 0.05,
+                    gpu = self.gpu,
+                    batch_size= self.batch_size,
+                    n_warmup=self.n_warmup,
+                    memory_capacity=self.memory_capacity,
                     actor_update_freq = 2,
                     policy_noise = 0.2,
                     noise_clip = 0.5,
                     actor_units = (256, 256),
-                    critic_units = (256, 256))
+                    critic_units = (256, 256),
+                    log_level = self.log_level)
                 self.get_logger().info('Instanciate TD3 agent...')
             
             if self.train_policy == 'SAC':
                 self.get_logger().debug('Parsing SAC parameters...')
                 parser = SAC.get_argument(parser)
                 args = parser.parse_args(self.parser_list)
-                print(args)
                 policy = SAC(
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
@@ -226,17 +203,21 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
                     alpha=.2,
                     auto_alpha=False, 
                     init_temperature=None,
-                    gpu = self.param_dict["training_params"]["--gpu"],
-                    batch_size= self.param_dict["training_params"]["--batch-size"],
-                    n_warmup=self.param_dict["training_params"]["--n-warmup"],
-                    memory_capacity=self.param_dict["training_params"]["--memory-capacity"],
-                    epsilon = 1.0, epsilon_decay = 0.996, epsilon_min = 0.05)
+                    gpu = self.gpu,
+                    batch_size= self.batch_size,
+                    n_warmup=self.n_warmup,
+                    memory_capacity=self.memory_capacity,
+                    epsilon = 1.0, 
+                    epsilon_decay = 0.996, 
+                    epsilon_min = 0.05,
+                    log_level = self.log_level)
                 self.get_logger().info('Instanciate SAC agent...')
 
-            # Instanciate Policy Trainer
             trainer = Trainer(policy, self, args, test_env=None)
+            #self.get_logger().info('Starting process...')
+            #trainer()
 
-        # ON-POLICY ALGORITHMS
+        # ON-POLICY ALGORITHM TRAINER
         if self.policy_trainer == 'on-policy':
             parser = OnPolicyTrainer.get_argument()
             
@@ -244,7 +225,6 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
                 self.get_logger().debug('Parsing PPO parameters...')
                 parser = PPO.get_argument(parser)
                 args = parser.parse_args(self.parser_list)
-                print(args)
                 policy = PPO(
                     state_shape = self.observation_space.shape,
                     action_dim = self.action_space.high.size,
@@ -258,32 +238,124 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
                     hidden_activation_critic="relu",
                     clip = True,
                     clip_ratio = 0.2,
-                    horizon = self.param_dict["training_params"]["--horizon"],
-                    enable_gae = self.param_dict["training_params"]["--enable-gae"],
-                    normalize_adv = self.param_dict["training_params"]["--normalize-adv"],
-                    gpu = self.param_dict["training_params"]["--gpu"],
-                    batch_size= self.param_dict["training_params"]["--batch-size"])
+                    horizon = self.horizon,
+                    enable_gae = self.enable_gae,
+                    normalize_adv = self.normalize_adv,
+                    gpu = self.gpu,
+                    batch_size= self.batch_size,
+                    log_level = self.log_level)
                 self.get_logger().info('Instanciate PPO agent...')
-            # Instanciate Policy Trainer
+
             trainer = OnPolicyTrainer(policy, self, args, test_env=None)
+            #self.get_logger().info('Starting process...')
+            #trainer()
 
         return trainer
 
-    def set_parser_list(self):
-        with open(self.training_params, 'r') as f:
-            self.param_dict = yaml.load(f)
-
+    def set_parser_list(self, params):
+        """
+        """
         self.parser_list = []
-        for k,v in self.param_dict['training_params'].items():
+        for k,v in params.items():
             if v is not None:
                 kv = k+'='+str(v)
                 self.parser_list.append(kv)
             else:
                 self.parser_list.append(k)
 
+        self.parser_list[5] += self.logdir
+
     def threadFunc(self):
         try:
             self.trainer()
-        except Exception as e:
-            self.get_logger().error("Error in starting trainer: {}".format(e))
+        except Exception:
+            self.get_logger().error(f"Error in starting trainer:\n {traceback.format_exc()}")
             return
+
+    def log_check(self):
+        """
+        Select the ROS2 log level.
+        """
+        try:
+            self.log_level = int(os.environ['LOG_LEVEL'])
+        except:
+            self.log_level = 20
+            self.get_logger().info("LOG_LEVEL not defined, setting default: INFO")
+
+        self.get_logger().set_level(self.log_level)
+
+
+    def print_log(self):
+        """
+        """
+        for i in range(len(self.log_dict)):
+            self.get_logger().info(f"{list(self.log_dict)[i]}: {self.log_dict[list(self.log_dict)[i]]}")
+
+        self.get_logger().info(f"action space shape: {self.action_space.high.size}")
+        self.get_logger().info(f"observation space size: {self.observation_space.high.size}\n")
+
+    def parameters_declaration(self):
+        """
+        """
+        main_param_path  = os.path.join(
+            get_package_share_directory('pic4rl'), 'config', 'main_param.yaml')
+        train_params_path= os.path.join(
+            get_package_share_directory('pic4rl'), 'config', 'training_params.yaml')
+        
+        with open(main_param_path, 'r') as main_param_file:
+            main_param = yaml.safe_load(main_param_file)['main_node']['ros__parameters']
+        with open(train_params_path, 'r') as train_param_file:
+            train_params = yaml.safe_load(train_param_file)['training_params']
+
+        self.declare_parameters(namespace='',
+        parameters=[
+            ('policy', train_params['--policy']),
+            ('policy_trainer', train_params['--policy_trainer']),
+            ('max_lin_vel', main_param['max_lin_vel']),
+            ('min_lin_vel', main_param['min_lin_vel']),
+            ('max_ang_vel', main_param['max_ang_vel']),
+            ('min_ang_vel', main_param['min_ang_vel']),
+            ('gpu', train_params['--gpu']),
+            ('batch_size', train_params['--batch-size']),
+            ('n_warmup', train_params['--n-warmup'])
+            ])
+
+        self.train_policy = self.get_parameter('policy').get_parameter_value().string_value
+        self.policy_trainer = self.get_parameter('policy_trainer').get_parameter_value().string_value
+        self.min_ang_vel = self.get_parameter('min_ang_vel').get_parameter_value().double_value
+        self.min_lin_vel = self.get_parameter('min_lin_vel').get_parameter_value().double_value
+        self.max_ang_vel = self.get_parameter('max_ang_vel').get_parameter_value().double_value
+        self.max_lin_vel = self.get_parameter('max_lin_vel').get_parameter_value().double_value
+        self.gpu = self.get_parameter('gpu').get_parameter_value().integer_value
+        self.batch_size = self.get_parameter('batch_size').get_parameter_value().integer_value
+        self.n_warmup = self.get_parameter('n_warmup').get_parameter_value().integer_value
+
+        if self.train_policy == 'PPO':
+            self.declare_parameters(namespace='',
+            parameters=[
+                ('horizon', train_params['--horizon']),
+                ('normalize_adv', train_params['--normalize-adv']),
+                ('enable_gae', train_params['--enable-gae'])
+                ])
+
+            self.horizon = self.get_parameter('horizon').get_parameter_value().integer_value
+            self.normalize_adv = self.get_parameter('normalize_adv').get_parameter_value().bool_value
+            self.enable_gae = self.get_parameter('enable_gae').get_parameter_value().bool_value
+
+        else:
+            self.declare_parameters(namespace='',
+            parameters=[
+                ('memory_capacity', train_params['--memory-capacity'])
+                ])
+
+            self.memory_capacity = self.get_parameter('memory_capacity').get_parameter_value().integer_value
+
+        self.log_dict = {
+            'policy': train_params['--policy'],
+            'max_steps': train_params['--max-steps'],
+            'max_episode_steps': train_params['--episode-max-steps'],
+            'sensor': main_param['sensor'],
+            'gpu': train_params['--gpu']
+        }
+
+        return train_params
