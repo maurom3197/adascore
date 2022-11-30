@@ -6,7 +6,7 @@ training_params:
 # --show-progress: # Call ``render`` function during training
     --save-model-interval: 20000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20221107T190916.229475_TD3_' # (str) Directory to restore model.
+    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20221114T213632.701951_TD3_' # (str) Directory to restore model.
 #    --dir-suffix: "vinedepth_mobv3_jackal"  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: '/root/applr_ws/src/APPLR_social_nav/pic4rl_testing/Results/' # (str) Output directory name. The default is ``"results"``
@@ -16,7 +16,7 @@ training_params:
 
     --test-interval: 20000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
-    --test-episodes: 3 # (int) Number of episodes at test. The default is ``5``
+    --test-episodes: 5 # (int) Number of episodes at test. The default is ``5``
 # --save-test-path: # Save trajectories of evaluation.
 # --show-test-images: # Show input images to neural networks when an episode finishes
 # --save-test-movie: # Save rendering results.

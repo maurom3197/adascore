@@ -77,6 +77,7 @@ class Tester:
         self._policy = policy
         self._env = env
         self._test_env = self._env if test_env is None else test_env
+        self._test_episodes  = len(self._env.goals)
         if self._normalize_obs:
             assert isinstance(env.observation_space, Box)
             self._obs_normalizer = EmpiricalNormalizer(
@@ -125,15 +126,17 @@ class Tester:
             self.logger.error("Please specify model directory by passing command line argument `--model-dir`")
             exit(-1)
 
-        self.evaluate_policy(total_steps=0)
-        while True:
+        #self.evaluate_policy(total_steps=0)
+        for n in range(self._n_experiments):
+            self.logger.info("Testing Experiment {}".format(n))
+            
             latest_path_ckpt = tf.train.latest_checkpoint(self._model_dir)
             if self._latest_path_ckpt != latest_path_ckpt:
                 self._latest_path_ckpt = latest_path_ckpt
                 self._checkpoint.restore(self._latest_path_ckpt)
                 self.logger.info("Restored {}".format(self._latest_path_ckpt))
 
-            self.evaluate_policy(total_steps=0)
+            avg_test_return, avg_test_steps = self.evaluate_policy(total_steps=0)
 
     def evaluate_policy(self, total_steps):
         tf.summary.experimental.set_step(total_steps)

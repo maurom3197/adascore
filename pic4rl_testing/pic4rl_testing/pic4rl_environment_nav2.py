@@ -161,7 +161,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         #self.get_logger().debug("Action received: "+str(action))
         dwb_params = action.tolist()
-        #self.get_logger().debug("dwb_params: "+str(dwb_params))
+        #self.get_logger().info("DWB params predicted: "+str(dwb_params))
         dwb_params[2] = int(dwb_params[2])
         dwb_params[3] = int(dwb_params[3])
 
@@ -185,7 +185,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
 
         self.get_logger().debug("compute metrics...")
-        self.nav_metrics.get_metrics_data(lidar_measurements, self.episode_step, done)
+        self.nav_metrics.get_metrics_data(lidar_measurements, self.episode_step, dwb_params, done)
 
         if not reset_step:
             self.get_logger().debug("getting reward...")
@@ -533,7 +533,6 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
-        #self.send_goal(self.goal_pose)
 
     ### DWB PARAMS CLIENTS METHODS ###
     # set_parameter #
@@ -674,7 +673,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         try:
             get_response = future.result()
             self.get_logger().info(
-                    'Result %s %s %s %s %s %s %s' %(
+                    'Get DWB Params: %s %s %s %s %s %s %s' %(
                     get_response.values[0].double_value,
                     get_response.values[1].double_value, 
                     get_response.values[2].integer_value, 
@@ -696,7 +695,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 try:
                     get_response = future.result()
                     self.get_logger().info(
-                        'Result %s ' %
+                        'Get Costmap param: %s ' %
                         (get_response.values[0].double_value))
                 except Exception as e:
                     self.get_logger().info(

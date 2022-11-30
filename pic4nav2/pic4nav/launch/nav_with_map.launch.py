@@ -31,7 +31,7 @@ def generate_launch_description():
     pkg_path                = get_package_share_directory('pic4nav')
     pic4nav_config          = os.path.join(pkg_path, 'config')
     params_file             = os.path.join(pic4nav_config, 'nav_params_with_map.yaml')
-    default_bt_xml_filename = os.path.join(pic4nav_config, 'bt_params.xml')
+    default_bt_xml_filename = os.path.join(pic4nav_config, 'bt_recovery.xml')
 
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -44,7 +44,8 @@ def generate_launch_description():
                        'planner_server',
                        'recoveries_server',
                        'bt_navigator',
-                       'waypoint_follower']
+                       'map_server']
+                       #'waypoint_follower']
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
@@ -122,6 +123,14 @@ def generate_launch_description():
             remappings=remappings),
 
         Node(
+            package='nav2_map_server',
+            executable='map_server',
+            name='map_server',
+            output='screen',
+            parameters=[configured_params],
+            remappings=remappings),
+
+        Node(
             package='nav2_bt_navigator',
             executable='bt_navigator',
             name='bt_navigator',
@@ -129,13 +138,13 @@ def generate_launch_description():
             parameters=[configured_params],
             remappings=remappings),
 
-        Node(
-            package='nav2_waypoint_follower',
-            executable='waypoint_follower',
-            name='waypoint_follower',
-            output='screen',
-            parameters=[configured_params],
-            remappings=remappings),
+#        Node(
+#            package='nav2_waypoint_follower',
+#            executable='waypoint_follower',
+#            name='waypoint_follower',
+#            output='screen',
+#            parameters=[configured_params],
+#            remappings=remappings),
 
         Node(
             package='nav2_lifecycle_manager',

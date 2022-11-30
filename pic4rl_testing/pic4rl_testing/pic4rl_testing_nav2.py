@@ -342,6 +342,7 @@ class Pic4rlTesting_APPLR(Pic4rlEnvironmentAPPLR):
         parameters=[
             ('policy', train_params['--policy']),
             ('policy_tester', train_params['--policy_trainer']),
+            ('n_experiments', train_params['--n-experiments']),
             ('max_lin_vel', main_params['max_lin_vel']),
             ('min_lin_vel', main_params['min_lin_vel']),
             ('max_ang_vel', main_params['max_ang_vel']),
@@ -355,6 +356,7 @@ class Pic4rlTesting_APPLR(Pic4rlEnvironmentAPPLR):
 
         self.train_policy = self.get_parameter('policy').get_parameter_value().string_value
         self.policy_tester = self.get_parameter('policy_tester').get_parameter_value().string_value
+        self.n_experiments = self.get_parameter('n_experiments').get_parameter_value().integer_value
         self.min_ang_vel = self.get_parameter('min_ang_vel').get_parameter_value().double_value
         self.min_lin_vel = self.get_parameter('min_lin_vel').get_parameter_value().double_value
         self.max_ang_vel = self.get_parameter('max_ang_vel').get_parameter_value().double_value
@@ -387,6 +389,7 @@ class Pic4rlTesting_APPLR(Pic4rlEnvironmentAPPLR):
 
         self.log_dict = {
             'policy': train_params['--policy'],
+            'n_experiments': train_params['--n-experiments'],
             'model': train_params['--model-dir'],
             'max_steps': train_params['--max-steps'],
             'max_episode_steps': train_params['--episode-max-steps'],

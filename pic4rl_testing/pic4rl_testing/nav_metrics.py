@@ -57,6 +57,7 @@ class Navigation_Metrics(Node):
         self.previous_time      = time.time()
         self.metrics_results    = []
         self.path               = []
+        self.save_path            = logdir
 
         self.open_logdir(logdir)
         self.init_get_entity_client()
@@ -76,7 +77,7 @@ class Navigation_Metrics(Node):
 
         self.get_logger().info("GetEntityState Client online!")
 
-    def get_metrics_data(self, lidar_measurement, episode_step, done=False):
+    def get_metrics_data(self, lidar_measurement, episode_step, controller_params=None, done=False):
         """
         """
         step_time = time.time()
@@ -89,6 +90,7 @@ class Navigation_Metrics(Node):
             self.velocities         = []
             self.accelerations      = []
             self.lidar_measurements = []
+            self.nav_params         = []
             self.metrics_results    = []
 
             velocity = [0., 0.]
@@ -103,6 +105,7 @@ class Navigation_Metrics(Node):
         self.path.append(robot_pose)
         self.velocities.append(velocity)
         self.accelerations.append(acceleration)
+        self.nav_params.append(controller_params)
         self.lidar_measurements.append(lidar_measurement)
 
         self.previous_velocity = velocity
@@ -176,14 +179,16 @@ class Navigation_Metrics(Node):
             self.distance_path_ratio(start_pose, goal_pose)
         if self.params['clearance_time']:
             self.clearance_time()
-        if self.params['mean_velocities']:
-            self.mean_velocities()
+        if self.params['velocity']:
+            self.velocity_metrics()
         if self.params['max_min_accelerations']:
             self.max_min_accelerations()
         if self.params['cumulative_heading_average']:
             self.cumulative_heading_average(goal_pose)
         if self.params['following_heading_metrics']:
             self.following_heading_metrics()
+        if self.params['controller_params']:
+            self.controller_params()
         if self.params['obstacle_clereance']:
             self.obstacle_clereance()
         if self.params['wineyard_path_comparison']:
@@ -276,22 +281,68 @@ class Navigation_Metrics(Node):
                 )
             )
 
-    def mean_velocities(self, event='Goal'): 
+    def velocity_metrics(self, event='Goal'): 
         """
         """
         velocities = np.array(self.velocities)
-        v, om = velocities[:, 0], velocities[:, 1]
+        v, w = velocities[:, 0], velocities[:, 1]
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Max_linear_vel, Min_linear_vel, Max_angular_vel, Min_angular_vel',[
+                    float(np.max(v)), 
+                    float(np.min(v)), 
+                    float(np.max(w)), 
+                    float(np.min(w))
+                    ]
+                )
+            )
 
         self.metrics_results.append(
             self.create_metric(
                 'Mean_velocities', 
-                [float(np.mean(v)), float(np.mean(om))]
+                [float(np.mean(v)), float(np.mean(w))]
                 )
             )
         self.metrics_results.append(
             self.create_metric(
-                'Std_velocities', 
-                [float(np.std(v)), float(np.std(om))]
+                'Std_dev_velocities', 
+                [float(np.std(v)), float(np.std(w))]
+                )
+            )
+
+    def controller_params(self, event='Goal'): 
+        """
+        # TO DO
+        """
+        params = np.array(self.nav_params)
+        npy_path = os.path.join(self.save_path,'controller_params.npy')
+        txt_path = os.path.join(self.save_path,'controller_params.txt')
+        np.save(npy_path, params)
+        np.savetxt(txt_path, params)
+        max_vel_x,max_vel_theta,vx_samples,vtheta_samples = params[:, 0], params[:, 1], params[:, 2], params[:, 3]
+        BaseObstacle,PathDist,GoalDist = params[:, 4], params[:, 5], params[:, 6]
+        inflation_radius = params[:, 7]
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Max_params_value, Min_params_value',[
+                    np.max(params,  axis=0).tolist(), 
+                    np.min(params,  axis=0).tolist(), 
+                    ]
+                )
+            )
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Mean_params_value', 
+                [np.mean(params,  axis=0).tolist()]
+                )
+            )
+        self.metrics_results.append(
+            self.create_metric(
+                'Std_dev_params_value', 
+                [np.std(params, axis=0).tolist()]
                 )
             )
 
@@ -332,7 +383,7 @@ class Navigation_Metrics(Node):
         self.metrics_results.append(
             self.create_metric(
                 'Cumulative_heading_average', 
-                float(np.mean(delta_thetas))
+                float(np.abs(np.mean(delta_thetas)))
                 )
             )
     

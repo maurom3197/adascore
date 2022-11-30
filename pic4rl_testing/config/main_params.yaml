@@ -55,9 +55,10 @@ main_node:
     path_distance: False
     distance_path_ratio: True
     clearance_time: True
-    mean_velocities: True
+    velocity: True
     max_min_accelerations: True
     cumulative_heading_average: True
     obstacle_clereance: True
+    controller_params: True
     following_heading_metrics: False
     wineyard_path_comparison: False

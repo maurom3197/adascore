@@ -61,6 +61,7 @@ class EvaluateNav(Node):
             namespace   = '',
             parameters  = [
                 ('data_path', main_params['data_path']),
+                ('n_experiments', train_params['--n-experiments']),
                 ('change_goal_and_pose', train_params['--change_goal_and_pose']),
                 ('starting_episodes', train_params['--starting_episodes']),
                 ('timeout_steps', train_params['--episode-max-steps']),
@@ -75,6 +76,8 @@ class EvaluateNav(Node):
         self.data_path      = self.get_parameter(
             'data_path').get_parameter_value().string_value
         self.data_path      = os.path.join(goals_path, self.data_path)
+        self.n_experiments = self.get_parameter(
+            'n_experiments').get_parameter_value().integer_value
         self.change_episode = self.get_parameter(
             'change_goal_and_pose').get_parameter_value().integer_value
         self.starting_episodes = self.get_parameter(
@@ -123,7 +126,6 @@ class EvaluateNav(Node):
         self.entity_path = os.path.join(get_package_share_directory("gazebo_sim"), 'models', 
             'goal_box', 'model.sdf')
 
-        self.num_experiments = 1
         self.episode_step = 0
         self.episode = 0
         self.collision_count = 0
@@ -531,7 +533,7 @@ class EvaluateNav(Node):
                 level=logging.INFO)
 
     def evaluate(self,):
-        for n in range(self.num_experiments):
+        for n in range(self.n_experiments):
             for episode in range(len(self.goals)):
                 episode_steps = 0
                 self.reset(episode)

@@ -31,7 +31,7 @@ def generate_launch_description():
     pkg_path                = get_package_share_directory('pic4nav')
     pic4nav_config          = os.path.join(pkg_path, 'config')
     params_file             = os.path.join(pic4nav_config, 'nav_params.yaml')
-    default_bt_xml_filename = os.path.join(pic4nav_config, 'bt_recovery.xml')
+    default_bt_xml_filename = os.path.join(pic4nav_config, 'bt_params.xml')
 
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')

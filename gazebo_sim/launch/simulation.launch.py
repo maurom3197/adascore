@@ -33,6 +33,7 @@ robot_pose, goal_pose = goal_and_poses["initial_pose"], goal_and_poses["goals"][
 x_rob = '-x '+str(robot_pose[0])
 y_rob = '-y '+str(robot_pose[1])
 z_rob = '-z '+str(0.07)
+yaw_rob = '-Y '+str(robot_pose[2])
 
 x_goal = '-x '+str(goal_pose[0])
 y_goal = '-y '+str(goal_pose[1])
@@ -63,7 +64,7 @@ def generate_launch_description():
         package='gazebo_ros',
         executable='spawn_entity.py',
         output='screen',
-        arguments=['-entity',configParams["robot_name"], x_rob, y_rob, z_rob, '-topic','/robot_description'],
+        arguments=['-entity',configParams["robot_name"], x_rob, y_rob, z_rob, yaw_rob, '-topic','/robot_description'],
     )
 
     spawn_goal = Node(
