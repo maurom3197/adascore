@@ -165,7 +165,7 @@ class EvaluateNav(Node):
         done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
 
         self.get_logger().debug("compute metrics...")
-        self.nav_metrics.get_metrics_data(lidar_measurements, self.episode_step, done)
+        self.nav_metrics.get_metrics_data(lidar_measurements, self.episode_step, done=done)
 
         self.compute_frequency()
         self.frequency_control()

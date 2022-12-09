@@ -114,7 +114,7 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.8
+      max_vel_x: 0.6
       max_vel_y: 0.0
       max_vel_theta: 2.0
       min_speed_xy: 0.0
@@ -141,19 +141,19 @@ controller_server:
       stateful: True
       critics: [
       #"RotateToGoal", 
-      #"Oscillation", 
+      "Oscillation", 
       "BaseObstacle", 
       #"GoalAlign", 
-      "PathAlign", 
+      #"PathAlign", 
       "PathDist", "GoalDist"]
       BaseObstacle.scale: 0.02
-      # PathAlign.scale: 32.0
-      # PathAlign.forward_point_distance: 0.1
-      # GoalAlign.scale: 24.0
-      # GoalAlign.forward_point_distance: 0.1
+      #PathAlign.scale: 32.0
+      #PathAlign.forward_point_distance: 0.1
+      #GoalAlign.scale: 24.0
+      #GoalAlign.forward_point_distance: 0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
-      # RotateToGoal.scale: 32.0
+      #RotateToGoal.scale: 32.0
       # RotateToGoal.slowing_factor: 5.0
       # RotateToGoal.lookahead_time: -1.0
 
@@ -164,7 +164,7 @@ controller_server_rclcpp_node:
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 5.0
+      update_frequency: 20.0
       publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: base_link

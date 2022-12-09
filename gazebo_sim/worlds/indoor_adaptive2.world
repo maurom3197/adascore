@@ -644,7 +644,7 @@
             <ambient>1 1 1 1</ambient>
           </material>
         </visual>
-        <pose>-4.58017 0.542142 0 0 0 -1.5708</pose>
+        <pose>-0.050866 3.49771 0 0 -0 3.13175</pose>
         <self_collide>0</self_collide>
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
@@ -2235,7 +2235,7 @@
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
       </link>
-      <pose>8.41415 9.53463 0 0 -0 0</pose>
+      <pose>4.5 9.5 0 0 -0 0</pose>
     </model>
     <model name='office_chair'>
       <static>1</static>
@@ -2496,10 +2496,10 @@
         </link>
       </model>
       <model name='VendingMachine'>
-        <pose>4.4846 9.44831 0 0 -0 0</pose>
+        <pose>4.5 9.5 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='body'>
-          <pose>4.4846 9.44831 0 0 -0 0</pose>
+          <pose>4.5 9.5 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -2932,7 +2932,7 @@
         </link>
       </model>
       <model name='inner_wall_7'>
-        <pose>-0.638045 -1.0769 0 0 -0 -1.58064</pose>
+        <pose>-0.050866 3.49771 0 0 -0 3.13175</pose>
         <scale>1 1 1</scale>
         <link name='inner_wall_7'>
           <pose>-0.050866 3.49771 0 0 -0 3.13175</pose>

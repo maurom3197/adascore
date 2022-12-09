@@ -187,8 +187,8 @@ class Navigation_Metrics(Node):
             self.cumulative_heading_average(goal_pose)
         if self.params['following_heading_metrics']:
             self.following_heading_metrics()
-        if self.params['controller_params']:
-            self.controller_params()
+        if self.params['controller_params'] and self.nav_params[0]!=None:
+            self.controller_params(episode)
         if self.params['obstacle_clereance']:
             self.obstacle_clereance()
         if self.params['wineyard_path_comparison']:
@@ -311,13 +311,13 @@ class Navigation_Metrics(Node):
                 )
             )
 
-    def controller_params(self, event='Goal'): 
+    def controller_params(self, episode, event='Goal'): 
         """
         # TO DO
         """
         params = np.array(self.nav_params)
-        npy_path = os.path.join(self.save_path,'controller_params.npy')
-        txt_path = os.path.join(self.save_path,'controller_params.txt')
+        npy_path = os.path.join(self.save_path,'controller_params_ep'+str(episode)+'.npy')
+        txt_path = os.path.join(self.save_path,'controller_params_ep'+str(episode)+'.txt')
         np.save(npy_path, params)
         np.savetxt(txt_path, params)
         max_vel_x,max_vel_theta,vx_samples,vtheta_samples = params[:, 0], params[:, 1], params[:, 2], params[:, 3]

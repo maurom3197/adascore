@@ -161,7 +161,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         #self.get_logger().debug("Action received: "+str(action))
         dwb_params = action.tolist()
-        #self.get_logger().info("DWB params predicted: "+str(dwb_params))
+        self.get_logger().info("DWB params predicted: "+str(dwb_params))
         dwb_params[2] = int(dwb_params[2])
         dwb_params[3] = int(dwb_params[3])
 
@@ -231,7 +231,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.compute_frequency()
         self.frequency_control()
 
-        #self.get_dwb_params()
+        self.get_dwb_params()
 
         #self.get_logger().debug("pausing...")
         #self.pause()
@@ -522,12 +522,12 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.n_navigation_end = 0
         self.get_logger().debug("Setting navigator initial Pose...")
         self.navigator.setInitialPose(init_pose)
-        if self.episode % 10 == 0:
-            self.get_logger().debug("Clearing all costmaps...")
-            self.navigator.clearAllCostmaps()
-        else:
-            self.get_logger().debug("Clearing local costmap...")
-            self.navigator.clearLocalCostmap()
+
+        self.get_logger().debug("Clearing all costmaps...")
+        self.navigator.clearAllCostmaps()
+
+        #self.get_logger().debug("Clearing local costmap...")
+        #self.navigator.clearLocalCostmap()
         self.get_logger().debug("wait until Nav2Active...")
         self.navigator.waitUntilNav2Active()
 

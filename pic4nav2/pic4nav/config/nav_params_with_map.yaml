@@ -140,7 +140,13 @@ controller_server:
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "PathDist", "GoalDist"]
+      critics: [
+      #"RotateToGoal", 
+      "Oscillation", 
+      "BaseObstacle", 
+      #"PathAlign",
+      "PathDist", 
+      "GoalDist"]
       BaseObstacle.scale: 0.02
       #PathAlign.scale: 0.0 #32.0
       #PathAlign.forward_point_distance: 0.0 #0.1
@@ -148,9 +154,9 @@ controller_server:
       #GoalAlign.forward_point_distance: 0.0 #0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0     
+      #RotateToGoal.scale: 32.0
+      #RotateToGoal.slowing_factor: 5.0
+      #RotateToGoal.lookahead_time: -1.0     
 
 controller_server_rclcpp_node:
   ros__parameters:
@@ -159,7 +165,7 @@ controller_server_rclcpp_node:
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 5.0
+      update_frequency: 20.0
       publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: base_link
@@ -258,7 +264,7 @@ global_costmap:
 map_server:
   ros__parameters:
     use_sim_time: True
-    yaml_filename: "/root/applr_ws/src/maps/new_indoor.yaml"
+    yaml_filename: "/root/applr_ws/src/APPLR_social_nav/maps/adaptive_test.yaml"
     frame_id: odom
 
 map_saver:
