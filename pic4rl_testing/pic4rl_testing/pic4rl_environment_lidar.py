@@ -20,7 +20,7 @@ from rclpy.qos import QoSProfile
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from ament_index_python.packages import get_package_share_directory
-from pic4rl.sensors import Sensors
+from pic4rl_testing.sensors import Sensors
 from testing.nav_metrics import Navigation_Metrics
 
 

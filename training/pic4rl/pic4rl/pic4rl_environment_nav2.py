@@ -60,7 +60,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 ('timeout_steps', training_params['--episode-max-steps']),
                 ('robot_name', main_params['robot_name']),
                 ('goal_tolerance', main_params['goal_tolerance']),
-                ('update_frequency', configParams['applr_param']['update_frequency']),
+                ('update_frequency', main_params['applr_param']['update_frequency']),
                 ('lidar_dist', main_params['laser_param']['max_distance']),
                 ('lidar_points', main_params['laser_param']['num_points'])
                 ]
@@ -87,7 +87,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             'lidar_points').get_parameter_value().integer_value
 
         # create log dir 
-        self.create_logdir(train_params['--policy'], main_param['sensor'], train_params['--logdir'])
+        self.create_logdir(training_params['--policy'], main_params['sensor'], training_params['--logdir'])
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)
@@ -215,7 +215,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         #self.get_dwb_params()
         self.send_params_action(dwb_params)
-        self.compute_frequency()
+        #self.compute_frequency()
         self.frequency_control()
 
         #self.get_dwb_params()

@@ -14,8 +14,8 @@ main_node:
     goal_tolerance: 0.40
 
     # World parameters
-    world_name: "adaptive_test.world" #Leave empty to obtain no world
-    data_path: "adaptive_test.json"
+    world_name: "new_indoor.world" #Leave empty to obtain no world
+    data_path: "new_indoor.json"
     collision_check: 0.36
 
     # Task parameters
@@ -39,7 +39,7 @@ main_node:
       imu_topic: "/imu/data"
       odom_topic: "/odom"
     laser_param:
-      max_distance: 12.0 # Meters
+      max_distance: 2.0 # Meters
       num_points: 36 # int divider of 360
     depth_param:
       dist_cutoff: 5 # Meters

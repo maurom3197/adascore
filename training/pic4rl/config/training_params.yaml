@@ -6,10 +6,10 @@ training_params:
 # --show-progress: # Call ``render`` function during training
     --save-model-interval: 20000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20221114T213632.701951_TD3_' # (str) Directory to restore model.
+#    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20221114T213632.701951_TD3_' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
-    --logdir: '/home/noe/appl/applr_ws/src/APPLR_social_nav/training/pic4rl/results/' # (str) Output directory name. The default is ``"results"``
+    --logdir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/results/' # (str) Output directory name. The default is ``"results"``
 #    --evaluate: # Whether evaluate trained model
     --test-interval: 20000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.

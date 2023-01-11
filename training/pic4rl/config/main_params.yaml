@@ -14,8 +14,8 @@ main_node:
     goal_tolerance: 0.40
 
     # World parameters
-    world_name: "new_indoor.world" #Leave empty to obtain no world
-    data_path: "new_indoor.json"
+    world_name: "jackal_cafe.world" #Leave empty to obtain no world
+    data_path: "cafe_people.json"
 
     # Task parameters
     task: 'goToPose' # goToPose, Following, Vineyards

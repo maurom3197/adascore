@@ -553,7 +553,7 @@ def main(args=None):
     try:
         eval_node.evaluate()
     except Exception as e:
-            self.get_logger().error("Error in starting nav evaluation node: {}".format(e))
+            eval_node.get_logger().error("Error in starting nav evaluation node: {}".format(e))
     
     eval_node.destroy_node()
     rclpy.shutdown()
