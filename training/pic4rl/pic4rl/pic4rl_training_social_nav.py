@@ -66,10 +66,8 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         ACTION AND OBSERVATION SPACES settings
         """
         action=[
-        [1.0, 20.0], # cutoff
-        [10.0, 400.0], # amplitude
-        [0.01, 1.0], # covariance
-        [1.0, 10.0], # vel factor
+        [0.1, 1.0], # covariance
+        [2.0, 10.0], # vel factor
         ]
 
         low_action = []
@@ -98,10 +96,8 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         state = state + [[-math.pi, math.pi]] # goal angle or yaw
 
         state = state + [
-        [1.0, 20.0], # cutoff
-        [10.0, 400.0], # amplitude
-        [0.01, 1.0], # covariance
-        [1.0, 10.0], # vel factor
+        [0.1, 1.0], # covariance
+        [2.0, 10.0], # vel factor
         ]
 
         if len(state)>0:

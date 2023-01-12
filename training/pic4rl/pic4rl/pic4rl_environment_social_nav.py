@@ -151,7 +151,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.initial_pose, self.goals, self.poses, self.agents = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
-        self.init_costmap_params = [10.0, 200.0, 0.25, 6.0]
+        self.init_costmap_params = [0.25, 6.0]
         self.n_navigation_end = 0
         self.navigator = BasicNavigator()
 
@@ -506,8 +506,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         if self.episode % self.change_episode == 0.:
             self.index = int(np.random.uniform()*len(self.poses)) -1 
 
-        #self.get_logger().debug("Respawning agents ...")
-        #self.respawn_agents()
+        if self.episode % 5 == 0:
+            self.get_logger().debug("Respawning agents ...")
+            self.respawn_agents()
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
     
@@ -630,18 +631,14 @@ class Pic4rlEnvironmentAPPLR(Node):
 
     ### COSTMAP PARAMS CLIENTS METHODS ###
     def send_set_request_global(self, param_values):
-        self.set_req_global.parameters = [Parameter(name='social_layer.cutoff', value=param_values[0]).to_parameter_msg(),
-                                              Parameter(name='social_layer.amplitude', value=param_values[1]).to_parameter_msg(),
-                                              Parameter(name='social_layer.covariance', value=param_values[2]).to_parameter_msg(),
-                                              Parameter(name='social_layer.speed_factor_multiplier', value=param_values[3]).to_parameter_msg()]
+        self.set_req_global.parameters = [Parameter(name='social_layer.covariance', value=param_values[0]).to_parameter_msg(),
+                                              Parameter(name='social_layer.speed_factor_multiplier', value=param_values[1]).to_parameter_msg()]
         future = self.set_cli_global.call_async(self.set_req_global)
         return future
 
     def send_set_request_local(self, param_values):
-        self.set_req_local.parameters = [Parameter(name='social_layer.cutoff', value=param_values[0]).to_parameter_msg(),
-                                              Parameter(name='social_layer.amplitude', value=param_values[1]).to_parameter_msg(),
-                                              Parameter(name='social_layer.covariance', value=param_values[2]).to_parameter_msg(),
-                                              Parameter(name='social_layer.speed_factor_multiplier', value=param_values[3]).to_parameter_msg()]
+        self.set_req_local.parameters = [Parameter(name='social_layer.covariance', value=param_values[0]).to_parameter_msg(),
+                                              Parameter(name='social_layer.speed_factor_multiplier', value=param_values[1]).to_parameter_msg()]
         future = self.set_cli_local.call_async(self.set_req_local)
         return future
 
@@ -709,7 +706,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         
     def get_random_goal(self):
 
-        x = random.randrange(-35, 35) / 10.0
+        x = random.randrange(-35, 30) / 10.0
         y = random.randrange(-88, 28) / 10.0
 
         x += self.initial_pose[0]
@@ -751,11 +748,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         try:
             get_response = future.result()
             self.get_logger().info(
-                    'Result %s %s %s %s' %(
+                    'Result %s %s' %(
                     get_response.values[0].double_value,
-                    get_response.values[1].double_value, 
-                    get_response.values[2].double_value, 
-                    get_response.values[3].double_value,
+                    get_response.values[1].double_value
                     ))
 
         except Exception as e:
@@ -770,11 +765,9 @@ class Pic4rlEnvironmentAPPLR(Node):
                 try:
                     get_response = future.result()
                     self.get_logger().info(
-                        'Result %s %s %s %s' %(
+                        'Result %s %s' %(
                         get_response.values[0].double_value,
-                        get_response.values[1].double_value, 
-                        get_response.values[2].double_value, 
-                        get_response.values[3].double_value,
+                        get_response.values[1].double_value
                         ))
                 except Exception as e:
                     self.get_logger().info(
