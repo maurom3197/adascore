@@ -4,14 +4,14 @@ training_params:
     --episode-max-steps: 500 # (int) The maximum steps for an episode. The default is ``int(1e3)``
     --n-experiments: 1 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
-    --save-model-interval: 20000 # (int) Interval to save model. The default is ``int(1e4)``
-    --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
+    --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
+    --save-summary-interval: 1000 # (int) Interval to save summary. The default is ``int(1e3)``
 #    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20221114T213632.701951_TD3_' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/results/' # (str) Output directory name. The default is ``"results"``
 #    --evaluate: # Whether evaluate trained model
-    --test-interval: 20000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
+    --test-interval: 10000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
     --test-episodes: 3 # (int) Number of episodes at test. The default is ``5``
 # --save-test-path: # Save trajectories of evaluation.
@@ -23,8 +23,8 @@ training_params:
     --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'TD3' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
-    --change_goal_and_pose: 20
-    --starting_episodes: 400
+    --change_goal_and_pose: 3
+    --starting_episodes: 0
     --batch-size: 128 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
 

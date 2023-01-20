@@ -66,8 +66,13 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         ACTION AND OBSERVATION SPACES settings
         """
         action=[
-        [0.1, 1.0], # covariance
-        [2.0, 10.0], # vel factor
+        [0.1, 1.0], # covariance front height
+        [0.1, 1.0], # covariance front width
+        [0.1, 1.0], # covariance right height
+        [0.1, 1.0], # covariance right width
+        [0.1, 1.0],  # covariance static
+        [0.1, 0.8], # max lin vel
+        [0.5, 2.0] # max ang vel
         ]
 
         low_action = []
@@ -90,15 +95,36 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         self.get_logger().info('action space min values: {}'.format(self.action_space.low))
 
         state = []
-        for i in range(self.lidar_points):
-            state = state + [[0., 2.]]
-
-        state = state + [[-math.pi, math.pi]] # goal angle or yaw
-
+        # Goal Info [angle, distance]
         state = state + [
-        [0.1, 1.0], # covariance
-        [2.0, 10.0], # vel factor
+        [-math.pi, math.pi], # goal angle or yaw
+        [0.0, 15.0] # distance
+        ] 
+
+        # Costmap params at time t-1
+        state = state + [
+        [0.1, 1.0], # covariance front height
+        [0.1, 1.0], # covariance front width
+        [0.1, 1.0], # covariance right height
+        [0.1, 1.0], # covariance right width
+        [0.1, 1.0], # covariance static
+        [0.1, 0.8], # max lin vel
+        [0.5, 2.0]  # max ang vel
+
         ]
+
+        # Add people state
+        for i in range(self.k_people):
+            state = state + [
+            [0., 20.], # distance
+            [-math.pi, math.pi], # angle
+            [0., 1.5], # velocity module
+            [-math.pi, math.pi] # yaw
+            ]
+
+        # Add LiDAR measures 
+        for i in range(self.lidar_points):
+            state = state + [[0., 3.]]
 
         if len(state)>0:
             low_state = []

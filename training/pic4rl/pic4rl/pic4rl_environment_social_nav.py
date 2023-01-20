@@ -129,6 +129,16 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.get_logger().info('service not available, waiting again...')
         self.set_req_local = SetParameters.Request()
 
+        self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
+        while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.get_req_controller = GetParameters.Request()
+
+        self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
+        while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.set_req_controller = SetParameters.Request()
+
 
         # create reset world client 
         self.reset_world_client = self.create_client(Empty, 'reset_world')
@@ -145,13 +155,15 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.min_obstacle_distance = 4.0
         self.t0 = 0.0
         self.evaluate = False
-        self.index = 0
+        self.index = -1
         self.people_msg = []
-        self.k_people = 3
+        self.people_state = []
+        self.k_people = 4
+        self.min_people_distance = 10.0
 
         self.initial_pose, self.goals, self.poses, self.agents = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
-        self.init_costmap_params = [0.25, 6.0]
+        self.init_nav_params = [0.25, 0.25, 0.25, 0.25, 0.25, 0.6, 1.5]
         self.n_navigation_end = 0
         self.navigator = BasicNavigator()
 
@@ -164,43 +176,43 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Env step : " + str(episode_step))
         self.episode_step = episode_step
 
-        #self.get_logger().debug("Action received: "+str(action))
-        costmap_params = action.tolist()
+        self.get_logger().debug("Action received: "+str(action))
+        params = action.tolist()
 
-        #self.get_logger().debug("costmap_params: "+str(costmap_params))
+        self.get_logger().debug("Nav2 params: "+str(params))
 
-        observation, reward, done = self._step(costmap_params)
+        observation, reward, done = self._step(params)
         info = None
 
         return observation, reward, done, info
 
-    def _step(self, costmap_params=None, reset_step = False):
+    def _step(self, nav_params=None, reset_step = False):
         """
         """
         self.get_logger().debug("sending action...")
 
-        self.send_action(costmap_params)
+        self.send_action(nav_params)
 
         self.get_logger().debug("getting sensor data...")
         self.spin_sensors_callbacks()
         lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
-        person_state = self.get_people_state(robot_pose)
+        people_state, people_info = self.get_people_state(robot_pose)
 
         self.get_logger().debug("checking events...")
         done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
 
         if not reset_step:
             self.get_logger().debug("getting reward...")
-            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, done, event)
+            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_info, done, event)
 
             self.get_logger().debug("getting observation...")
-            observation = self.get_observation(lidar_measurements, goal_info, robot_pose, costmap_params)
+            observation = self.get_observation(lidar_measurements, goal_info, robot_pose, people_state, nav_params)
 
         else:
             reward = None
             observation = None
 
-        self.update_state(lidar_measurements, goal_info, robot_pose, costmap_params, done, event)
+        self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event)
 
         if done:
             self.navigator.cancelNav()
@@ -227,32 +239,58 @@ class Pic4rlEnvironmentAPPLR(Node):
     def get_people_state(self, robot_pose):
         """
         """
-        people_ = []
+        # Spin once to get the people message
+        rclpy.spin_once(self)
+
+        people_state_ = []
+        people_info_ = []
         distances = []
         msg = self.people_msg
 
         for i in range(len(self.agents)):
             x = msg.people[i].position.x
             y = msg.people[i].position.y
-            person_position = [x,y]
+            yaw = msg.people[i].position.z
+            person_pose = [x,y,yaw]
 
-            person_dist, person_angle = self.process_people(person_position, robot_pose)
+            person_dist, person_angle = self.process_people(person_pose, robot_pose)
+
             distances.append(person_dist)
 
             vel_x = msg.people[i].velocity.x
             vel_y = msg.people[i].velocity.y
+            vel_w = msg.people[i].velocity.z
+            vel_module = math.sqrt((vel_x)**2+(vel_y)**2)
 
-            people_.append([person_dist, person_angle, vel_x, vel_y])
+            # make variable relative to robot frame
+            x = x - robot_pose[0]
+            y = y - robot_pose[1]
+            yaw = yaw - robot_pose[2]
+
+            # Person state s_p as [x,y,yaw,vel_x,vel_y,vel_w] or [dist, angle, v_module, yaw]
+            people_state_.append([person_dist, person_angle, vel_module, yaw])
+
+            # people info is used to compute social reward
+            people_info_.append([x,y,yaw,vel_x,vel_y,vel_w])
+
+        # Keep people state shape at (k,s_p), if people < k
+        if len(people_state_) < self.k_people:
+            for i in range(self.k_people-len(people_state_)):
+                distances.append(20.0)
+                people_state_.append([20.0, 0.0, 0.0, 0.0])
+                people_info_.append([20.0, 20.0, 0.0, 0.0, 0.0])
 
         distances = np.array(distances)
-        people_ = np.array(people_)
+        self.min_people_distance = np.min(distances)
+        people_state_ = np.array(people_state_)
 
         # Filter the k closest people to the robot
         idx = np.argpartition(distances.ravel(), self.k_people-1)
         #print('MIN distances idx: ', idx)
-        people_state = people_[idx[:self.k_people]] # shape (k,4)
-        self.get_logger().debug('people state info (distance, angle, vel_x, vely) '+str(people_state))
-        return people_state
+        people_state = people_state_[idx[:self.k_people]] # shape (k,s_p)
+
+        self.get_logger().debug('people state info (distance, angle, v_module, yaw) '+str(people_state))
+        return people_state, people_info_
 
     def process_people(self, person_position, robot_pose):
 
@@ -272,17 +310,19 @@ class Pic4rlEnvironmentAPPLR(Node):
         elif angle < -math.pi:
             angle += 2 * math.pi
 
-        person_info = [distance, angle]
+        return distance, angle
 
-        return person_info
-
-    def send_action(self,costmap_params):
+    def send_action(self, params):
 
         #self.get_logger().debug("unpausing...")
         #self.unpause()
 
+        costmap_params = params[:5]
+        controller_params = params[-2:]
         #self.get_costmap_params()
-        self.send_params_action(costmap_params)
+        self.set_costmap_params(costmap_params)
+        self.set_costmap_params(controller_params)
+
         #self.compute_frequency()
         self.frequency_control()
 
@@ -301,7 +341,6 @@ class Pic4rlEnvironmentAPPLR(Node):
     def frequency_control(self):
         #self.get_logger().debug("Sleeping for: "+str(1/self.params_update_freq) +' s')
         time.sleep(1/self.params_update_freq)
-
 
     def get_sensor_data(self):
         """
@@ -400,55 +439,63 @@ class Pic4rlEnvironmentAPPLR(Node):
             print('Navigation Result UNKNOWN!')
         return result
 
-    def get_reward(self,lidar_measurements, goal_info, robot_pose, done, event):
+    def get_reward(self,lidar_measurements, goal_info, robot_pose, people_info, done, event):
         """
         """
         #dist_reward = (self.previous_goal_info[0] - goal_info[0])*30 
-        #yaw_reward = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi)))*0.4
+        #
 
         p_t = np.array([robot_pose[0], robot_pose[1]], dtype=np.float32)
         p_tp1 = np.array([self.previous_robot_pose[0], self.previous_robot_pose[1]], dtype=np.float32)
         goal_pose = np.asarray(self.goal_pose, dtype=np.float32)
 
-        cp = 3
-        cc = 2
-        Rp = np.dot((p_tp1 - p_t), (goal_pose - p_t)) / goal_info[0]
-        Rc = -1/self.min_obstacle_distance
-        reward = cp*Rp + cc*Rc
+        ch = 1.0
+        cs = 0.8
+        Rh = np.dot((p_tp1 - p_t), (goal_pose - p_t)) / goal_info[0] #heading reward v.1
+        #Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi)))*0.6 #heading reward v.2
+        Rs = -1/self.min_people_distance #Convert this into social cost
+        reward = ch*Rh + cs*Rs
 
-        #self.get_logger().debug('Rp: ' +str(Rp))
-        #self.get_logger().debug('Rc: ' +str(Rc))
-        #self.get_logger().debug('sparse reward: '+str(reward))
+        self.get_logger().debug('Goal Heading Reward Rh: ' +str(Rh))
+        self.get_logger().debug('Social nav reward Rs: ' +str(Rs))
+        self.get_logger().debug('sparse reward: '+str(reward))
 
         if event == "goal":
-            reward += 10
+            reward += 0 # add path social cost
         elif event == "collision":
             reward += -100
         elif event == "None":
-            reward += -1
+            reward += -1.0
 
         self.get_logger().debug('total reward: ' +str(reward))
 
         return reward
 
-    def get_observation(self, lidar_measurements, goal_info, robot_pose, costmap_params):
-        # goal angle
-        state_list = []
+    def get_observation(self, lidar_measurements, goal_info, robot_pose, people_state, nav_params):
         
+        state_list = []
+
+        # goal info
+        state_list.append(goal_info[1])
+        state_list.append(goal_info[0])
+
+        # costmap previous parameters
+        state_list.extend(nav_params)
+
+        # People info
+        people_state = people_state.flatten().tolist()
+        state_list.extend(people_state)
+
         # lidar points
         for point in lidar_measurements:
             state_list.append(float(point))
 
-        state_list.append(goal_info[1])
-
-        # costmap previous parameters
-        
-        state_list.extend(costmap_params)
         state = np.array(state_list, dtype = np.float32)
         #self.get_logger().debug('goal angle: '+str(goal_info[1]))
         #self.get_logger().debug('min obstacle lidar_distance: '+str(self.min_obstacle_distance))
         #self.get_logger().debug('costmap_params : '+str(costmap_params))
-        #self.get_logger().debug('state shape: '+str(state.shape))
+        self.get_logger().debug('state shape: '+str(state.shape))
+        self.get_logger().debug('state: '+str(state))
 
         return state
 
@@ -459,13 +506,14 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return data["initial_pose"], data["goals"], data["poses"], data["agents"]
 
-    def update_state(self,lidar_measurements, goal_info, robot_pose, costmap_params, done, event):
+    def update_state(self,lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event):
         """
         """
         self.previous_lidar_measurements = lidar_measurements
         self.previous_goal_info = goal_info
         self.previous_robot_pose = robot_pose
-        self.previous_costmap_params = costmap_params
+        self.people_state = people_state
+        self.previous_nav_params = nav_params
 
     def reset(self, n_episode, tot_steps, evaluate=False):
         """
@@ -488,9 +536,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Performing null step to reset variables")
         self.episode_step = 0
 
-        costmap_params = self.init_costmap_params
-        _,_,_, = self._step(costmap_params,reset_step = True)
-        observation,_,_, = self._step(costmap_params)
+        nav_params = self.init_nav_params
+        _,_,_, = self._step(nav_params,reset_step = True)
+        observation,_,_, = self._step(nav_params)
         return observation
     
     def new_episode(self):
@@ -504,11 +552,13 @@ class Pic4rlEnvironmentAPPLR(Node):
         # self.reset_world_client.call_async(req)
         
         if self.episode % self.change_episode == 0.:
-            self.index = int(np.random.uniform()*len(self.poses)) -1 
+            #self.index = int(np.random.uniform()*len(self.poses)) -1 
+            self.index += 1
+            if self.index > len(self.goals):
+                self.index = 0
 
-        if self.episode % 5 == 0:
-            self.get_logger().debug("Respawning agents ...")
-            self.respawn_agents()
+        self.get_logger().debug("Respawning agents ...")
+        self.respawn_agents()
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
     
@@ -523,10 +573,10 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_robot(self, index):
         """
         """
-        if self.episode <= self.starting_episodes:
-            x, y, yaw = tuple(self.initial_pose)
-        else:
-            x, y , yaw = tuple(self.poses[index])
+        # if self.episode <= self.starting_episodes:
+        #     x, y, yaw = tuple(self.initial_pose)
+        # else:
+        x, y , yaw = tuple(self.poses[index])
 
         qz = np.sin(yaw/2)
         qw = np.cos(yaw/2)
@@ -547,11 +597,20 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_agents(self,):
         """
         """
-        for i in range(len(self.agents)):
-            x, y , yaw = tuple(self.agents[i])
+        if self.index == 0:
+            agents2reset = [0,1,2,3]
+        elif self.index == 2:
+            agents2reset = [5]
+        elif self.index == 3:
+            agents2reset = [6]
+        else:
+            return
+            
+        for agent in agents2reset:
+            x, y , yaw = tuple(self.agents[agent])
 
             self.get_logger().info(f"Agent pose [x,y,yaw]: {[x, y, yaw]}")
-            agent_name = "agent"+str(i+1)
+            agent_name = "agent"+str(agent+1)
 
             position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(1.50)+"}"
             #orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
@@ -568,7 +627,7 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_goal(self, index):
         """
         """
-        if self.episode <= self.starting_episodes:
+        if self.episode < self.starting_episodes:
             self.get_random_goal()
         else:
             self.get_goal(index)
@@ -617,12 +676,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.n_navigation_end = 0
         self.get_logger().debug("Setting navigator initial Pose...")
         self.navigator.setInitialPose(init_pose)
-        if self.episode % 5 == 0:
-            self.get_logger().debug("Clearing all costmaps...")
-            self.navigator.clearAllCostmaps()
-        else:
-            self.get_logger().debug("Clearing local costmap...")
-            self.navigator.clearLocalCostmap()
+
+        self.get_logger().debug("Clearing all costmaps...")
+        self.navigator.clearAllCostmaps()
+ 
         self.get_logger().debug("wait until Nav2Active...")
         self.navigator.waitUntilNav2Active()
 
@@ -631,18 +688,37 @@ class Pic4rlEnvironmentAPPLR(Node):
 
     ### COSTMAP PARAMS CLIENTS METHODS ###
     def send_set_request_global(self, param_values):
-        self.set_req_global.parameters = [Parameter(name='social_layer.covariance', value=param_values[0]).to_parameter_msg(),
-                                              Parameter(name='social_layer.speed_factor_multiplier', value=param_values[1]).to_parameter_msg()]
+        self.set_req_global.parameters = [
+                        Parameter(name='social_layer.covariance_front_height', value=param_values[0]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_front_width', value=param_values[1]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_right_width', value=param_values[2]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_right_width', value=param_values[3]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_when_still', value=param_values[4]).to_parameter_msg()
+                                              ]
         future = self.set_cli_global.call_async(self.set_req_global)
         return future
 
     def send_set_request_local(self, param_values):
-        self.set_req_local.parameters = [Parameter(name='social_layer.covariance', value=param_values[0]).to_parameter_msg(),
-                                              Parameter(name='social_layer.speed_factor_multiplier', value=param_values[1]).to_parameter_msg()]
+        self.set_req_local.parameters = [
+                        Parameter(name='social_layer.covariance_front_height', value=param_values[0]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_front_width', value=param_values[1]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_right_width', value=param_values[2]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_right_width', value=param_values[3]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_when_still', value=param_values[4]).to_parameter_msg()
+                                              ]
         future = self.set_cli_local.call_async(self.set_req_local)
         return future
 
-    def send_params_action(self, costmap_params):
+    def send_set_request_controller(self, param_values):
+        self.set_req_controller.parameters = [Parameter(name='FollowPath.max_vel_x', value=param_values[0]).to_parameter_msg(),
+                                              Parameter(name='FollowPath.max_vel_theta', value=param_values[1]).to_parameter_msg()
+                                              #Parameter(name='FollowPath.vx_samples', value=param_values[2]).to_parameter_msg(),
+                                              #Parameter(name='FollowPath.vtheta_samples', value=param_values[3]).to_parameter_msg()
+                                              ]
+        future = self.set_cli_controller.call_async(self.set_req_controller)
+        return future
+
+    def set_costmap_params(self, costmap_params):
         self.get_logger().debug('setting costmap params to: '+str(costmap_params))
 
         self.set_req_local = SetParameters.Request()
@@ -671,18 +747,20 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.get_logger().debug(
                 'Service call failed %r' % (e,))
 
-        # while rclpy.ok():
-        #     rclpy.spin_once(self)
-        #     if future.done():
-        #         try:
-        #             get_response = future.result()
-        #             self.get_logger().info(
-        #                 'Result %s' %
-        #                 (get_response.results[0].successful))
-        #         except Exception as e:
-        #             self.get_logger().info(
-        #                 'Service call failed %r' % (e,))
-        #         break
+    def set_controller_params(self, controller_params):
+        self.get_logger().debug('setting controller params to: '+str(controller_params))
+        self.set_req_controller = SetParameters.Request()
+        future = self.send_set_request_controller(controller_params)
+        rclpy.spin_until_future_complete(self, future)
+
+        try:
+            get_response = future.result()
+            self.get_logger().debug(
+                'Result %s' %
+                (get_response.results[0].successful))
+        except Exception as e:
+            self.get_logger().debug(
+                'Service call failed %r' % (e,))
 
     def get_goal(self, index):
         # get goal from predefined list
@@ -731,14 +809,30 @@ class Pic4rlEnvironmentAPPLR(Node):
 
     # Global Costmap get_parameter #
     def send_get_request_global(self):
-        self.get_req_global.names = ['social_layer.cutoff','social_layer.amplitude','social_layer.covariance','social_layer.speed_factor_multiplier']
+        self.get_req_global.names = [
+            'social_layer.covariance_front_height',
+            'social_layer.covariance_front_width',
+                                    ]
         future = self.get_cli_global.call_async(self.get_req_global)
         return future
 
     # Local Costmap get_parameter #
     def send_get_request_local(self):
-        self.get_req_local.names = ['social_layer.cutoff','social_layer.amplitude','social_layer.covariance','social_layer.speed_factor_multiplier']
+        self.get_req_local.names = [
+            'social_layer.covariance_front_height',
+            'social_layer.covariance_front_width'
+        ]
         future = self.get_cli_local.call_async(self.get_req_local)
+        return future
+
+    def send_get_request_controller(self):
+        self.get_req_controller.names = [
+            'FollowPath.max_vel_x',
+            'FollowPath.max_vel_theta'
+            #'FollowPath.vx_samples',
+            #'FollowPath.vtheta_samples'
+        ]
+        future = self.get_cli_controller.call_async(self.get_req_controller)
         return future
 
     def get_costmap_params(self,):
@@ -773,6 +867,25 @@ class Pic4rlEnvironmentAPPLR(Node):
                     self.get_logger().info(
                         'Service call failed %r' % (e,))
                 break
+
+        future = self.send_get_request_controller()
+        rclpy.spin_until_future_complete(self, future)
+        try:
+            get_response = future.result()
+            self.get_logger().info(
+                    'Result %s %s %s %s %s %s %s' %(
+                    get_response.values[0].double_value,
+                    get_response.values[1].double_value, 
+                    get_response.values[2].integer_value, 
+                    get_response.values[3].integer_value,
+                    get_response.values[4].double_value,
+                    get_response.values[5].double_value,
+                    get_response.values[6].double_value
+                    ))
+
+        except Exception as e:
+            self.get_logger().info(
+                'Service call failed %r' % (e,))
     
     def create_logdir(self, policy, sensor, logdir):
                 """
