@@ -8,7 +8,7 @@ from sensor_msgs.msg import Image, Imu
 
 from cv_bridge import CvBridge
 
-from pic4rl.sensors import *
+from pic4rl.utils.sensors import *
 
 import os
 import yaml

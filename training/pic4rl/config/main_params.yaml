@@ -16,6 +16,7 @@ main_node:
     # World parameters
     world_name: "social_indoor.world" #Leave empty to obtain no world
     data_path: "social_indoor.json"
+    agents_config: "social_indoor_agents.yaml"
 
     # Task parameters
     task: 'goToPose' # goToPose, Following, Vineyards

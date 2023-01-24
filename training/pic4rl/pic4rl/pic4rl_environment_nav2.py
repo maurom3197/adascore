@@ -21,7 +21,7 @@ from rclpy.qos import QoSProfile
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from ament_index_python.packages import get_package_share_directory
-from pic4rl.generic_sensor import Sensors
+from pic4rl.utils.generic_sensor import Sensors
 
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import ParameterValue

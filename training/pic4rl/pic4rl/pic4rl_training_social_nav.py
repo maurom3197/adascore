@@ -68,11 +68,11 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         action=[
         [0.1, 1.0], # covariance front height
         [0.1, 1.0], # covariance front width
-        [0.1, 1.0], # covariance right height
-        [0.1, 1.0], # covariance right width
+        #[0.1, 1.0], # covariance right height
+        #[0.1, 1.0], # covariance right width
         [0.1, 1.0],  # covariance static
-        [0.1, 0.8], # max lin vel
-        [0.5, 2.0] # max ang vel
+        #[0.1, 0.8], # max lin vel
+        #[0.5, 2.0] # max ang vel
         ]
 
         low_action = []
@@ -105,11 +105,11 @@ class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
         state = state + [
         [0.1, 1.0], # covariance front height
         [0.1, 1.0], # covariance front width
-        [0.1, 1.0], # covariance right height
-        [0.1, 1.0], # covariance right width
+        #[0.1, 1.0], # covariance right height
+        #[0.1, 1.0], # covariance right width
         [0.1, 1.0], # covariance static
-        [0.1, 0.8], # max lin vel
-        [0.5, 2.0]  # max ang vel
+        #[0.1, 0.8], # max lin vel
+        #[0.5, 2.0]  # max ang vel
 
         ]
 
