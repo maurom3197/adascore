@@ -296,8 +296,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED):
                 self.send_goal(self.goal_pose)
                 self.n_navigation_end = self.n_navigation_end +1
-                if self.n_navigation_end == 20:
-                    self.get_logger().info('Navigation aborted more than 20 times... pausing Nav till next episode.') 
+                if self.n_navigation_end == 30:
+                    self.get_logger().info('Navigation aborted more than 30 times... pausing Nav till next episode.') 
                     self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: 'Nav failed'")
                     logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Nav failed") 
                     return True, "nav2 failed"  
@@ -446,8 +446,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             if self.index == len(self.goals):
                 self.index = 0
 
-        #self.get_logger().debug("Respawning agents ...")
-        #self.respawn_agents()
+        self.get_logger().debug("Respawning agents ...")
+        self.respawn_agents()
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
     
@@ -557,21 +557,22 @@ class Pic4rlEnvironmentAPPLR(Node):
             #         stdout=subprocess.DEVNULL
             #         )
         self.get_logger().debug("Restarting LifeCycleNodes...")
-        subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 0}'",
+        subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
                 shell=True,
                 stdout=subprocess.DEVNULL
                 )
 
         self.n_navigation_end = 0
+
+        self.get_logger().debug("wait until Nav2Active...")
+        self.navigator.waitUntilNav2Active()
+
         self.get_logger().debug("Setting navigator initial Pose...")
         self.navigator.setInitialPose(init_pose)
 
         self.get_logger().debug("Clearing all costmaps...")
         self.navigator.clearAllCostmaps()
  
-        self.get_logger().debug("wait until Nav2Active...")
-        self.navigator.waitUntilNav2Active()
-
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
 

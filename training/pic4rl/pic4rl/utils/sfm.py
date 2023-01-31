@@ -150,6 +150,8 @@ class SocialForceModel():
 
             self.agents.append(agent)
 
+        print(self.agents)
+
     def get_people(self, robot_pose):
         """
         """

@@ -73,7 +73,7 @@ def filter_people(k_, distances, people_state_, people_info_):
     people_state = people_state_[idx[:k_]] # shape (k,s_p)
     people_info = people_info_[idx[:k_]]
 
-    print('people state info (distance, angle, v_module, yaw) '+str(people_state))
+    #print('people state info (distance, angle, v_module, yaw) '+str(people_state))
     return people_state, people_info, min_people_distance
 
 def process_odom(goal_pose, odom):
