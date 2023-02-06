@@ -14,9 +14,9 @@ main_node:
     goal_tolerance: 0.40
 
     # World parameters
-    world_name: "social_indoor.world" #Leave empty to obtain no world
-    data_path: "social_indoor.json"
-    agents_config: "social_indoor_agents.yaml"
+    world_name: "social_indoor2.world" #Leave empty to obtain no world
+    data_path: "social_indoor2.json"
+    agents_config: "social_indoor_agents2.yaml"
 
     # Task parameters
     task: 'goToPose' # goToPose, Following, Vineyards
@@ -40,7 +40,7 @@ main_node:
       odom_topic: "/odom"
     laser_param:
       max_distance: 3.0 # Meters
-      num_points: 36 # int divider of 360
+      num_points: 18 # int divider of 360
     depth_param:
       dist_cutoff: 5.0 # Meters
       width: 112

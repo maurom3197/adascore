@@ -27,7 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
         'pic4rl_trainer = pic4rl.pic4rl_trainer:main',
-        'plot_reward = pic4rl.plot_reward:main'
+        'plot_reward = pic4rl.utils.plot_reward:main'
         ],
     },
 )

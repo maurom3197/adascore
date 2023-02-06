@@ -170,7 +170,7 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       use_sim_time: True
-      rolling_window: true
+      rolling_window: True
       width: 3
       height: 3
       resolution: 0.05
@@ -284,7 +284,7 @@ global_costmap:
 map_server:
   ros__parameters:
     use_sim_time: True
-    yaml_filename: "/root/applr_ws/src/hunav_sim/hunav_rviz2_panel/maps/social_indoor.yaml"
+    yaml_filename: "/root/applr_ws/src/APPLR_social_nav/maps/social_small_map.yaml"
     frame_id: odom
 
 map_saver:

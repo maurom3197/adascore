@@ -108,14 +108,14 @@ class SAC(OffPolicyAgent):
     def _setup_critic_q(self, state_shape, action_dim, critic_units, lr, network='mlp'):
         if network=='mlp':
             self.qf1 = CriticQ(state_shape, action_dim,  critic_units=critic_units, name="qf1")
-            if self.log_level < 20:
+            if log_level < 20:
             	self.qf1.model().summary()
             self.qf2 = CriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2")
             self.qf1_target = CriticQ(state_shape, action_dim,  critic_units=critic_units, name="qf1_target")
             self.qf2_target = CriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2_target")
         elif network=='conv':
             self.qf1 = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf1")
-            if self.log_level < 20:
+            if log_level < 20:
             	self.qf1.model().summary()
             self.qf2 = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf2")
             self.qf1_target = ConvMixCriticQ(state_shape, action_dim, critic_units=critic_units, name="qf1_target")

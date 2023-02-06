@@ -95,6 +95,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         # create log dir 
         self.logdir = create_logdir(training_params['--policy'], main_params['sensor'], training_params['--logdir'])
 
+        self.create_clients()
+
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)
         self.spin_sensors_callbacks()
@@ -114,43 +116,6 @@ class Pic4rlEnvironmentAPPLR(Node):
                 1)
 
         self.sfm = SocialForceModel(self, self.agents_config)
-
-        # create global and local Costmap parameter client
-        self.get_cli_global = self.create_client(GetParameters, '/global_costmap/global_costmap/get_parameters')
-        while not self.get_cli_global.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.get_req_global = GetParameters.Request()
-
-        self.get_cli_local = self.create_client(GetParameters, '/local_costmap/local_costmap/get_parameters')
-        while not self.get_cli_local.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.get_req_local = GetParameters.Request()
-
-        self.set_cli_global = self.create_client(SetParameters, '/global_costmap/global_costmap/set_parameters')
-        while not self.set_cli_global.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.set_req_global = SetParameters.Request()
-
-        self.set_cli_local = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
-        while not self.set_cli_local.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.set_req_local = SetParameters.Request()
-
-        # self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
-        # while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
-        #     self.get_logger().info('service not available, waiting again...')
-        # self.get_req_controller = GetParameters.Request()
-
-        # self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
-        # while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
-        #     self.get_logger().info('service not available, waiting again...')
-        # self.set_req_controller = SetParameters.Request()
-
-
-        # create reset world client 
-        self.reset_world_client = self.create_client(Empty, 'reset_world')
-        self.pause_physics_client = self.create_client(Empty, 'pause_physics')
-        self.unpause_physics_client = self.create_client(Empty, 'unpause_physics')
 
         self.entity_path = os.path.join(get_package_share_directory("gazebo_sim"), 'models', 
             'goal_box', 'model.sdf')
@@ -231,6 +196,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             shell=True,
             stdout=subprocess.DEVNULL
             )
+            if event == "nav2 failed":
+                self.n_navigation_end = -1
 
         return observation, reward, done
 
@@ -448,6 +415,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().debug("Respawning agents ...")
         self.respawn_agents()
+        
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
     
@@ -550,7 +518,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         init_pose.pose.orientation.y = 0.0
         init_pose.pose.orientation.z = z
         init_pose.pose.orientation.w = w
-        #if self.n_navigation_end == -1:
+        # if self.n_navigation_end == -1:
             # self.get_logger().debug("Resetting LifeCycleNodes...")
             # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 3}'",
             #         shell=True,
@@ -575,6 +543,42 @@ class Pic4rlEnvironmentAPPLR(Node):
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
+
+    def restart_gazebo(self, ):
+
+        self.get_logger().debug("Shutting down gazebo...")
+        subprocess.run(
+            "pkill -9 gzserver",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
+
+        subprocess.run(
+            "pkill -9 gzclient",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
+
+        time.sleep(3.0)
+        self.get_logger().debug("Launching gazebo...")
+        subprocess.run(
+            "ros2 launch hunav_gazebo_wrapper social_indoor.launch.py",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
+
+        time.sleep(10.0)
+        self.get_logger().debug("Create clients...")
+        self.create_clients()
+
+    def restart_nav2(self,):
+
+        self.nav2_proc.kill()
+        self.nav2_proc = subprocess.run(
+            "ros2 launch pic4nav social_nav_with_map.launch.py",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
 
     def get_people_state(self, robot_pose):
         """
@@ -795,3 +799,41 @@ class Pic4rlEnvironmentAPPLR(Node):
         except Exception as e:
             self.get_logger().info(
                 'Service call failed %r' % (e,))
+
+    def create_clients(self,):
+        # create global and local Costmap parameter client
+        self.get_cli_global = self.create_client(GetParameters, '/global_costmap/global_costmap/get_parameters')
+        while not self.get_cli_global.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.get_req_global = GetParameters.Request()
+
+        self.get_cli_local = self.create_client(GetParameters, '/local_costmap/local_costmap/get_parameters')
+        while not self.get_cli_local.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.get_req_local = GetParameters.Request()
+
+        self.set_cli_global = self.create_client(SetParameters, '/global_costmap/global_costmap/set_parameters')
+        while not self.set_cli_global.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.set_req_global = SetParameters.Request()
+
+        self.set_cli_local = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
+        while not self.set_cli_local.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.set_req_local = SetParameters.Request()
+
+        # create Controller parameter client
+        # self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
+        # while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info('service not available, waiting again...')
+        # self.get_req_controller = GetParameters.Request()
+
+        # self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
+        # while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info('service not available, waiting again...')
+        # self.set_req_controller = SetParameters.Request()
+
+        # create reset world client 
+        self.reset_world_client = self.create_client(Empty, 'reset_simulation')
+        self.pause_physics_client = self.create_client(Empty, 'pause_physics')
+        self.unpause_physics_client = self.create_client(Empty, 'unpause_physics')
