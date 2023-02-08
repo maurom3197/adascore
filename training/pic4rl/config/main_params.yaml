@@ -2,7 +2,7 @@ main_node:
   ros__parameters:
     # Robot parameters
     robot_name: "jackal_ugv"
-    max_lin_vel: 0.6
+    max_lin_vel: 0.8
     min_lin_vel: 0.05
     max_ang_vel: 1.5
     min_ang_vel: 0.05
@@ -24,7 +24,7 @@ main_node:
     # Sensors parameters
     sensor: 'applr' # lidar or rgb_camera or depth_camera
     applr_param:
-      update_frequency: 10.0 # update the controller parameters at this frequency
+      update_frequency: 20.0 # update the controller parameters at this frequency
     visual_data: 'features'
     features: 12544
     channels: 1

@@ -167,3 +167,39 @@ def normalize_angle(theta):
     elif theta < -math.pi:
         theta += 2 * math.pi
     return theta
+
+def restart_gazebo(self, ):
+
+    self.get_logger().debug("Shutting down gazebo...")
+    subprocess.run(
+        "pkill -9 gzserver",
+        shell=True,
+        stdout=subprocess.DEVNULL
+        )
+
+    subprocess.run(
+        "pkill -9 gzclient",
+        shell=True,
+        stdout=subprocess.DEVNULL
+        )
+
+    time.sleep(3.0)
+    self.get_logger().debug("Launching gazebo...")
+    subprocess.run(
+        "ros2 launch hunav_gazebo_wrapper social_indoor.launch.py",
+        shell=True,
+        stdout=subprocess.DEVNULL
+        )
+
+    time.sleep(10.0)
+    self.get_logger().debug("Create clients...")
+    self.create_clients()
+
+def restart_nav2(self,):
+
+    self.nav2_proc.kill()
+    self.nav2_proc = subprocess.run(
+        "ros2 launch pic4nav social_nav_with_map.launch.py",
+        shell=True,
+        stdout=subprocess.DEVNULL
+        )

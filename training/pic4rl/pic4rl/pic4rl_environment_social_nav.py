@@ -152,10 +152,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Env step : " + str(episode_step))
         self.episode_step = episode_step
 
-        self.get_logger().debug("Action received: "+str(action))
+        self.get_logger().debug("Action received (nav2 params): "+str(action))
         params = action.tolist()
-
-        self.get_logger().debug("Nav2 params: "+str(params))
 
         observation, reward, done = self._step(params)
         info = None
@@ -246,7 +244,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         #self.set_controller_params(controller_params)
 
         # Regulate the step frequency of the environment
-        #self.compute_frequency()
+        self.compute_frequency()
         frequency_control(self.params_update_freq)
 
         # If desired to get params
@@ -263,8 +261,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED):
                 self.send_goal(self.goal_pose)
                 self.n_navigation_end = self.n_navigation_end +1
-                if self.n_navigation_end == 30:
-                    self.get_logger().info('Navigation aborted more than 30 times... pausing Nav till next episode.') 
+                if self.n_navigation_end == 50:
+                    self.get_logger().info('Navigation aborted more than 50 times... pausing Nav till next episode.') 
                     self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: 'Nav failed'")
                     logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Nav failed") 
                     return True, "nav2 failed"  
@@ -304,23 +302,21 @@ class Pic4rlEnvironmentAPPLR(Node):
         goal_pose = np.asarray(self.goal_pose, dtype=np.float32)
 
         # Heading Reward
-        ch = 1.0
-        Rh = np.dot((p_tp1 - p_t), (goal_pose - p_t)) / goal_info[0] #heading reward v.1
-        #Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi)))*0.6 #heading reward v.2
+        ch = 0.4
+        #Rh = np.dot((p_tp1 - p_t), (goal_pose - p_t)) / goal_info[0] #heading reward v.1
+        Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
         #Rs = -1/self.min_people_distance # people naive reward
 
         # Social Disturbance Reward
         wr, wp = self.sfm.computeSocialWork()
         Rs = wr + wp
-        cs = -8.0
+        cs = -40.0
 
         # Total Reward
         reward = ch*Rh + cs*Rs
 
-        self.get_logger().debug('Goal Heading Reward Rh: ' +str(Rh))
-        self.get_logger().debug('Social Work Robot: ' +str(wr))
-        self.get_logger().debug('Social Work People: ' +str(wp))
-        self.get_logger().debug('Social nav reward Rs: ' +str(Rs))
+        self.get_logger().debug('Goal Heading Reward Rh: ' +str(ch*Rh))
+        self.get_logger().debug('Social nav reward Rs: ' +str(cs*Rs))
         self.get_logger().debug('sparse reward: '+str(reward))
 
         if event == "goal":
@@ -328,7 +324,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         elif event == "collision":
             reward += -100
         elif event == "None":
-            reward += -1.0
+            reward += -0.5
 
         self.get_logger().debug('total reward: ' +str(reward))
 
@@ -358,7 +354,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         #self.get_logger().debug('min obstacle lidar_distance: '+str(self.min_obstacle_distance))
         #self.get_logger().debug('costmap_params : '+str(costmap_params))
         #self.get_logger().debug('state shape: '+str(state.shape))
-        #self.get_logger().debug('state: '+str(state))
+        #self.get_logger().debug('state=[goal,params,people,lidar]: '+str(state))
 
         return state
 
@@ -413,8 +409,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             if self.index == len(self.goals):
                 self.index = 0
 
-        self.get_logger().debug("Respawning agents ...")
-        self.respawn_agents()
+        #self.get_logger().debug("Respawning agents ...")
+        #self.respawn_agents()
         
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
@@ -543,42 +539,6 @@ class Pic4rlEnvironmentAPPLR(Node):
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
-
-    def restart_gazebo(self, ):
-
-        self.get_logger().debug("Shutting down gazebo...")
-        subprocess.run(
-            "pkill -9 gzserver",
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
-
-        subprocess.run(
-            "pkill -9 gzclient",
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
-
-        time.sleep(3.0)
-        self.get_logger().debug("Launching gazebo...")
-        subprocess.run(
-            "ros2 launch hunav_gazebo_wrapper social_indoor.launch.py",
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
-
-        time.sleep(10.0)
-        self.get_logger().debug("Create clients...")
-        self.create_clients()
-
-    def restart_nav2(self,):
-
-        self.nav2_proc.kill()
-        self.nav2_proc = subprocess.run(
-            "ros2 launch pic4nav social_nav_with_map.launch.py",
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
 
     def get_people_state(self, robot_pose):
         """

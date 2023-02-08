@@ -21,7 +21,7 @@ training_params:
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
     --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
-    --policy: 'TD3' # training policy
+    --policy: 'SAC' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
     --change_goal_and_pose: 1
     --starting_episodes: 0
@@ -33,8 +33,8 @@ training_params:
     --memory-capacity: 1000000  # (int) Replay Buffer size. The default is ``1e6``.
 
 # For only SAC
-#    --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.
-#    --auto-alpha: # Automatic alpha tuning
+    --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.
+    --auto-alpha: # Automatic alpha tuning
 # For only SAC-AE
 #   --stop-q-grad: # Whether stop gradient after convolutional layers at Encoder
 
