@@ -51,7 +51,7 @@ from ament_index_python.packages import get_package_share_directory
 #from rclpy.executors import ExternalShutdownException
 
 
-class Pic4rlTraining_APPLR(Pic4rlEnvironmentAPPLR):
+class Pic4rlTraining_APPLR_nav2(Pic4rlEnvironmentAPPLR):
     def __init__(self):
         super().__init__()
         rclpy.logging.set_logger_level('pic4rl_training', 10)

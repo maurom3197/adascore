@@ -44,14 +44,14 @@ from tf2rl.algos.sac import SAC
 from tf2rl.algos.ppo import PPO
 from tf2rl.experiments.trainer import Trainer
 from tf2rl.experiments.on_policy_trainer import OnPolicyTrainer
-from pic4rl.pic4rl_environment_social_nav import Pic4rlEnvironmentAPPLR
+from pic4rl.pic4rl_environment_costmap import Pic4rlEnvironmentAPPLR
 from ament_index_python.packages import get_package_share_directory
 
 #from rclpy.executors import SingleThreadedExecutor
 #from rclpy.executors import ExternalShutdownException
 
 
-class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
+class Pic4rlTraining_APPLR_costmap(Pic4rlEnvironmentAPPLR):
     def __init__(self):
         super().__init__()
         rclpy.logging.set_logger_level('pic4rl_training', 10)
@@ -114,17 +114,21 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
         ]
 
         # Add people state
-        for i in range(self.k_people):
-            state = state + [
-            [0., 20.], # distance
-            [-math.pi, math.pi], # angle
-            [0., 1.5], # velocity module
-            [-math.pi, math.pi] # yaw
-            ]
+        # for i in range(self.k_people):
+        #     state = state + [
+        #     [0., 20.], # distance
+        #     [-math.pi, math.pi], # angle
+        #     [0., 1.5], # velocity module
+        #     [-math.pi, math.pi] # yaw
+        #     ]
 
-        # Add LiDAR measures 
-        for i in range(self.lidar_points):
-            state = state + [[0., 3.]]
+        self.state_1d_shape = len(state)
+        self.get_logger().info('state 1D shape: {}'.format(self.state_1d_shape))
+        self.get_logger().info('costmap-state 2D width&height: {}'.format(self.costmap_width))
+
+        # Add costmap
+        for i in range(self.costmap_features):
+            state = state + [[0., 1.]]
 
         if len(state)>0:
             low_state = []
@@ -155,10 +159,12 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
                     action_dim = self.action_space.high.size,
                     max_action=self.action_space.high,
                     min_action=self.action_space.low,
+                    state_2d_shape=(self.costmap_width,self.costmap_height,1,),
                     lr_actor = 2e-4,
                     lr_critic = 2e-4,
                     actor_units = (256, 256),
                     critic_units = (256, 256),
+                    network='conv',
                     subclassing=False,
                     sigma = 0.2,
                     tau = 0.01,
@@ -181,6 +187,7 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
                     action_dim = self.action_space.high.size,
                     max_action=self.action_space.high,
                     min_action=self.action_space.low,
+                    state_2d_shape=(self.costmap_width,self.costmap_height,1,),
                     lr_actor = 3e-4,
                     lr_critic = 3e-4,
                     sigma = 0.2,
@@ -197,6 +204,7 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
                     noise_clip = 0.5,
                     actor_units = (256, 256),
                     critic_units = (256, 256),
+                    network='conv',
                     log_level = self.log_level)
                 self.get_logger().info('Instanciate TD3 agent...')
             
@@ -209,10 +217,12 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
                     action_dim = self.action_space.high.size,
                     max_action = self.action_space.high,
                     min_action=self.action_space.low,
+                    state_2d_shape=(self.costmap_width,self.costmap_height,1,),
                     lr=2e-4,
                     lr_alpha=3e-4,
                     actor_units=(256, 256),
                     critic_units=(256, 256),
+                    network='conv',
                     tau=5e-3,
                     alpha=.2,
                     auto_alpha=False, 

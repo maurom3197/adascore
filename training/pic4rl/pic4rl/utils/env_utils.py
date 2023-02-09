@@ -186,7 +186,7 @@ def restart_gazebo(self, ):
     time.sleep(3.0)
     self.get_logger().debug("Launching gazebo...")
     subprocess.run(
-        "ros2 launch hunav_gazebo_wrapper social_indoor.launch.py",
+        "ros2 launch hunav_gazebo_wrapper social_indoor.launch.py &",
         shell=True,
         stdout=subprocess.DEVNULL
         )
@@ -197,9 +197,15 @@ def restart_gazebo(self, ):
 
 def restart_nav2(self,):
 
-    self.nav2_proc.kill()
+    self.nav2_proc.kill() # to kill singularly
     self.nav2_proc = subprocess.run(
-        "ros2 launch pic4nav social_nav_with_map.launch.py",
+        "ros2 launch pic4nav social_nav_with_map.launch.py &",
         shell=True,
         stdout=subprocess.DEVNULL
         )
+
+def plot_costmap(image):
+        colormap = np.asarray(image*255, dtype = np.uint8)
+        cv2.namedWindow('Local Costmap', cv2.WINDOW_NORMAL)
+        cv2.imshow('Local Costmap',colormap)
+        cv2.waitKey(1)

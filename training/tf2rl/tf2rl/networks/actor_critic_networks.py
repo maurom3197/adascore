@@ -93,7 +93,7 @@ class Actor_tanh(tf.keras.Model):
         return tf.keras.Model(inputs = self.state_input, outputs = self.call(self.state_input), name = self.model_name)
 
 class ConvActor(tf.keras.Model):
-    def __init__(self, state_shape, action_dim, max_action=(0.4,1.), min_action=(0.,-1.), units=(256, 256),
+    def __init__(self, state_shape, state_2d_shape, action_dim, max_action=(0.4,1.), min_action=(0.,-1.), units=(256, 256),
         num_conv_layers=4, conv_filters=(32,64), filt_size = (3,3), name="Actor"):
         super().__init__(name=name)
 
@@ -101,8 +101,8 @@ class ConvActor(tf.keras.Model):
         self.state_input = Input(shape=state_shape)
         self.action_dim = action_dim
 
-        self.image_shape = (112,112,1,)
-        self.state_info_shape = state_shape[-1]-(self.image_shape[0]*self.image_shape[1])
+        self.state_2d_shape = state_2d_shape
+        self.state_1d_shape = state_shape[-1]-(self.state_2d_shape[0]*self.state_2d_shape[1])
 
         self.k_initializer = HeUniform()
         self.conv_layers = []
@@ -139,9 +139,9 @@ class ConvActor(tf.keras.Model):
 
     def call(self, states):
         b = tf.shape(states)[0]
-        state_info = states[:,:self.state_info_shape]
-        img_array = states[:,self.state_info_shape:]
-        features = tf.reshape(img_array, (b,self.image_shape[0],self.image_shape[1],self.image_shape[2]))
+        state_info = states[:,:self.state_1d_shape]
+        img_array = states[:,self.state_1d_shape:]
+        features = tf.reshape(img_array, (b,self.state_2d_shape[0],self.state_2d_shape[1],self.state_2d_shape[2]))
 
         for conv_layer in self.conv_layers:
             features = conv_layer(features)
@@ -377,7 +377,7 @@ class ConvCriticQ(tf.keras.Model):
         return tf.keras.Model(inputs = [self.state_input, self.action_input], outputs = self.call(self.state_input, self.action_input), name = self.model_name)
 
 class ConvMixCriticQ(tf.keras.Model):
-    def __init__(self, state_shape, action_dim, critic_units=(256, 256), 
+    def __init__(self, state_shape, state_2d_shape, action_dim, critic_units=(256, 256), 
                  num_conv_layers=4, conv_filters=(32,64), filt_size = (3,3), name='qf'):
         super().__init__(name=name)
 
@@ -385,8 +385,8 @@ class ConvMixCriticQ(tf.keras.Model):
         self.state_input = Input(shape=state_shape)
         self.action_input = Input(shape=(action_dim,))
 
-        self.image_shape = (112,112,1,)
-        self.state_info_shape = state_shape[-1]-(self.image_shape[0]*self.image_shape[1])
+        self.state_2d_shape = state_2d_shape
+        self.state_1d_shape = state_shape[-1]-(self.state_2d_shape[0]*self.state_2d_shape[1])
 
         self.k_initializer = HeUniform()
         self.conv_layers = []
@@ -418,9 +418,9 @@ class ConvMixCriticQ(tf.keras.Model):
 
     def call(self, states, actions):
         b = tf.shape(states)[0]
-        state_info = states[:,:self.state_info_shape]
-        img_array = states[:,self.state_info_shape:]
-        features = tf.reshape(img_array, (b,self.image_shape[0],self.image_shape[1],self.image_shape[2]))
+        state_info = states[:,:self.state_1d_shape]
+        img_array = states[:,self.state_1d_shape:]
+        features = tf.reshape(img_array, (b,self.state_2d_shape[0],self.state_2d_shape[1],self.state_2d_shape[2]))
 
         for conv_layer in self.conv_layers:
             features = conv_layer(features)
@@ -435,7 +435,7 @@ class ConvMixCriticQ(tf.keras.Model):
         return tf.keras.Model(inputs = [self.state_input, self.action_input], outputs = self.call(self.state_input, self.action_input), name = self.model_name)
 
 class ConvMixCriticTD3(tf.keras.Model):
-    def __init__(self, state_shape, action_dim, units=(256, 256), 
+    def __init__(self, state_shape, state_2d_shape, action_dim, units=(256, 256), 
                  num_conv_layers=4, conv_filters=(32,64), filt_size = (3,3), name='qf'):
         super().__init__(name=name)
 
@@ -443,8 +443,8 @@ class ConvMixCriticTD3(tf.keras.Model):
         self.state_input = Input(shape=state_shape)
         self.action_input = Input(shape=(action_dim,))
 
-        self.image_shape = (112,112,1,)
-        self.state_info_shape = state_shape[-1]-(self.image_shape[0]*self.image_shape[1])
+        self.state_2d_shape = state_2d_shape
+        self.state_1d_shape = state_shape[-1]-(self.state_2d_shape[0]*self.state_2d_shape[1])
 
         self.k_initializer = HeUniform()
         self.conv_layers = []
@@ -485,9 +485,9 @@ class ConvMixCriticTD3(tf.keras.Model):
 
     def call(self, states, actions):
         b = tf.shape(states)[0]
-        state_info = states[:,:self.state_info_shape]
-        img_array = states[:,self.state_info_shape:]
-        features = tf.reshape(img_array, (b,self.image_shape[0],self.image_shape[1],self.image_shape[2]))
+        state_info = states[:,:self.state_1d_shape]
+        img_array = states[:,self.state_1d_shape:]
+        features = tf.reshape(img_array, (b,self.state_2d_shape[0],self.state_2d_shape[1],self.state_2d_shape[2]))
 
         for conv_layer in self.conv_layers:
             features = conv_layer(features)
@@ -509,9 +509,9 @@ class ConvMixCriticTD3(tf.keras.Model):
 
     def Q1(self, states, actions):
         b = tf.shape(states)[0]
-        state_info = states[:,:self.state_info_shape]
-        img_array = states[:,self.state_info_shape:]
-        features = tf.reshape(img_array, (b,self.image_shape[0],self.image_shape[1],self.image_shape[2]))
+        state_info = states[:,:self.state_1d_shape]
+        img_array = states[:,self.state_1d_shape:]
+        features = tf.reshape(img_array, (b,self.state_2d_shape[0],self.state_2d_shape[1],self.state_2d_shape[2]))
 
         for conv_layer in self.conv_layers:
             features = conv_layer(features)

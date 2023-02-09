@@ -22,6 +22,7 @@ class TD3(DDPG):
             self,
             state_shape,
             action_dim,
+            state_2d_shape=(112,112,1,),
             name="TD3",
             actor_update_freq=2,
             policy_noise=0.2,
@@ -71,8 +72,8 @@ class TD3(DDPG):
             self.actor = Actor_tanh(state_shape, action_dim, max_action, min_action, actor_units)
             self.actor_target = Actor_tanh(state_shape, action_dim, max_action, min_action, actor_units)
         elif network=='conv':
-            self.actor = ConvActor(state_shape, action_dim, max_action, min_action, actor_units)
-            self.actor_target = ConvActor(state_shape, action_dim, max_action, min_action, actor_units)
+            self.actor = ConvActor(state_shape, state_2d_shape, action_dim, max_action, min_action, actor_units)
+            self.actor_target = ConvActor(state_shape, state_2d_shape, action_dim, max_action, min_action, actor_units)
         self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=lr_actor)
         update_target_variables(self.actor_target.weights,
                                 self.actor.weights, tau=1.)
@@ -83,8 +84,8 @@ class TD3(DDPG):
             self.critic = CriticTD3(state_shape, action_dim, critic_units, name="Q1_Q2")
             self.critic_target = CriticTD3(state_shape, action_dim, critic_units, name="target_Q1_Q2")
         elif network=='conv':
-            self.critic = ConvMixCriticTD3(state_shape, action_dim, critic_units, name="Q1_Q2")
-            self.critic_target = ConvMixCriticTD3(state_shape, action_dim, critic_units, name="target_Q1_Q2")
+            self.critic = ConvMixCriticTD3(state_shape, state_2d_shape, action_dim, critic_units, name="Q1_Q2")
+            self.critic_target = ConvMixCriticTD3(state_shape, state_2d_shape, action_dim, critic_units, name="target_Q1_Q2")
         self.critic_optimizer = tf.keras.optimizers.Adam(
                 learning_rate=lr_critic)
         update_target_variables(

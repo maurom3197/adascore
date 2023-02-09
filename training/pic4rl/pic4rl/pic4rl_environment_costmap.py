@@ -32,7 +32,7 @@ from rcl_interfaces.msg import ParameterDescriptor, ParameterValue
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, NavigationResult
 from people_msgs.msg import People
-
+from nav_msgs.msg import OccupancyGrid
 
 class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
@@ -68,6 +68,9 @@ class Pic4rlEnvironmentAPPLR(Node):
                 ('update_frequency', main_params['applr_param']['update_frequency']),
                 ('lidar_dist', main_params['laser_param']['max_distance']),
                 ('lidar_points', main_params['laser_param']['num_points']),
+                ('costmap_width', main_params['costmap_param']['width']),
+                ('costmap_height', main_params['costmap_param']['height']),
+                ('show_costmap', main_params['costmap_param']['show_image']),
                 ('gazebo_client', main_params['gazebo_client'])
                 ]
             )
@@ -93,17 +96,23 @@ class Pic4rlEnvironmentAPPLR(Node):
             'lidar_dist').get_parameter_value().double_value
         self.lidar_points   = self.get_parameter(
             'lidar_points').get_parameter_value().integer_value
+        self.costmap_width = self.get_parameter(
+            'costmap_width').get_parameter_value().integer_value
+        self.costmap_height = self.get_parameter(
+            'costmap_height').get_parameter_value().integer_value
+        self.plot_costmap = self.get_parameter(
+            'show_costmap').get_parameter_value().bool_value
         self.gazebo_client = self.get_parameter(
             'gazebo_client').get_parameter_value().bool_value
 
         # create log dir 
         self.logdir = create_logdir(training_params['--policy'], main_params['sensor'], training_params['--logdir'])
-
+        # create clients
         self.create_clients()
 
-        if not self.gazebo_client:
-            self.unpause()
-            time.sleep(2.0)
+        #if not self.gazebo_client:
+        self.unpause()
+        time.sleep(2.0)
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)
@@ -122,7 +131,14 @@ class Pic4rlEnvironmentAPPLR(Node):
                 '/people', 
                 self.people_callback,
                 1)
+        self.get_logger().info('Local Costmap topic subscription')
+        self.costmap_sub = self.create_subscription(
+                OccupancyGrid,
+                '/local_costmap/costmap', 
+                self.costmap_callback,
+                1)
 
+        self.costmap_features = self.costmap_width*self.costmap_height
         self.sfm = SocialForceModel(self, self.agents_config)
 
         self.entity_path = os.path.join(get_package_share_directory("gazebo_sim"), 'models', 
@@ -179,6 +195,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.spin_sensors_callbacks()
         lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
         people_state, people_info = self.get_people_state(robot_pose)
+        costmap = self.get_processed_costmap()
 
         if not reset_step:
             self.get_logger().debug("checking events...")
@@ -188,7 +205,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_info, done, event)
 
             self.get_logger().debug("getting observation...")
-            observation = self.get_observation(lidar_measurements, goal_info, robot_pose, people_state, nav_params)
+            observation = self.get_observation(lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap)
 
         else:
             reward = None
@@ -196,7 +213,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             done = False
             event = 'None'
 
-        self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event)
+        self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap)
 
         if done:
             #self.navigator.cancelNav()
@@ -245,6 +262,31 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         self.people_msg = msg
 
+    def costmap_callback(self,msg):
+        """
+        """
+        self.costmap_msg = msg
+
+    def get_processed_costmap(self,):
+        """
+        """
+        rclpy.spin_once(self)    
+        map_cost = self.costmap_msg.data
+
+        # convert to np array and add a dim
+        cost_mat = np.array(map_cost, dtype=np.float32)/100
+        #cost_mat = np.expand_dims(cost_mat, axis = -1)
+
+        # plot costmap
+        if self.plot_costmap:
+            # original
+            mat2plot = cost_mat.reshape(100,100)
+            # flipped 
+            #mat2plot = np.flip(np.flip(cost_mat.reshape(100,100).transpose(),1),0)
+            plot_costmap(mat2plot)
+
+        return cost_mat
+
     def send_action(self, params):
         """
         """
@@ -263,8 +305,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         #self.get_controller_params()
 
     def check_events(self, lidar_measurements, goal_info, robot_pose, collision):
-        if self.episode_step < 10:
+        if self,episode_step < 10:
             return False, "None"
+
         # get action feedback from navigator
         feedback = self.navigator.getFeedback()
         #self.get_logger().debug('Navigator feedback: '+str(feedback))
@@ -343,7 +386,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return reward
 
-    def get_observation(self, lidar_measurements, goal_info, robot_pose, people_state, nav_params):
+    def get_observation(self, lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap):
         
         state_list = []
 
@@ -355,14 +398,21 @@ class Pic4rlEnvironmentAPPLR(Node):
         state_list.extend(nav_params)
 
         # People info
-        people_state = people_state.flatten().tolist()
-        state_list.extend(people_state)
+        #people_state = people_state.flatten().tolist()
+        #state_list.extend(people_state)
 
         # lidar points
-        for point in lidar_measurements:
-            state_list.append(float(point))
+        #for point in lidar_measurements:
+        #    state_list.append(float(point))
 
-        state = np.array(state_list, dtype = np.float32)
+        # Costmap 2D (features)
+        state_1d = np.array(state_list, dtype=np.float32)
+        #self.get_logger().debug('state 1d shape: '+str(state_1d.shape))
+        #self.get_logger().debug('costmap shape: '+str(costmap.shape))
+
+        state = np.concatenate((state_1d, costmap))
+
+        state = np.array(state, dtype = np.float32)
         #self.get_logger().debug('goal angle: '+str(goal_info[1]))
         #self.get_logger().debug('min obstacle lidar_distance: '+str(self.min_obstacle_distance))
         #self.get_logger().debug('costmap_params : '+str(costmap_params))
@@ -371,7 +421,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return state
 
-    def update_state(self,lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event):
+    def update_state(self,lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap):
         """
         """
         self.previous_lidar_measurements = lidar_measurements
@@ -379,6 +429,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.previous_robot_pose = robot_pose
         self.people_state = people_state
         self.previous_nav_params = nav_params
+        self.previous_costmap = costmap
 
     def reset(self, n_episode, tot_steps, evaluate=False):
         """
@@ -473,7 +524,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         # else:
         #     return
 
-        agents2reset = [6,7,9,10]
+        agents2reset = [10]
             
         for agent in agents2reset:
             print(len(self.agents))
