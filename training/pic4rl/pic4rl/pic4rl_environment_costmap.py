@@ -146,6 +146,8 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.episode_step = 0
         self.previous_twist = None
+        self.previous_event = "None"
+        self.prev_nav_state = "unknown"
         self.episode = 0
         self.collision_count = 0
         self.min_obstacle_distance = 4.0
@@ -213,7 +215,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             done = False
             event = 'None'
 
-        self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap)
+        self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap, event)
 
         if done:
             #self.navigator.cancelNav()
@@ -221,7 +223,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             shell=True,
             stdout=subprocess.DEVNULL
             )
-            if event == "nav2 failed":
+            if event == "nav2_failed":
                 self.n_navigation_end = -1
             time.sleep(5.0)
 
@@ -296,18 +298,19 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.set_costmap_params(costmap_params)
         #self.set_controller_params(controller_params)
 
-        # Regulate the step frequency of the environment
-        #self.compute_frequency()
-        #frequency_control(self.params_update_freq)
+        # # Regulate the step frequency of the environment
+        # action_hz, t1 = compute_frequency(self.t0)
+        # self.t0 = t1
+        # frequency_control(self.params_update_freq)
+        # self.get_logger().debug('Sending action at '+str(action_hz))
 
         # If desired to get params
         #self.get_costmap_params()
         #self.get_controller_params()
 
     def check_events(self, lidar_measurements, goal_info, robot_pose, collision):
-        if self,episode_step < 10:
-            return False, "None"
-
+        """
+        """
         # get action feedback from navigator
         feedback = self.navigator.getFeedback()
         #self.get_logger().debug('Navigator feedback: '+str(feedback))
@@ -321,12 +324,21 @@ class Pic4rlEnvironmentAPPLR(Node):
                     self.get_logger().info('Navigation aborted more than 50 times... pausing Nav till next episode.') 
                     self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: 'Nav failed'")
                     logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Nav failed") 
-                    return True, "nav2 failed"  
+                    self.prev_nav_state = "nav2_failed"
+                    return True, "nav2_failed"  
                 
             if result == NavigationResult.SUCCEEDED:
+                if self.prev_nav_state == "goal":
+                    self.get_logger().info('uncorrect goal status detected... resending goal.') 
+                    self.send_goal(self.goal_pose)
+                    return False, "None"
+
                 self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
                 logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
+                self.prev_nav_state = "goal"
                 return True, "goal"
+        else:
+            self.prev_nav_state = "unknown"
 
         # check collision
         if  collision:
@@ -421,7 +433,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return state
 
-    def update_state(self,lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap):
+    def update_state(self,lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap, event):
         """
         """
         self.previous_lidar_measurements = lidar_measurements
@@ -430,6 +442,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.people_state = people_state
         self.previous_nav_params = nav_params
         self.previous_costmap = costmap
+        self.previous_event = event
 
     def reset(self, n_episode, tot_steps, evaluate=False):
         """
@@ -474,7 +487,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 self.index = 0
 
         if self.episode % 200 == 0.:
-            #self.get_logger().debug("Respawning agents ...")
+            self.get_logger().debug("Respawning agents ...")
             self.respawn_agents()
         
         self.get_logger().debug("Respawning robot ...")
@@ -524,7 +537,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         # else:
         #     return
 
-        agents2reset = [10]
+        agents2reset = [6,7,9,10]
             
         for agent in agents2reset:
             print(len(self.agents))
@@ -598,15 +611,15 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().debug("wait until Nav2Active...")
         self.navigator.waitUntilNav2Active()
-
-        self.get_logger().debug("Setting navigator initial Pose...")
-        self.navigator.setInitialPose(init_pose)
-
         self.get_logger().debug("Clearing all costmaps...")
         self.navigator.clearAllCostmaps()
+        time.sleep(5.0)
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
+        time.sleep(3.0)
+        self.send_goal(self.goal_pose)
+        time.sleep(2.0)
 
     def get_people_state(self, robot_pose):
         """
@@ -726,12 +739,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().info("New goal: (x,y) : " + str(x) + "," +str(y))
         self.goal_pose = [x, y]
 
-    def compute_frequency(self,):
-        t1 = time.perf_counter()
-        step_time = t1-self.t0
-        self.t0 = t1
-        action_hz = 1./(step_time)
-        self.get_logger().debug('Sending action at '+str(action_hz))
 
     def pause(self):
 

@@ -33,6 +33,13 @@ def frequency_control(params_update_freq):
     #print("Sleeping for: "+str(1/self.params_update_freq) +' s')
     time.sleep(1/params_update_freq)
 
+def compute_frequency(t0):
+        t1 = time.perf_counter()
+        step_time = t1-t0
+        t0 = t1
+        action_hz = 1./(step_time)
+        return action_hz, t1
+        
 def get_goals_and_poses(data_path):
     """
     """
