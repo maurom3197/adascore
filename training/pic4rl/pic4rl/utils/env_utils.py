@@ -175,41 +175,56 @@ def normalize_angle(theta):
         theta += 2 * math.pi
     return theta
 
-def restart_gazebo(self, ):
+def restart_gazebo(gazebo_client):
 
-    self.get_logger().debug("Shutting down gazebo...")
+    print("Shutting down gazebo...")
     subprocess.run(
         "pkill -9 gzserver",
         shell=True,
         stdout=subprocess.DEVNULL
         )
+    time.sleep(5.0)
 
+    if gazebo_client:
+        subprocess.run(
+            "pkill -9 gzclient",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
+
+        time.sleep(5.0)
+
+    print("Launching gazebo...")
     subprocess.run(
-        "pkill -9 gzclient",
+        "ros2 launch hunav_gazebo_wrapper social_small_indoor.launch.py &",
         shell=True,
         stdout=subprocess.DEVNULL
         )
 
-    time.sleep(3.0)
-    self.get_logger().debug("Launching gazebo...")
+    time.sleep(20.0)
+    
+def restart_nav2():
+    nav2_nodes = ["bt_navigator", "planner_server", 
+    "controller_server", "map_server", 
+    "recoveries_server", "lifecycle_manager_navigation"
+     ]   
+
+    for proc in nav2_nodes:
+        print("Killing nav process: "+proc)
+        subprocess.run(
+            "killall -9 "+proc,
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
+        time.sleep(5.0)
+
+    print("launching nav2 again...")
     subprocess.run(
-        "ros2 launch hunav_gazebo_wrapper social_indoor.launch.py &",
-        shell=True,
-        stdout=subprocess.DEVNULL
-        )
-
-    time.sleep(10.0)
-    self.get_logger().debug("Create clients...")
-    self.create_clients()
-
-def restart_nav2(self,):
-
-    self.nav2_proc.kill() # to kill singularly
-    self.nav2_proc = subprocess.run(
         "ros2 launch pic4nav social_nav_with_map.launch.py &",
         shell=True,
         stdout=subprocess.DEVNULL
         )
+    time.sleep(20.0)
 
 def plot_costmap(image):
         colormap = np.asarray(image*255, dtype = np.uint8)

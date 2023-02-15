@@ -132,6 +132,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.previous_twist = None
         self.previous_event = "None"
         self.prev_nav_state = "unknown"
+        self.simulation_restarted = 0
         self.episode = 0
         self.collision_count = 0
         self.min_obstacle_distance = 4.0
@@ -176,10 +177,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("sending action...")
 
         self.send_action(nav_params)
-
-        self.get_logger().debug("getting sensor data...")
+        
         self.spin_sensors_callbacks()
+        self.get_logger().debug("getting sensor data...")
         lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
+        self.get_logger().debug("getting people data...")
         people_state, people_info = self.get_people_state(robot_pose)
 
         if not reset_step:
@@ -201,7 +203,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event)
 
         if done:
-            #self.navigator.cancelNav()
+            self.navigator.cancelNav()
             subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
             shell=True,
             stdout=subprocess.DEVNULL
@@ -216,6 +218,7 @@ class Pic4rlEnvironmentAPPLR(Node):
     def spin_sensors_callbacks(self):
         """
         """
+        self.get_logger().debug("spinning for sensor_msg...")
         rclpy.spin_once(self)
         while None in self.sensors.sensor_msg.values():
             rclpy.spin_once(self)
@@ -396,6 +399,24 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.previous_nav_params = nav_params
         self.previous_event = event
 
+    def restart_simulation(self,):
+        """
+        """
+        restart_gazebo(self.gazebo_client)
+        restart_nav2()
+        self.get_logger().debug("Creating parameters clients...")
+        self.create_clients()
+
+        self.get_logger().debug("unpausing gazebo...")
+        self.unpause()
+        time.sleep(2.0)
+        
+        self.navigator = BasicNavigator()
+        self.sensors = Sensors(self)
+        self.spin_sensors_callbacks()
+        self.index = 0
+        self.n_navigation_end = 0
+
     def reset(self, n_episode, tot_steps, evaluate=False):
         """
         """
@@ -406,10 +427,16 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.pause()
 
         logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
+        
+        # if ((n_episode+1) % 2 == 0) or (self.n_navigation_end == -1):
+        #     self.get_logger().debug("restarting gazebo simulation and nav2...")
+        #     self.restart_simulation()
+        #     self.simulation_restarted = 1
 
         self.get_logger().info("Initializing new episode ...")
         logging.info("Initializing new episode ...")
         self.new_episode()
+        self.simulation_restarted = 0
 
         self.get_logger().debug("unpausing...")
         self.unpause()
@@ -492,7 +519,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         agents2reset = [6,7,9,10]
             
         for agent in agents2reset:
-            print(len(self.agents))
             x, y , yaw = tuple(self.agents[agent])
 
             self.get_logger().info(f"Agent pose [x,y,yaw]: {[x, y, yaw]}")
@@ -547,19 +573,15 @@ class Pic4rlEnvironmentAPPLR(Node):
         init_pose.pose.orientation.y = 0.0
         init_pose.pose.orientation.z = z
         init_pose.pose.orientation.w = w
-        # if self.n_navigation_end == -1:
-            # self.get_logger().debug("Resetting LifeCycleNodes...")
-            # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 3}'",
-            #         shell=True,
-            #         stdout=subprocess.DEVNULL
-            #         )
-        self.get_logger().debug("Restarting LifeCycleNodes...")
-        subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
-                shell=True,
-                stdout=subprocess.DEVNULL
-                )
 
-        self.n_navigation_end = 0
+        if not self.simulation_restarted == 1:
+            self.get_logger().debug("Restarting LifeCycleNodes...")
+            subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
+                    shell=True,
+                    stdout=subprocess.DEVNULL
+                    )
+
+            self.n_navigation_end = 0
 
         self.get_logger().debug("wait until Nav2Active...")
         self.navigator.waitUntilNav2Active()

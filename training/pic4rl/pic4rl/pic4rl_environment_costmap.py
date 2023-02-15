@@ -601,6 +601,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             #         shell=True,
             #         stdout=subprocess.DEVNULL
             #         )
+
+        
         self.get_logger().debug("Restarting LifeCycleNodes...")
         subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
                 shell=True,

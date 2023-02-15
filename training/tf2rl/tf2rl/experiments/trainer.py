@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from gym.spaces import Box
 
-from tf2rl.experiments.utils import save_path, frames_to_gif
+from tf2rl.experiments.utils import save_path, frames_to_gif, save_replay_buffer, load_replay_buffer
 from tf2rl.misc.get_replay_buffer import get_replay_buffer
 from tf2rl.misc.prepare_output_dir import prepare_output_dir
 from tf2rl.misc.initialize_logger import initialize_logger
@@ -18,7 +18,6 @@ if tf.config.experimental.list_physical_devices('GPU'):
     for cur_device in tf.config.experimental.list_physical_devices("GPU"):
         print(cur_device)
         tf.config.experimental.set_memory_growth(cur_device, enable=True)
-
 
 class Trainer:
     """
@@ -128,6 +127,9 @@ class Trainer:
             self._policy, self._env, self._use_prioritized_rb,
             self._use_nstep_rb, self._n_step)
 
+        if self._restore_rb:
+            replay_buffer.load_transitions(self._rb_path)
+
         obs = self._env.reset(n_episode, total_steps)
 
         while total_steps < self._max_steps:
@@ -203,6 +205,8 @@ class Trainer:
 
             if total_steps % self._save_model_interval == 0:
                 self.checkpoint_manager.save()
+                replay_buffer.save_transitions(self._rb_path, safe=True)
+
 
         tf.summary.flush()
 
@@ -288,6 +292,8 @@ class Trainer:
         self._use_prioritized_rb = args.use_prioritized_rb
         self._use_nstep_rb = args.use_nstep_rb
         self._n_step = args.n_step
+        self._restore_rb = args.restore_rb
+        self._rb_path = args.rb_path
         # test settings
         self._evaluate = args.evaluate
         self._test_interval = args.test_interval
@@ -365,6 +371,10 @@ class Trainer:
                             help='Flag to use nstep experience replay')
         parser.add_argument('--n-step', type=int, default=4,
                             help='Number of steps to look over')
+        parser.add_argument('--restore-rb', action='store_true',
+                            help='Flag to load replay buffer')
+        parser.add_argument('--rb-path', type=str, default=None,
+                            help='Path to restore replay buffer')
         # others
         parser.add_argument('--logging-level', choices=['DEBUG', 'INFO', 'WARNING'],
                             default='INFO', help='Logging level')

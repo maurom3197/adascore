@@ -127,12 +127,20 @@ class ConvActor(tf.keras.Model):
             unit = units[i]
             self.base_layers.append(Dense(unit, activation='relu'))
 
-        #Output Layer
-        self.v_out = Dense(1, activation = 'sigmoid')
-        self.w_out = Dense(1, activation = 'tanh')
+        #Output Layer velocity
+        # self.v_out = Dense(1, activation = 'sigmoid')
+        # self.w_out = Dense(1, activation = 'tanh')
+
+        # self.max_action = tf.cast(max_action, dtype = tf.float32)
+        # self.min_action = tf.cast(min_action, dtype = tf.float32)
+
+        # Output Layer general tanh
+        self.out_layer = Dense(action_dim, activation = 'tanh')
 
         self.max_action = tf.cast(max_action, dtype = tf.float32)
         self.min_action = tf.cast(min_action, dtype = tf.float32)
+        self.act_width = (self.max_action - self.min_action)*0.5
+        self.act_bias = (self.max_action + self.min_action)*0.5
 
         with tf.device("/cpu:0"):
             self(tf.constant(np.zeros(shape=(1,) + state_shape, dtype=np.float32)))
@@ -150,9 +158,12 @@ class ConvActor(tf.keras.Model):
         for cur_layer in self.base_layers:
             features = cur_layer(features)
         
-        Linear_velocity = self.v_out(features)*self.max_action[0]
-        Angular_velocity = self.w_out(features)*self.max_action[1]
-        action = concatenate([Linear_velocity, Angular_velocity])
+        #Linear_velocity = self.v_out(features)*self.max_action[0]
+        #Angular_velocity = self.w_out(features)*self.max_action[1]
+        #action = concatenate([Linear_velocity, Angular_velocity])
+        action = self.out_layer(features)
+        action = tf.multiply(action,self.act_width)
+        action += self.act_bias
         return action
 
     def model(self):
