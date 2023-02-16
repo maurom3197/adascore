@@ -133,6 +133,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.previous_event = "None"
         self.prev_nav_state = "unknown"
         self.simulation_restarted = 0
+        self.failure_counter = 0
         self.episode = 0
         self.collision_count = 0
         self.min_obstacle_distance = 4.0
@@ -208,9 +209,10 @@ class Pic4rlEnvironmentAPPLR(Node):
             shell=True,
             stdout=subprocess.DEVNULL
             )
-            if event == "nav2_failed":
-                self.n_navigation_end = -1
-                # TO DO: total reset
+            if event == "nav2_failed" or event == 'timeout':
+                self.failure_counter += 1
+            else: 
+                self.failure_counter = 0
             time.sleep(5.0)
 
         return observation, reward, done
@@ -281,7 +283,17 @@ class Pic4rlEnvironmentAPPLR(Node):
             result = check_navigation(self.navigator)
             if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED):
                 self.send_goal(self.goal_pose)
+                time.sleep(1.0)
+                self.send_goal(self.goal_pose)
+                time.sleep(2.0)
                 self.n_navigation_end = self.n_navigation_end +1
+                if self.n_navigation_end == 25:
+                    self.navigator.cancelNav()
+                    time.sleep(2.0)
+                    self.navigator.clearAllCostmaps()
+                    time.sleep(2.0)
+                    self.send_goal(self.goal_pose)
+                    time.sleep(3.0)
                 if self.n_navigation_end == 50:
                     self.get_logger().info('Navigation aborted more than 50 times... pausing Nav till next episode.') 
                     self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: 'Nav failed'")
@@ -412,6 +424,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         time.sleep(2.0)
         
         self.navigator = BasicNavigator()
+        time.sleep(2.0)
         self.sensors = Sensors(self)
         self.spin_sensors_callbacks()
         self.index = 0
@@ -428,10 +441,11 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
         
-        # if ((n_episode+1) % 2 == 0) or (self.n_navigation_end == -1):
-        #     self.get_logger().debug("restarting gazebo simulation and nav2...")
-        #     self.restart_simulation()
-        #     self.simulation_restarted = 1
+        if self.failure_counter == 10:
+            self.get_logger().debug("restarting gazebo simulation and nav2...")
+            self.restart_simulation()
+            self.simulation_restarted = 1
+            self.failure_counter = 0
 
         self.get_logger().info("Initializing new episode ...")
         logging.info("Initializing new episode ...")
@@ -465,7 +479,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             if self.index == len(self.goals):
                 self.index = 0
 
-        if self.episode % 200 == 0.:
+        if self.episode % 100 == 0.:
             self.get_logger().debug("Respawning agents ...")
             self.respawn_agents()
         
@@ -503,6 +517,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             shell=True,
             stdout=subprocess.DEVNULL
             )
+        time.sleep(2.0)
 
     def respawn_agents(self,):
         """
@@ -533,6 +548,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 shell=True,
                 stdout=subprocess.DEVNULL
                 )
+            time.sleep(1.0)
 
         #ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState '{state: {name: 'agent2',pose: {position: {x: 2.924233, y: 5.0, z: 1.25}}}}'
 
