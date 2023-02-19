@@ -38,7 +38,7 @@ def main(args=None):
 
     rclpy.init()
 
-    pic4rl_testing = Pic4rlTesting_APPLR_people()
+    pic4rl_testing = Pic4rlTesting_APPLR_costmap()
     pic4rl_testing.get_logger().info(
                 "Initialized Testing: APPLR agent, Task: social_nav with people\n\n")
 

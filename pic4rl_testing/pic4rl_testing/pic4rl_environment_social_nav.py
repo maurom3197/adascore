@@ -123,14 +123,12 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.previous_twist = None
         self.previous_event = "None"
         self.prev_nav_state = "unknown"
-        self.simulation_restarted = 0
-        self.failure_counter = 0
+
         self.episode = 0
         self.collision_count = 0
         self.min_obstacle_distance = 4.0
         self.t0 = 0.0
         self.evaluate = False
-        self.start_pose = [0., 0., 0.]
         self.index = 0
         self.people_msg = []
         self.people_state = []
@@ -138,6 +136,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.min_people_distance = 10.0
 
         self.initial_pose, self.goals, self.poses, self.agents = get_goals_and_poses(self.data_path)
+        self.start_pose = [0., 0., 0.]
         self.goal_pose = self.goals[0]
         self.init_nav_params = [0.25, 0.25, # covariance height/width
                                 0.25, # covariance static
@@ -261,7 +260,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         # Regulate the step frequency of the environment
         # action_hz, t1 = compute_frequency(self.t0)
         # self.t0 = t1
-        # frequency_control(self.params_update_freq)
+        frequency_control(self.params_update_freq)
         # self.get_logger().debug('Sending action at '+str(action_hz))
 
         # If desired to get params
