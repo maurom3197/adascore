@@ -110,7 +110,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         # create clients
         self.create_clients()
 
-        #if not self.gazebo_client:
         self.unpause()
         time.sleep(2.0)
 
@@ -305,7 +304,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         # # Regulate the step frequency of the environment
         # action_hz, t1 = compute_frequency(self.t0)
         # self.t0 = t1
-        # frequency_control(self.params_update_freq)
+        frequency_control(self.params_update_freq)
         # self.get_logger().debug('Sending action at '+str(action_hz))
 
         # If desired to get params

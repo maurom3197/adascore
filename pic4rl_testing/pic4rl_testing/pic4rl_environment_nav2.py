@@ -24,7 +24,7 @@ from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from ament_index_python.packages import get_package_share_directory
-from pic4rl_testing.generic_sensor import Sensors
+from pic4rl_testing.utils.generic_sensor import Sensors
 
 from rclpy.parameter import Parameter
 #from rcl_interfaces.msg import Parameter
@@ -34,7 +34,7 @@ from rcl_interfaces.msg import ParameterDescriptor, ParameterValue
 
 #from pic4rl.nav_param_client import DWBparamsClient
 from nav2_simple_commander.robot_navigator import BasicNavigator, NavigationResult
-from pic4rl_testing.nav_metrics import Navigation_Metrics
+from pic4rl_testing.utils.nav_metrics import Navigation_Metrics
 
 class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
@@ -486,7 +486,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             shell=True,
             stdout=subprocess.DEVNULL
             )
-
 
     def reset_navigator(self, index):
         init_pose = PoseStamped()

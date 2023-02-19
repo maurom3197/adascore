@@ -3,7 +3,9 @@
 import yaml
 import rclpy
 import threading
-from pic4rl_testing.pic4rl_testing_nav2 import Pic4rlTesting_APPLR
+#from pic4rl_testing.pic4rl_testing_nav2 import Pic4rlTesting_APPLR
+from pic4rl_testing.pic4rl_testing_social_nav import Pic4rlTesting_APPLR_people
+from pic4rl_testing.pic4rl_testing_costmap import Pic4rlTesting_APPLR_costmap
 from ament_index_python.packages import get_package_share_directory
 
 import os
@@ -36,9 +38,9 @@ def main(args=None):
 
     rclpy.init()
 
-    pic4rl_testing= Pic4rlTesting_APPLR()
+    pic4rl_testing = Pic4rlTesting_APPLR_people()
     pic4rl_testing.get_logger().info(
-                "Initialized Testing: APPLR agent, Task: adaptive_nav\n\n")
+                "Initialized Testing: APPLR agent, Task: social_nav with people\n\n")
 
     pic4rl_testing.threadFunc()
 

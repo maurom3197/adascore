@@ -26,7 +26,8 @@ setup(
     entry_points={
         'console_scripts': [
         'pic4rl_tester = pic4rl_testing.pic4rl_tester:main',
-        'evaluate_navigation = pic4rl_testing.evaluate_navigation:main'
+        'evaluate_navigation = pic4rl_testing.evaluate_navigation:main',
+        'evaluate_social_navigation = pic4rl_testing.evaluate_social_navigation:main'
         ],
     },
 )

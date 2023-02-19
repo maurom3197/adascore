@@ -6,7 +6,7 @@ training_params:
 # --show-progress: # Call ``render`` function during training
     --save-model-interval: 20000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20221114T213632.701951_TD3_' # (str) Directory to restore model.
+    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20230131_170816.213510_applr_TD3/20230131T170819.516136_TD3_' # (str) Directory to restore model.
 #    --dir-suffix: "vinedepth_mobv3_jackal"  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: '/root/applr_ws/src/APPLR_social_nav/pic4rl_testing/Results/' # (str) Output directory name. The default is ``"results"``
@@ -26,16 +26,16 @@ training_params:
     --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'TD3' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
-    --change_goal_and_pose: 20
+    --change_goal_and_pose: 1
     --starting_episodes: 0
     --tflite_flag: False
     --tflite_model_path: '~/inference/actor_fp16.tflite'
-    --batch-size: 128 # (int) Batch size for training. The default is ``32``.
+    --batch-size: 64 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
 
 # For all off-policy algos (DDPG, TD3, SAC)
-    --n-warmup: 12000 # (int) Number of warmup steps before training. The default is ``1e4``.
-    --memory-capacity: 2000  # (int) Replay Buffer size. The default is ``1e6``.
+    --n-warmup: 0 # (int) Number of warmup steps before training. The default is ``1e4``.
+    --memory-capacity: 0  # (int) Replay Buffer size. The default is ``1e6``.
 
 # For only SAC
     # --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.

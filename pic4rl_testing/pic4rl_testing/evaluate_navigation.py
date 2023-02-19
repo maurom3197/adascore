@@ -69,7 +69,8 @@ class EvaluateNav(Node):
                 ('goal_tolerance', main_params['goal_tolerance']),
                 ('update_frequency', main_params['applr_param']['update_frequency']),
                 ('lidar_dist', main_params['laser_param']['max_distance']),
-                ('lidar_points', main_params['laser_param']['num_points'])
+                ('lidar_points', main_params['laser_param']['num_points']),
+                ('gazebo_client', main_params['gazebo_client'])
                 ]
             )
 
@@ -94,6 +95,8 @@ class EvaluateNav(Node):
             'lidar_dist').get_parameter_value().double_value
         self.lidar_points   = self.get_parameter(
             'lidar_points').get_parameter_value().integer_value
+        self.gazebo_client = self.get_parameter(
+            'gazebo_client').get_parameter_value().bool_value
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)

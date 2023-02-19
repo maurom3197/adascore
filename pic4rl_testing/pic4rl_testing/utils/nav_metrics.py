@@ -7,6 +7,7 @@ import math
 import yaml
 import numpy as np
 import logging
+from pathlib import Path
 
 import rclpy
 from rclpy.node import Node
@@ -57,7 +58,7 @@ class Navigation_Metrics(Node):
         self.previous_time      = time.time()
         self.metrics_results    = []
         self.path               = []
-        self.save_path            = logdir
+        self.save_path          = logdir
 
         self.open_logdir(logdir)
         self.init_get_entity_client()
@@ -77,7 +78,7 @@ class Navigation_Metrics(Node):
 
         self.get_logger().info("GetEntityState Client online!")
 
-    def get_metrics_data(self, lidar_measurement, episode_step, controller_params=None, done=False):
+    def get_metrics_data(self, lidar_measurement, episode_step, controller_params=None, costmap_params=None, social_work=False, done=False):
         """
         """
         step_time = time.time()
@@ -90,7 +91,9 @@ class Navigation_Metrics(Node):
             self.velocities         = []
             self.accelerations      = []
             self.lidar_measurements = []
-            self.nav_params         = []
+            self.controller_params  = []
+            self.social_costmap_params = []
+            self.social_work        = []
             self.metrics_results    = []
 
             velocity = [0., 0.]
@@ -105,7 +108,9 @@ class Navigation_Metrics(Node):
         self.path.append(robot_pose)
         self.velocities.append(velocity)
         self.accelerations.append(acceleration)
-        self.nav_params.append(controller_params)
+        self.controller_params.append(controller_params)
+        self.social_costmap_params.append(costmap_params)
+        self.social_work.append(social_work)
         self.lidar_measurements.append(lidar_measurement)
 
         self.previous_velocity = velocity
@@ -159,7 +164,7 @@ class Navigation_Metrics(Node):
             filename=os.path.join(logdir, 'metrics_results.log'), 
             level=logging.INFO)
 
-        self.yaml_file = open(logdir + 'metrics_results.yaml', 'w')
+        self.yaml_file = open(str(logdir) + '/metrics_results.yaml', 'w')
 
     def calc_metrics(
             self, 
@@ -187,12 +192,16 @@ class Navigation_Metrics(Node):
             self.cumulative_heading_average(goal_pose)
         if self.params['following_heading_metrics']:
             self.following_heading_metrics()
-        if self.params['controller_params'] and self.nav_params[0]!=None:
-            self.controller_params(episode)
+        if self.params['controller_params'] and self.controller_params[0]!=None:
+            self.controller_params_metrics(episode)
+        if self.params['social_costmap_params'] and self.social_costmap_params[0]!=None:
+            self.social_costmap_metrics(episode)
+        if self.params['social_disturbance']:
+            self.social_disturbance_metrics(episode)
         if self.params['obstacle_clereance']:
             self.obstacle_clereance()
-        if self.params['wineyard_path_comparison']:
-            self.wineyard_path_comparison(true_path)
+        if self.params['vineyard_path_comparison']:
+            self.vineyard_path_comparison(true_path)
 
     def log_metrics_results(self, episode):
         """
@@ -219,7 +228,6 @@ class Navigation_Metrics(Node):
 
         yaml.dump(episode_results, self.yaml_file, default_flow_style=False)
    
-
     # Metrics
     def path_distance(self, event='Goal'):
         """
@@ -311,13 +319,71 @@ class Navigation_Metrics(Node):
                 )
             )
 
-    def controller_params(self, episode, event='Goal'): 
+    def social_disturbance_metrics(self, episode, event='Goal'): 
+        """
+        """
+        social_work = np.array(self.social_work)
+        npy_path = str(self.save_path)+'/social_work_ep'+str(episode)+'.npy'
+        txt_path = str(self.save_path)+'/social_work_ep'+str(episode)+'.txt'
+
+        np.save(npy_path, social_work)
+        np.savetxt(txt_path, social_work)
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Cumulative_social_work',
+                    float(np.sum(social_work)) 
+                )
+            )
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Max_social_work, Min_social_work',[
+                    float(np.max(social_work)), 
+                    float(np.min(social_work)) 
+                    ]
+                )
+            )
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Mean_social_work, Std_dev_social_work', 
+                [float(np.mean(social_work)),
+                float(np.std(social_work))]
+                )
+            )
+    
+    def social_costmap_metrics(self, episode, event='Goal'): 
+
+        params = np.array(self.social_costmap_params)
+        npy_path = str(self.save_path)+'/social_costmap_params_ep'+str(episode)+'.npy'
+        txt_path = str(self.save_path)+'/social_costmap_params_ep'+str(episode)+'.txt'
+        np.save(npy_path, params)
+        np.savetxt(txt_path, params)
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Max_params_value, Min_params_value',[
+                    np.max(params,  axis=0).tolist(), 
+                    np.min(params,  axis=0).tolist(), 
+                    ]
+                )
+            )
+
+        self.metrics_results.append(
+            self.create_metric(
+                'Mean_params_value, Std_dev_params_value',
+                [np.mean(params,  axis=0).tolist(), np.std(params, axis=0).tolist()]
+                )
+            )
+
+    def controller_params_metrics(self, episode, event='Goal'): 
         """
         # TO DO
         """
-        params = np.array(self.nav_params)
-        npy_path = os.path.join(self.save_path,'controller_params_ep'+str(episode)+'.npy')
-        txt_path = os.path.join(self.save_path,'controller_params_ep'+str(episode)+'.txt')
+        params = np.array(self.controller_params)
+        npy_path = str(self.save_path)+'/controller_params_ep'+str(episode)+'.npy'
+        txt_path = str(self.save_path)+'/controller_params_ep'+str(episode)+'.txt'
         np.save(npy_path, params)
         np.savetxt(txt_path, params)
         max_vel_x,max_vel_theta,vx_samples,vtheta_samples = params[:, 0], params[:, 1], params[:, 2], params[:, 3]
@@ -438,7 +504,7 @@ class Navigation_Metrics(Node):
                 )
             )
 
-    def wineyard_path_comparison(self, true_path):
+    def vineyard_path_comparison(self, true_path):
         """
         """
         true_path = np.array(true_path)
@@ -457,7 +523,7 @@ class Navigation_Metrics(Node):
 
         self.metrics_results.append(
             self.create_metric(
-                'Wineyard_path_comparison', 
+                'vineyard_path_comparison', 
                 [mae, mse]
                 )
             )

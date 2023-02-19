@@ -125,12 +125,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             'goal_pose',
             qos)
 
-        self.get_logger().info('People topic subscription')
-        self.people_sub = self.create_subscription(
-                People,
-                '/people', 
-                self.people_callback,
-                1)
         self.get_logger().info('Local Costmap topic subscription')
         self.costmap_sub = self.create_subscription(
                 OccupancyGrid,
@@ -156,7 +150,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.t0 = 0.0
         self.evaluate = False
         self.index = -1
-        self.people_msg = []
         self.people_state = []
         self.k_people = 4
         self.min_people_distance = 10.0
@@ -263,10 +256,6 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return lidar_measurements, goal_info, robot_pose, collision
 
-    def people_callback(self,msg):
-        """
-        """
-        self.people_msg = msg
 
     def costmap_callback(self,msg):
         """
@@ -578,14 +567,14 @@ class Pic4rlEnvironmentAPPLR(Node):
         # else:
         #     return
 
-        agents2reset = [6,7,9,10]
+        agents2reset = [1,6,7,9,10,11]
             
         for agent in agents2reset:
             print(len(self.agents))
-            x, y , yaw = tuple(self.agents[agent])
+            x, y , yaw = tuple(self.agents[agent-1])
 
             self.get_logger().info(f"Agent pose [x,y,yaw]: {[x, y, yaw]}")
-            agent_name = "agent"+str(agent+1)
+            agent_name = "agent"+str(agent)
 
             position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(1.50)+"}"
             #orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
