@@ -6,7 +6,7 @@ training_params:
 # --show-progress: # Call ``render`` function during training
     --save-model-interval: 20000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/costmap_conv/20230214_111018.878212_applr_TD3/20230214T111023.034125_TD3_' # (str) Directory to restore model.
+    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20230131_170816.213510_applr_TD3/20230131T170819.516136_TD3_' # (str) Directory to restore model.
 #    --dir-suffix: "vinedepth_mobv3_jackal"  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: '/root/applr_ws/src/APPLR_social_nav/pic4rl_testing/Results/' # (str) Output directory name. The default is ``"results"``
