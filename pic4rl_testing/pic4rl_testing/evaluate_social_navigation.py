@@ -43,7 +43,7 @@ class EvaluateSocialNav(Node):
     def __init__(self):
         super().__init__('evaluate_social_nav')
         
-        rclpy.logging.set_logger_level('evaluate_social_nav', 10)
+        #rclpy.logging.set_logger_level('evaluate_social_nav', 10)
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl_testing'), 'goals_and_poses')
         main_params_path  = os.path.join(
@@ -109,7 +109,6 @@ class EvaluateSocialNav(Node):
 
         self.create_clients()
         self.unpause()
-        time.sleep(2.0)
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)
@@ -209,13 +208,6 @@ class EvaluateSocialNav(Node):
             self.nav_metrics.calc_metrics(self.episode, self.start_pose, self.goal_pose)
             self.nav_metrics.log_metrics_results(self.episode)
             self.nav_metrics.save_metrics_results(self.episode)
-
-            self.navigator.cancelNav()
-            subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
-            time.sleep(3.0)
 
         return done
 
@@ -318,9 +310,23 @@ class EvaluateSocialNav(Node):
         """
         self.episode = episode
 
+        self.get_logger().debug("pausing...")
+        self.pause()
+
+        self.navigator.cancelNav()
+        subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
+        time.sleep(3.0)
+
         self.get_logger().info(f"Initializing new episode: scenario {self.index}")
         logging.info(f"Initializing new episode: scenario {self.index}")
         self.new_episode()
+
+        self.get_logger().debug("unpausing...")
+        self.unpause()
+
         self.get_logger().debug("Performing null step to reset variables")
 
         _ = self._step(reset_step = True)
@@ -423,7 +429,7 @@ class EvaluateSocialNav(Node):
         self.navigator.waitUntilNav2Active()
         self.get_logger().debug("Clearing all costmaps...")
         self.navigator.clearAllCostmaps()
-        time.sleep(3.0)
+        time.sleep(5.0)
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
@@ -479,6 +485,7 @@ class EvaluateSocialNav(Node):
     def evaluate(self,):
         """
         """
+        self.unpause()
         for n in range(self.n_experiments):
             for episode in range(len(self.goals)):
                 episode_steps = 0
@@ -488,9 +495,7 @@ class EvaluateSocialNav(Node):
                 while not done:
                     done = self.step(episode_steps)
                     episode_steps += 1
-                self.nav_metrics.calc_metrics(self.episode, self.start_pose, self.goal_pose)
-                self.nav_metrics.log_metrics_results(self.episode)
-                self.nav_metrics.save_metrics_results(self.episode)
+        self.pause()
 
 
 def main(args=None):

@@ -67,10 +67,10 @@ class Pic4rlTraining_APPLR_costmap(Pic4rlEnvironmentAPPLR):
         """
         action=[
         [0.1, 1.0], # covariance front height
-        [0.1, 1.0], # covariance front width
+        #[0.1, 1.0], # covariance front width
         #[0.1, 1.0], # covariance right height
         #[0.1, 1.0], # covariance right width
-        [0.1, 1.0],  # covariance static
+        #[0.1, 1.0],  # covariance static
         #[0.1, 0.8], # max lin vel
         #[0.5, 2.0] # max ang vel
         ]
@@ -104,23 +104,23 @@ class Pic4rlTraining_APPLR_costmap(Pic4rlEnvironmentAPPLR):
         # Costmap params at time t-1
         state = state + [
         [0.1, 1.0], # covariance front height
-        [0.1, 1.0], # covariance front width
+        #[0.1, 1.0], # covariance front width
         #[0.1, 1.0], # covariance right height
         #[0.1, 1.0], # covariance right width
-        [0.1, 1.0], # covariance static
+        #[0.1, 1.0], # covariance static
         #[0.1, 0.8], # max lin vel
         #[0.5, 2.0]  # max ang vel
 
         ]
 
         # Add people state
-        # for i in range(self.k_people):
-        #     state = state + [
-        #     [0., 20.], # distance
-        #     [-math.pi, math.pi], # angle
-        #     [0., 1.5], # velocity module
-        #     [-math.pi, math.pi] # yaw
-        #     ]
+        for i in range(self.k_people):
+            state = state + [
+            [0., 10.], # distance
+            [-math.pi, math.pi], # angle
+            [0., 1.5], # velocity module
+            [-math.pi, math.pi] # yaw
+            ]
 
         self.state_1d_shape = len(state)
         self.get_logger().info('state 1D shape: {}'.format(self.state_1d_shape))

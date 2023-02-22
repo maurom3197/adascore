@@ -38,7 +38,7 @@ from nav_msgs.msg import OccupancyGrid
 class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
         super().__init__('pic4rl_env_applr')
-        rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
+        #rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
 
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')

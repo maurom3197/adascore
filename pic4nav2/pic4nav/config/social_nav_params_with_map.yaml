@@ -232,7 +232,7 @@ global_costmap:
       width: 100
       height: 100
       footprint: "[[0.24, 0.24], [0.24, -0.24], [-0.24, -0.24], [-0.24, 0.24]]"
-      resolution: 0.05
+      resolution: 0.10
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer", "social_layer"]
       obstacle_layer:

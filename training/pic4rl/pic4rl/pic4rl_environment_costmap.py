@@ -156,11 +156,12 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.initial_pose, self.goals, self.poses, self.agents = get_goals_and_poses(self.data_path)
         self.goal_pose = self.goals[0]
-        self.init_nav_params = [0.25, 0.25, # covariance height/width
-                                0.25, # covariance static
-                                #   0.25, 0.25, # covariance right
-                                #   0.6, 1.5 # max vel robot
-                                ]
+        # self.init_nav_params = [0.25, 0.25, # covariance height/width
+        #                         0.25, # covariance static
+        #                         #   0.25, 0.25, # covariance right
+        #                         #   0.6, 1.5 # max vel robot
+        #                         ]
+        self.init_nav_params = [0.25]
         self.n_navigation_end = 0
         self.navigator = BasicNavigator()
 
@@ -199,7 +200,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
 
             self.get_logger().debug("getting reward...")
-            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_info, done, event)
+            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_state, done, event)
 
             self.get_logger().debug("getting observation...")
             observation = self.get_observation(lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap)
@@ -213,15 +214,15 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, costmap, event)
 
         if done:
-            #self.navigator.cancelNav()
+            self.navigator.cancelNav()
             subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
             shell=True,
             stdout=subprocess.DEVNULL
             )
-            if event == "nav2_failed" or event == 'timeout':
-                self.failure_counter += 1
-            else: 
-                self.failure_counter = 0
+            # if event == "nav2_failed" or event == 'timeout':
+            #     self.failure_counter += 1
+            # else: 
+            #     self.failure_counter = 0
             time.sleep(5.0)
 
         return observation, reward, done
@@ -291,11 +292,12 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.set_costmap_params(costmap_params)
         #self.set_controller_params(controller_params)
 
-        # # Regulate the step frequency of the environment
-        # action_hz, t1 = compute_frequency(self.t0)
-        # self.t0 = t1
-        # frequency_control(self.params_update_freq)
-        # self.get_logger().debug('Sending action at '+str(action_hz))
+        # Regulate the step frequency of the environment
+        action_hz, t1 = compute_frequency(self.t0)
+        self.t0 = t1
+        if action_hz > self.params_update_freq:
+            frequency_control(self.params_update_freq)
+            self.get_logger().debug('Sending action at '+str(action_hz))
 
         # If desired to get params
         #self.get_costmap_params()
@@ -313,16 +315,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED):
                 self.send_goal(self.goal_pose)
                 time.sleep(1.0)
-                self.send_goal(self.goal_pose)
-                time.sleep(2.0)
-                self.n_navigation_end = self.n_navigation_end +1
-                if self.n_navigation_end == 25:
-                    self.navigator.cancelNav()
-                    time.sleep(2.0)
-                    self.navigator.clearAllCostmaps()
-                    time.sleep(2.0)
-                    self.send_goal(self.goal_pose)
-                    time.sleep(3.0)
                 if self.n_navigation_end == 50:
                     self.get_logger().info('Navigation aborted more than 50 times... pausing Nav till next episode.') 
                     self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: 'Nav failed'")
@@ -362,31 +354,36 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return False, "None"
 
-    def get_reward(self,lidar_measurements, goal_info, robot_pose, people_info, done, event):
+    def get_reward(self,lidar_measurements, goal_info, robot_pose, people_state, done, event):
         """
         """
         # Distance Reward
         #dist_reward = (self.previous_goal_info[0] - goal_info[0])*30 
 
-        p_t = np.array([robot_pose[0], robot_pose[1]], dtype=np.float32)
-        p_tp1 = np.array([self.previous_robot_pose[0], self.previous_robot_pose[1]], dtype=np.float32)
-        goal_pose = np.asarray(self.goal_pose, dtype=np.float32)
+        # p_t = np.array([robot_pose[0], robot_pose[1]], dtype=np.float32)
+        # p_tp1 = np.array([self.previous_robot_pose[0], self.previous_robot_pose[1]], dtype=np.float32)
+        # goal_pose = np.asarray(self.goal_pose, dtype=np.float32)
 
         # Heading Reward
         ch = 0.4
         #Rh = np.dot((p_tp1 - p_t), (goal_pose - p_t)) / goal_info[0] #heading reward v.1
-        Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
-        #Rs = -1/self.min_people_distance # people naive reward
-
+        #Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
+        
         # Social Disturbance Reward
-        wr, wp = self.sfm.computeSocialWork()
-        Rs = wr + wp
-        cs = -40.0
+        avg_people_dist = np.mean(people_state[:,0])
+        Rs = -1/avg_people_dist # people distance reward
+        if self.min_people_distance < 1.2:
+            Rs += -1/self.min_people_distance # personal space reward
+
+        # wr, wp = self.sfm.computeSocialWork()
+        # Rs = wr + wp
+        cs = 4.0
 
         # Total Reward
-        reward = ch*Rh + cs*Rs
+        #reward = ch*Rh + cs*Rs
+        reward = cs*Rs
 
-        self.get_logger().debug('Goal Heading Reward Rh: ' +str(ch*Rh))
+        #self.get_logger().debug('Goal Heading Reward Rh: ' +str(ch*Rh))
         self.get_logger().debug('Social nav reward Rs: ' +str(cs*Rs))
         self.get_logger().debug('sparse reward: '+str(reward))
 
@@ -413,8 +410,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         state_list.extend(nav_params)
 
         # People info
-        #people_state = people_state.flatten().tolist()
-        #state_list.extend(people_state)
+        people_state = people_state.flatten().tolist()
+        state_list.extend(people_state)
 
         # lidar points
         #for point in lidar_measurements:
@@ -422,7 +419,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         # Costmap 2D (features)
         state_1d = np.array(state_list, dtype=np.float32)
-        #self.get_logger().debug('state 1d shape: '+str(state_1d.shape))
+        self.get_logger().debug('state 1d shape: '+str(state_1d.shape))
         #self.get_logger().debug('costmap shape: '+str(costmap.shape))
 
         state = np.concatenate((state_1d, costmap))
@@ -432,7 +429,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         #self.get_logger().debug('min obstacle lidar_distance: '+str(self.min_obstacle_distance))
         #self.get_logger().debug('costmap_params : '+str(costmap_params))
         self.get_logger().debug('state shape: '+str(state.shape))
-        #self.get_logger().debug('state=[goal,params,costmap]: '+str(state))
+        self.get_logger().debug('state 1d=[goal,params,people]: '+str(state_1d))
 
         return state
 
@@ -477,16 +474,16 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
         
-        if self.failure_counter == 10:
-            self.get_logger().debug("restarting gazebo simulation and nav2...")
-            self.restart_simulation()
-            self.simulation_restarted = 1
-            self.failure_counter = 0
+        # if self.failure_counter == 10:
+        #     self.get_logger().debug("restarting gazebo simulation and nav2...")
+        #     self.restart_simulation()
+        #     self.simulation_restarted = 1
+        #     self.failure_counter = 0
 
         self.get_logger().info("Initializing new episode ...")
         logging.info("Initializing new episode ...")
         self.new_episode()
-        self.simulation_restarted = 0
+        #self.simulation_restarted = 0
 
         self.get_logger().debug("unpausing...")
         self.unpause()
@@ -515,7 +512,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             if self.index == len(self.goals):
                 self.index = 0
 
-        if self.episode % 100 == 0.:
+        if self.episode % 30 == 0.:
             self.get_logger().debug("Respawning agents ...")
             self.respawn_agents()
         
@@ -570,7 +567,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         agents2reset = [1,6,7,9,10,11]
             
         for agent in agents2reset:
-            print(len(self.agents))
             x, y , yaw = tuple(self.agents[agent-1])
 
             self.get_logger().info(f"Agent pose [x,y,yaw]: {[x, y, yaw]}")
@@ -609,30 +605,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         #     )
 
     def reset_navigator(self, index):
-        init_pose = PoseStamped()
-        if self.episode <= self.starting_episodes:
-            x, y, yaw = tuple(self.initial_pose)
-        else:
-            x, y, yaw = tuple(self.poses[index])
-
-        z = math.sin(yaw/2)
-        w = math.cos(yaw/2)
-
-        init_pose.header.frame_id = 'odom'
-        init_pose.pose.position.x = x
-        init_pose.pose.position.y = y
-        init_pose.pose.position.z = 0.0
-        init_pose.pose.orientation.x = 0.0
-        init_pose.pose.orientation.y = 0.0
-        init_pose.pose.orientation.z = z
-        init_pose.pose.orientation.w = w
-        # if self.n_navigation_end == -1:
-            # self.get_logger().debug("Resetting LifeCycleNodes...")
-            # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 3}'",
-            #         shell=True,
-            #         stdout=subprocess.DEVNULL
-            #         )
-
         if not self.simulation_restarted == 1:
             self.get_logger().debug("Restarting LifeCycleNodes...")
             subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
@@ -650,9 +622,7 @@ class Pic4rlEnvironmentAPPLR(Node):
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
-        time.sleep(3.0)
-        self.send_goal(self.goal_pose)
-        time.sleep(2.0)
+        time.sleep(1.0)
 
     def get_people_state(self, robot_pose):
         """
@@ -669,8 +639,8 @@ class Pic4rlEnvironmentAPPLR(Node):
     def send_set_request_global(self, param_values):
         self.set_req_global.parameters = [
                         Parameter(name='social_layer.covariance_front_height', value=param_values[0]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_front_width', value=param_values[1]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_when_still', value=param_values[2]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_front_width', value=param_values[0]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_when_still', value=param_values[0]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[3]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[4]).to_parameter_msg()
                                               ]
@@ -680,8 +650,8 @@ class Pic4rlEnvironmentAPPLR(Node):
     def send_set_request_local(self, param_values):
         self.set_req_local.parameters = [
                         Parameter(name='social_layer.covariance_front_height', value=param_values[0]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_front_width', value=param_values[1]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_when_still', value=param_values[2]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_front_width', value=param_values[0]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_when_still', value=param_values[0]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[3]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[4]).to_parameter_msg()
                                               ]

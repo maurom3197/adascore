@@ -54,7 +54,7 @@ from ament_index_python.packages import get_package_share_directory
 class Pic4rlTesting_APPLR_people(Pic4rlEnvironmentAPPLR):
     def __init__(self):
         super().__init__()
-        rclpy.logging.set_logger_level('pic4rl_testing', 10)
+        #rclpy.logging.set_logger_level('pic4rl_testing', 10)
         self.log_check()
 
         main_params, training_params = self.parameters_declaration()

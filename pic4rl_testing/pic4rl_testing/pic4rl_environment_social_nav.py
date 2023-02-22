@@ -37,7 +37,7 @@ from pic4rl_testing.utils.nav_metrics import Navigation_Metrics
 class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
         super().__init__('pic4rl_env_applr')
-        rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
+        #rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
 
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl_testing'), 'goals_and_poses')
@@ -101,7 +101,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().info("Logging results at: " + str(self.logdir))
         self.create_clients()
         self.unpause()
-        time.sleep(2.0)
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)
@@ -207,13 +206,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.nav_metrics.calc_metrics(self.episode, self.start_pose, self.goal_pose)
             self.nav_metrics.log_metrics_results(self.episode)
             self.nav_metrics.save_metrics_results(self.episode)
-
-            self.navigator.cancelNav()
-            subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
-            time.sleep(3.0)
 
         return observation, reward, done
 
@@ -402,6 +394,13 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().debug("pausing...")
         self.pause()
+
+        self.navigator.cancelNav()
+        subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
+        time.sleep(3.0)
 
         self.get_logger().info(f"Initializing new episode: scenario {self.index}")
         logging.info(f"Initializing new episode: scenario {self.index}")

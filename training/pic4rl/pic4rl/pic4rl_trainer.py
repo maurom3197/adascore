@@ -23,8 +23,8 @@ def main(args=None):
     with open(configFilepath, 'r') as file:
         configParams = yaml.safe_load(file)['main_node']['ros__parameters']
 
-    #pic4rl_training= Pic4rlTraining_APPLR_people()
-    pic4rl_training= Pic4rlTraining_APPLR_costmap()
+    pic4rl_training= Pic4rlTraining_APPLR_people()
+    #pic4rl_training= Pic4rlTraining_APPLR_costmap()
     pic4rl_training.threadFunc()
 
     pic4rl_training.destroy_node()
