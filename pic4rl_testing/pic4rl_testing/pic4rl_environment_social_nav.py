@@ -137,8 +137,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.initial_pose, self.goals, self.poses, self.agents = get_goals_and_poses(self.data_path)
         self.start_pose = [0., 0., 0.]
         self.goal_pose = self.goals[0]
-        self.init_nav_params = [0.25, 0.25, # covariance height/width
-                                0.25, # covariance static
+        self.init_nav_params = [0.25, 
+                                #0.25, # covariance height/width
+                                #0.25, # covariance static
                                 #   0.25, 0.25, # covariance right
                                 #   0.6, 1.5 # max vel robot
                                 ]
@@ -187,7 +188,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.nav_metrics.get_metrics_data(lidar_measurements, self.episode_step, costmap_params=nav_params, social_work=Rs, done=done)
 
             self.get_logger().debug("getting reward...")
-            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_info, done, event)
+            #reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_info, done, event)
+            reward = 0.
 
             self.get_logger().debug("getting observation...")
             observation = self.get_observation(lidar_measurements, goal_info, robot_pose, people_state, nav_params)
@@ -206,6 +208,9 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.nav_metrics.calc_metrics(self.episode, self.start_pose, self.goal_pose)
             self.nav_metrics.log_metrics_results(self.episode)
             self.nav_metrics.save_metrics_results(self.episode)
+
+            self.get_logger().debug("pausing...")
+            self.pause()
 
         return observation, reward, done
 
@@ -250,10 +255,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         #self.set_controller_params(controller_params)
 
         # Regulate the step frequency of the environment
-        # action_hz, t1 = compute_frequency(self.t0)
-        # self.t0 = t1
-        frequency_control(self.params_update_freq)
-        # self.get_logger().debug('Sending action at '+str(action_hz))
+        action_hz, t1 = compute_frequency(self.t0)
+        self.t0 = t1
+        if action_hz > self.params_update_freq:
+            frequency_control(self.params_update_freq)
+            self.get_logger().debug('Sending action at '+str(action_hz))
 
         # If desired to get params
         #self.get_costmap_params()
@@ -392,9 +398,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         self.episode = n_episode
 
-        self.get_logger().debug("pausing...")
-        self.pause()
-
         self.navigator.cancelNav()
         subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
             shell=True,
@@ -402,9 +405,14 @@ class Pic4rlEnvironmentAPPLR(Node):
             )
         time.sleep(3.0)
 
-        self.get_logger().info(f"Initializing new episode: scenario {self.index}")
-        logging.info(f"Initializing new episode: scenario {self.index}")
+        self.get_logger().info(f"Initializing new episode: scenario {self.index+1}")
+        logging.info(f"Initializing new episode: scenario {self.index+1}")
         self.new_episode()
+
+        subprocess.run("ros2 launch hunav_evaluator hunav_evaluator_launch.py &",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
 
         self.get_logger().debug("unpausing...")
         self.unpause()
@@ -474,7 +482,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         # else:
         #     return
 
-        if self.index <= 4:
+        if self.index <= 3:
             agents2reset = [1]
         else:
             agents2reset = [1,6,7,9,10,11]
@@ -542,8 +550,8 @@ class Pic4rlEnvironmentAPPLR(Node):
     def send_set_request_global(self, param_values):
         self.set_req_global.parameters = [
                         Parameter(name='social_layer.covariance_front_height', value=param_values[0]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_front_width', value=param_values[1]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_when_still', value=param_values[2]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_front_width', value=param_values[0]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_when_still', value=param_values[0]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[3]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[4]).to_parameter_msg()
                                               ]
@@ -553,8 +561,8 @@ class Pic4rlEnvironmentAPPLR(Node):
     def send_set_request_local(self, param_values):
         self.set_req_local.parameters = [
                         Parameter(name='social_layer.covariance_front_height', value=param_values[0]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_front_width', value=param_values[1]).to_parameter_msg(),
-                        Parameter(name='social_layer.covariance_when_still', value=param_values[2]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_front_width', value=param_values[0]).to_parameter_msg(),
+                        Parameter(name='social_layer.covariance_when_still', value=param_values[0]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[3]).to_parameter_msg(),
                         #Parameter(name='social_layer.covariance_right_width', value=param_values[4]).to_parameter_msg()
                                               ]

@@ -2,12 +2,12 @@ training_params:
 # Trainer parameters
     --max-steps: 1200000 # (int) The maximum steps for training. The default is ``int(1e6)``
     --episode-max-steps: 1000 # (int) The maximum steps for an episode. The default is ``int(1e3)``
-    --n-experiments: 1 # (int) Number of experiments. The default is ``1``
+    --n-experiments: 5 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
     --save-model-interval: 20000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20230131_170816.213510_applr_TD3/20230131T170819.516136_TD3_' # (str) Directory to restore model.
-#    --dir-suffix: "20230213_154735.655508_applr_SAC/20230213T154738.710494_SAC_"  # (str) Suffix for directory that stores results.
+    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20230224_112719.single_action_applr_TD3/20230224_112719.034129_applr_TD3/20230224T112719.863104_TD3_/' # (str) Directory to restore model.
+#    --dir-suffix: "20230213_154735.655508_applr_SAC/20230213T154738.710494_SAC_  20230131_170816.213510_applr_TD3/20230131T170819.516136_TD3_"  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: '/root/applr_ws/src/APPLR_social_nav/pic4rl_testing/Results/' # (str) Output directory name. The default is ``"results"``
 
@@ -24,7 +24,7 @@ training_params:
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
     --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
-    --policy: 'SAC' # training policy
+    --policy: 'TD3' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
     --change_goal_and_pose: 1
     --starting_episodes: 0

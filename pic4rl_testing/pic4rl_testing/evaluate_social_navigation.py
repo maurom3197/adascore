@@ -320,12 +320,19 @@ class EvaluateSocialNav(Node):
             )
         time.sleep(3.0)
 
-        self.get_logger().info(f"Initializing new episode: scenario {self.index}")
-        logging.info(f"Initializing new episode: scenario {self.index}")
+        self.get_logger().info(f"Initializing new episode: scenario {self.index+1}")
+        logging.info(f"Initializing new episode: scenario {self.index+1}")
         self.new_episode()
+
+        subprocess.run("ros2 launch hunav_evaluator hunav_evaluator_launch.py &",
+            shell=True,
+            stdout=subprocess.DEVNULL
+            )
 
         self.get_logger().debug("unpausing...")
         self.unpause()
+
+
 
         self.get_logger().debug("Performing null step to reset variables")
 

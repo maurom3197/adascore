@@ -299,11 +299,12 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.set_costmap_params(costmap_params)
         #self.set_controller_params(controller_params)
 
-        # # Regulate the step frequency of the environment
-        # action_hz, t1 = compute_frequency(self.t0)
-        # self.t0 = t1
-        frequency_control(self.params_update_freq)
-        # self.get_logger().debug('Sending action at '+str(action_hz))
+        # Regulate the step frequency of the environment
+        action_hz, t1 = compute_frequency(self.t0)
+        self.t0 = t1
+        if action_hz > self.params_update_freq:
+            frequency_control(self.params_update_freq)
+            self.get_logger().debug('Sending action at '+str(action_hz))
 
         # If desired to get params
         #self.get_costmap_params()

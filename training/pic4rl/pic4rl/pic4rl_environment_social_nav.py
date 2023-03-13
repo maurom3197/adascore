@@ -100,10 +100,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.logdir = create_logdir(training_params['--policy'], main_params['sensor'], training_params['--logdir'])
 
         self.create_clients()
-
-        if not self.gazebo_client:
-            self.unpause()
-            time.sleep(2.0)
+        self.unpause()
 
         # create Sensor class to get and process sensor data
         self.sensors = Sensors(self)

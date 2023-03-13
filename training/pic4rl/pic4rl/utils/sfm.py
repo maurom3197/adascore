@@ -236,7 +236,7 @@ class SocialForceModel():
 
             # Compute force
             forceVelocityAmount = \
-                math.exp(-diff_norm / B - (self.agents[index].nPrime * B * theta)**2)
+                -math.exp(-diff_norm / B - (self.agents[index].nPrime * B * theta)**2)
             
             forceAngleAmount = \
                 -np.sign(theta) * math.exp(-diff_norm / B - (self.agents[index].n * B * theta)**2)
@@ -276,7 +276,7 @@ class SocialForceModel():
 
         # Compute force
         forceVelocityAmount = \
-            math.exp(-diff_norm / B - (agent.nPrime * B * theta)**2)
+            -math.exp(-diff_norm / B - (agent.nPrime * B * theta)**2)
         
         forceAngleAmount = \
             -np.sign(theta) * math.exp(-diff_norm / B - (agent.n * B * theta)**2)
