@@ -137,8 +137,8 @@ class Sensors():
             self.node.get_logger().warn('NO Odometry data')
             return None
 
-        data = self.odom_process.process_data(self.odom_data)
-        return data
+        pose, velocity = self.odom_process.process_data(self.odom_data)
+        return pose, velocity
 
     def get_depth(self):
         if self.depth_sub is None:

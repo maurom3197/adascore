@@ -66,7 +66,7 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
         ACTION AND OBSERVATION SPACES settings
         """
         action=[
-        [0.1, 1.0], # covariance front height
+        [0.15, 1.0], # covariance front height
         #[0.1, 1.0], # covariance front width
         #[0.1, 1.0], # covariance right height
         #[0.1, 1.0], # covariance right width
@@ -103,7 +103,7 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
 
         # Costmap params at time t-1
         state = state + [
-        [0.1, 1.0], # covariance front height
+        [0.15, 1.0], # covariance front height
         #[0.1, 1.0], # covariance front width
         #[0.1, 1.0], # covariance right height
         #[0.1, 1.0], # covariance right width
@@ -222,7 +222,7 @@ class Pic4rlTraining_APPLR_people(Pic4rlEnvironmentAPPLR):
                     n_warmup=self.n_warmup,
                     memory_capacity=self.memory_capacity,
                     epsilon = 1.0, 
-                    epsilon_decay = 0.996, 
+                    epsilon_decay = 0.998, 
                     epsilon_min = 0.05,
                     log_level = self.log_level)
                 self.get_logger().info('Instanciate SAC agent...')

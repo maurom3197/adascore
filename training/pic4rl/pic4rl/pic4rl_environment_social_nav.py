@@ -126,13 +126,14 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.failure_counter = 0
         self.episode = 0
         self.collision_count = 0
-        self.min_obstacle_distance = 4.0
+        self.min_obstacle_distance = 12.0
         self.t0 = 0.0
         self.evaluate = False
         self.index = -1
         self.people_state = []
         self.k_people = 4
         self.min_people_distance = 10.0
+        self.max_person_dist_allowed = 5.0
 
         self.initial_pose, self.goals, self.poses, self.agents = get_goals_and_poses(self.data_path)
         self.goal_pose = self.goals[0]
@@ -171,16 +172,18 @@ class Pic4rlEnvironmentAPPLR(Node):
         
         self.spin_sensors_callbacks()
         self.get_logger().debug("getting sensor data...")
-        lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
+        lidar_measurements, goal_info, robot_pose, robot_velocity, collision = self.get_sensor_data()
         self.get_logger().debug("getting people data...")
-        people_state, people_info = self.get_people_state(robot_pose)
+        people_state, people_info = self.get_people_state(robot_pose, robot_velocity)
+        wr, wp = self.sfm.computeSocialWork()
+        social_work = wr + wp
 
         if not reset_step:
             self.get_logger().debug("checking events...")
             done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
 
             self.get_logger().debug("getting reward...")
-            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_state, done, event)
+            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_state, social_work, done, event)
 
             self.get_logger().debug("getting observation...")
             observation = self.get_observation(lidar_measurements, goal_info, robot_pose, people_state, nav_params)
@@ -221,7 +224,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         sensor_data = {}
         sensor_data["scan"], min_obstacle_distance, collision = self.sensors.get_laser()
-        sensor_data["odom"] = self.sensors.get_odom()
+        sensor_data["odom"], sensor_data["velocity"] = self.sensors.get_odom()
 
         if sensor_data["scan"] is None:
             self.get_logger().debug("scan data is None...")
@@ -235,8 +238,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         goal_info, robot_pose = process_odom(self.goal_pose, sensor_data["odom"])
         lidar_measurements = sensor_data["scan"]
         self.min_obstacle_distance = min_obstacle_distance
+        velocity = sensor_data["velocity"]
 
-        return lidar_measurements, goal_info, robot_pose, collision
+        return lidar_measurements, goal_info, robot_pose, velocity, collision
 
     def send_action(self, params):
         """
@@ -311,7 +315,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return False, "None"
 
-    def get_reward(self,lidar_measurements, goal_info, robot_pose, people_state, done, event):
+    def get_reward(self,lidar_measurements, goal_info, robot_pose, people_state, social_work, done, event):
         """
         """
         # Distance Reward
@@ -322,26 +326,29 @@ class Pic4rlEnvironmentAPPLR(Node):
         # goal_pose = np.asarray(self.goal_pose, dtype=np.float32)
 
         # Heading Reward
-        ch = 0.4
+        ch = 0.3
         #Rh = np.dot((p_tp1 - p_t), (goal_pose - p_t)) / goal_info[0] #heading reward v.1
-        #Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
+        Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
         
         # Social Disturbance Reward
-        avg_people_dist = np.mean(people_state[:,0])
-        Rs = -1/avg_people_dist # people distance reward
+        #avg_people_dist = np.mean(people_state[:,0])
+        #Rs = -1/avg_people_dist # people distance reward
+        Rp = 0.
         if self.min_people_distance < 1.2:
-            Rs += -1/self.min_people_distance # personal space reward
+            Rp += -1/self.min_people_distance # personal space reward
+        cp = 1.5
 
-        # wr, wp = self.sfm.computeSocialWork()
-        # Rs = wr + wp
-        cs = 4.0
+        # Social work
+        Rs = -social_work
+        cs = 15.0
 
         # Total Reward
-        #reward = ch*Rh + cs*Rs
-        reward = cs*Rs
+        reward = ch*Rh + cs*Rs + cp*Rp
+        #reward = cs*Rs
 
-        #self.get_logger().debug('Goal Heading Reward Rh: ' +str(ch*Rh))
-        self.get_logger().debug('Social nav reward Rs: ' +str(cs*Rs))
+        self.get_logger().debug('Goal Heading Reward Rh: ' +str(ch*Rh))
+        self.get_logger().debug('People proxemics reward Rp: ' +str(cp*Rp))
+        self.get_logger().debug('Social work reward Rs: ' +str(cs*Rs))
         self.get_logger().debug('sparse reward: '+str(reward))
 
         if event == "goal":
@@ -460,13 +467,15 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.index += 1
             if self.index == len(self.goals):
                 self.index = 0
-
-        if self.episode % 30 == 0.:
-            self.get_logger().debug("Respawning agents ...")
-            self.respawn_agents()
         
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
+
+        if self.episode % 45 == 0.:
+            self.get_logger().debug("Respawning all agents ...")
+            self.respawn_agents(all=True)
+        else:
+            self.respawn_agents()
     
         self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
@@ -501,24 +510,24 @@ class Pic4rlEnvironmentAPPLR(Node):
             )
         time.sleep(2.0)
 
-    def respawn_agents(self,):
+    def respawn_agents(self, all=False):
         """
         """
-        # if self.index == 0:
-        #     agents2reset = [0,1,2,3]
-        # elif self.index == 2:
-        #     agents2reset = [5]
-        # elif self.index == 3:
-        #     agents2reset = [6]
-        # else:
-        #     return
-
-        agents2reset = [1,6,7,9,10,11]
+        if self.index in [0,1]:
+            agents2reset = [1]
+        elif self.index in [2,3,4]:
+            agents2reset = [2,3]
+        elif self.index > 4:
+            agents2reset = [3,4,5,9]
+        elif all:
+            agents2reset = list(range(1,len(self.agents)+1))
+        else:
+            return
             
         for agent in agents2reset:
             x, y , yaw = tuple(self.agents[agent-1])
 
-            self.get_logger().info(f"Agent pose [x,y,yaw]: {[x, y, yaw]}")
+            self.get_logger().info(f"Respawning Agent at pose [x,y,yaw]: {[x, y, yaw]}")
             agent_name = "agent"+str(agent)
 
             position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(1.50)+"}"
@@ -591,13 +600,13 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.send_goal(self.goal_pose)
         time.sleep(1.0)
 
-    def get_people_state(self, robot_pose):
+    def get_people_state(self, robot_pose, robot_velocity):
         """
         """
         # Spin once to get the people message
         rclpy.spin_once(self)
 
-        people_state, people_info, min_people_distance = self.sfm.get_people(robot_pose)
+        people_state, people_info, min_people_distance = self.sfm.get_people(robot_pose, robot_velocity)
         self.min_people_distance = min_people_distance
 
         return people_state, people_info

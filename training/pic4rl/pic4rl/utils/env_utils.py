@@ -69,10 +69,10 @@ def filter_people(k_, distances, people_state_, people_info_):
             people_state_.append([20.0, 0.0, 0.0, 0.0])
             people_info_.append([20.0, 20.0, 0.0, 0.0, 0.0])
 
-    distances = np.array(distances)
+    distances = np.asarray(distances)
     min_people_distance = np.min(distances)
-    people_state_ = np.array(people_state_)
-    people_info_ = np.array(people_info_)
+    people_state_ = np.asarray(people_state_)
+    people_info_ = np.asarray(people_info_)
 
     # Filter the k closest people to the robot
     idx = np.argpartition(distances.ravel(), k_-1)

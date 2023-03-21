@@ -14,7 +14,7 @@ main_node:
     goal_tolerance: 0.40
 
     # World parameters
-    world_name: "social_indoor2.world" #Leave empty to obtain no world
+    world_name: "social_nav.world" #Leave empty to obtain no world
     data_path: "social_indoor2_test.json"
     agents_config: "social_indoor_agents2.yaml"
     gazebo_client: True

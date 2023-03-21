@@ -133,7 +133,11 @@ class OdomSensor():
         pos_y = data.pose.pose.position.y
         _,_,yaw = euler_from_quaternion(data.pose.pose.orientation)
         
-        return [pos_x, pos_y, yaw]
+        v_x = data.twist.twist.linear.x
+        v_y = data.twist.twist.linear.y
+        w_z = data.twist.twist.angular.z
+        
+        return [pos_x, pos_y, yaw], [v_x, v_y, w_z]
 
 
 class DepthCamera():

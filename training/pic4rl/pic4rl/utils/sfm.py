@@ -71,8 +71,8 @@ class Agent():
         self.yaw = 0.0
         self.velocity = [0., 0.] # [v_x, v_y]
         self.ang_velocity = 0.0
-        #self.goals = [[0., 0.],]
-        #self.current_goal = [0.,0.]
+        self.goals = [[0., 0.],]
+        self.current_goal = [0.,0.]
 
         self.socialForce = np.zeros(2, dtype=np.float32)
         self.obstacleForce = np.zeros(2, dtype=np.float32)
@@ -128,6 +128,7 @@ class SocialForceModel():
     def instanciate_agents(self,):
         robot = Agent()
         robot.agent_name = "robot"
+        robot.max_vel = 0.8
         self.agents.append(robot)
 
         for i in range(self.num_agents):
@@ -150,9 +151,9 @@ class SocialForceModel():
 
             self.agents.append(agent)
 
-        print(self.agents)
+        print("Agents in sfm model: ", len(self.agents))
 
-    def get_people(self, robot_pose):
+    def get_people(self, robot_pose, robot_velocity):
         """
         """
         people_state_ = []
@@ -160,34 +161,37 @@ class SocialForceModel():
         distances = []
         msg = self.people_msg
 
+        self.agents[0].update_state(robot_pose, robot_velocity)
+
         for i in range(len(self.agents[1:])):
+            # get person pose
             x = msg.people[i].position.x
             y = msg.people[i].position.y
             yaw = msg.people[i].position.z
             person_pose = [x,y,yaw]
 
-            person_dist, person_angle = process_people(person_pose, robot_pose)
-
-            distances.append(person_dist)
-
+            # get person velocity
             vel_x = msg.people[i].velocity.x
             vel_y = msg.people[i].velocity.y
             vel_w = msg.people[i].velocity.z
             vel_module = math.sqrt((vel_x)**2+(vel_y)**2)
 
-            self.agents[i].update_state(person_pose, [vel_x, vel_y, vel_w])
-            # _ = self.computeSocialForce_on_agent(i)
+            # update agent state
+            self.agents[i+1].update_state(person_pose, [vel_x, vel_y, vel_w])
 
-            # people info is used to compute social forces
-            people_info_.append([x,y,yaw,vel_x,vel_y,vel_w])
+            person_dist, person_angle = process_people(person_pose, robot_pose)
 
-            # make variable relative to robot frame
-            #x = x - robot_pose[0]
-            #y = y - robot_pose[1]
-            yaw = yaw - robot_pose[2]
+            if person_dist < self.node.max_person_dist_allowed:
+                distances.append(person_dist)
+                # people info is used to compute social forces
+                people_info_.append([x,y,yaw,vel_x,vel_y,vel_w])
+                # make variable relative to robot frame
+                #x = x - robot_pose[0]
+                #y = y - robot_pose[1]
+                yaw = yaw - robot_pose[2]
 
-            # Person state s_p as [x,y,yaw,vel_x,vel_y,vel_w] or [dist, angle, v_module, yaw]
-            people_state_.append([person_dist, person_angle, vel_module, yaw])
+                # Person state s_p as [x,y,yaw,vel_x,vel_y,vel_w] or [dist, angle, v_module, yaw]
+                people_state_.append([person_dist, person_angle, vel_module, yaw])
 
         people_state, people_info_, min_people_distance = filter_people(self.node.k_people, distances, people_state_, people_info_)
 
@@ -307,6 +311,7 @@ class SocialForceModel():
         sfr = self.computeSocialForce_on_agent(0)
         wr = np.linalg.norm(sfr)
             # +np.linalg.norm(self.agents[0].obstacleForce)
+        #self.node.get_logger().debug("social work on the robot: "+str(wr))
 
         # Compute the social work provoked by the robot in the other agents
         wp = 0.
@@ -314,7 +319,8 @@ class SocialForceModel():
             i +=1
             social_force = self.computeSocialForce_by_robot(i)
             wp += np.linalg.norm(social_force)
-            #self.node.get_logger().debug('social force by the robot on one agent: ', str(np.linalg.norm(social_force)))
+            #self.node.get_logger().debug('social Force by the robot on ONE agent: '+str(np.linalg.norm(social_force)))
+        #self.node.get_logger().debug('social Work by the robot on ALL agents: '+str(wp))
 
         return wr, wp
 

@@ -179,20 +179,20 @@ class EvaluateSocialNav(Node):
         """
         self.spin_sensors_callbacks()
         self.get_logger().debug("getting sensor data...")
-        lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
+        lidar_measurements, goal_info, robot_pose, robot_velocity, collision = self.get_sensor_data()
 
         self.get_logger().debug("getting people data...")
-        people_state, people_info = self.get_people_state(robot_pose)
+        people_state, people_info = self.get_people_state(robot_pose, robot_velocity)
 
         self.get_logger().debug("checking events...")
         done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
 
         self.get_logger().debug("ccomputing social work...")
         wr, wp = self.sfm.computeSocialWork()
-        Rs = wr + wp
+        social_work = wr + wp
 
         self.get_logger().debug("collecting metrics data...")
-        self.nav_metrics.get_metrics_data(lidar_measurements, self.episode_step, costmap_params=nav_params, social_work=Rs, done=done)
+        self.nav_metrics.get_metrics_data(lidar_measurements, self.episode_step, costmap_params=nav_params, social_work=social_work, done=done)
 
         # Regulate the step frequency of the environment
         # action_hz, t1 = compute_frequency(self.t0)
@@ -225,7 +225,7 @@ class EvaluateSocialNav(Node):
         """
         sensor_data = {}
         sensor_data["scan"], min_obstacle_distance, collision = self.sensors.get_laser()
-        sensor_data["odom"] = self.sensors.get_odom()
+        sensor_data["odom"], sensor_data["velocity"] = self.sensors.get_odom()
 
         if sensor_data["scan"] is None:
             self.get_logger().debug("scan data is None...")
@@ -239,8 +239,8 @@ class EvaluateSocialNav(Node):
         goal_info, robot_pose = process_odom(self.goal_pose, sensor_data["odom"])
         lidar_measurements = sensor_data["scan"]
         self.min_obstacle_distance = min_obstacle_distance
-
-        return lidar_measurements, goal_info, robot_pose, collision
+        velocity = sensor_data["velocity"]
+        return lidar_measurements, goal_info, robot_pose, velocity, collision
 
     def check_events(self, lidar_measurements, goal_info, robot_pose, collision):
         """
@@ -441,10 +441,10 @@ class EvaluateSocialNav(Node):
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
 
-    def get_people_state(self, robot_pose):
+    def get_people_state(self, robot_pose, robot_velocity):
         """
         """
-        people_state, people_info, min_people_distance = self.sfm.get_people(robot_pose)
+        people_state, people_info, min_people_distance = self.sfm.get_people(robot_pose, robot_velocity)
         self.min_people_distance = min_people_distance
 
         return people_state, people_info

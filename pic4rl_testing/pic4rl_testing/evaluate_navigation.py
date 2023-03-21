@@ -162,7 +162,7 @@ class EvaluateNav(Node):
         """
         self.get_logger().debug("getting sensor data...")
         self.spin_sensors_callbacks()
-        lidar_measurements, goal_info, robot_pose, collision = self.get_sensor_data()
+        lidar_measurements, goal_info, robot_pose, robot_velocity, collision = self.get_sensor_data()
 
         self.get_logger().debug("checking events...")
         done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
@@ -208,7 +208,7 @@ class EvaluateNav(Node):
         """
         sensor_data = {}
         sensor_data["scan"], min_obstacle_distance, collision = self.sensors.get_laser()
-        sensor_data["odom"] = self.sensors.get_odom()
+        sensor_data["odom"], sensor_data["velocity"] = self.sensors.get_odom()
     
         if sensor_data["scan"] is None:
             self.get_logger().debug("scan data is None...")
@@ -222,8 +222,9 @@ class EvaluateNav(Node):
         goal_info, robot_pose = self.process_odom(sensor_data["odom"])
         lidar_measurements = sensor_data["scan"]
         self.min_obstacle_distance = min_obstacle_distance
+        velocity = sensor_data["velocity"]
 
-        return lidar_measurements, goal_info, robot_pose, collision
+        return lidar_measurements, goal_info, robot_pose, velocity, collision
 
     def process_odom(self, odom):
 
