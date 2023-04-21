@@ -147,12 +147,14 @@ class EvaluateSocialNav(Node):
         self.people_state = []
         self.k_people = 4
         self.min_people_distance = 10.0
+        self.max_person_dist_allowed = 5.0
 
         self.initial_pose, self.goals, self.poses, self.agents = get_goals_and_poses(self.data_path)
         self.start_pose = [0., 0., 0.]
         self.goal_pose = self.goals[0]
-        self.init_nav_params = [0.25, 0.25, # covariance height/width
-                                0.25, # covariance static
+        self.init_nav_params = [0.25
+                                # 0.25, # covariance height/width
+                                # 0.25, # covariance static
                                 #   0.25, 0.25, # covariance right
                                 #   0.6, 1.5 # max vel robot
                                 ]
@@ -276,9 +278,9 @@ class EvaluateSocialNav(Node):
             self.prev_nav_state = "unknown"
 
         # check collision
-        if  collision:
+        if  collision or self.min_people_distance < 0.55:
             self.collision_count += 1
-            if self.collision_count >= 3:
+            if self.collision_count >= 1:
                 self.collision_count = 0
                 self.get_logger().info(f"Test Episode {self.episode+1}: Collision")
                 logging.info(f"Test Episode {self.episode+1}: Collision")
@@ -332,8 +334,6 @@ class EvaluateSocialNav(Node):
         self.get_logger().debug("unpausing...")
         self.unpause()
 
-
-
         self.get_logger().debug("Performing null step to reset variables")
 
         _ = self._step(reset_step = True)
@@ -382,19 +382,21 @@ class EvaluateSocialNav(Node):
     def respawn_agents(self,):
         """
         """
-        # if self.index == 0:
-        #     agents2reset = [0,1,2,3]
-        # elif self.index == 2:
-        #     agents2reset = [5]
-        # elif self.index == 3:
-        #     agents2reset = [6]
-        # else:
-        #     return
-
-        if self.index <= 4:
+        if self.index in [0,1]:
             agents2reset = [1]
+        elif self.index in [2,3,4]:
+            agents2reset = [2,3]
+        elif self.index > 4:
+            agents2reset = list(range(1,len(self.agents)+1))
+        elif all:
+            agents2reset = list(range(1,len(self.agents)+1))
         else:
-            agents2reset = [1,6,7,9,10,11]
+            return
+            
+        # if self.index <= 4:
+        #     agents2reset = [1]
+        # else:
+        #     agents2reset = [1,6,7,9,10,11]
             
         for agent in agents2reset:
             x, y , yaw = tuple(self.agents[agent-1])
@@ -436,16 +438,21 @@ class EvaluateSocialNav(Node):
         self.navigator.waitUntilNav2Active()
         self.get_logger().debug("Clearing all costmaps...")
         self.navigator.clearAllCostmaps()
-        time.sleep(5.0)
+        time.sleep(3.0)
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
 
+
     def get_people_state(self, robot_pose, robot_velocity):
         """
         """
+        # Spin once to get the people message
+        rclpy.spin_once(self)
+
         people_state, people_info, min_people_distance = self.sfm.get_people(robot_pose, robot_velocity)
         self.min_people_distance = min_people_distance
+        self.get_logger().info("min people distance: " + str(self.min_people_distance))
 
         return people_state, people_info
 

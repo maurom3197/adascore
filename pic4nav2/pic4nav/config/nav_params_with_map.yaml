@@ -115,15 +115,15 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.6
+      max_vel_x: 0.8
       max_vel_y: 0.0
       max_vel_theta: 1.5
       min_speed_xy: 0.0
-      max_speed_xy: 0.6
+      max_speed_xy: 1.0
       min_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
-      acc_lim_x: 2.5
+      acc_lim_x: 2.5 #2.5
       acc_lim_y: 0.0
       acc_lim_theta: 3.2
       decel_lim_x: -2.5
@@ -144,12 +144,12 @@ controller_server:
       #"RotateToGoal", 
       "Oscillation", 
       "BaseObstacle", 
-      #"PathAlign",
+      "PathAlign",
       "PathDist", 
       "GoalDist"]
       BaseObstacle.scale: 0.02
-      #PathAlign.scale: 0.0 #32.0
-      #PathAlign.forward_point_distance: 0.0 #0.1
+      PathAlign.scale: 32.0 #32.0
+      PathAlign.forward_point_distance: 0.1 #0.1
       #GoalAlign.scale: 0.0 #24.0
       #GoalAlign.forward_point_distance: 0.0 #0.1
       PathDist.scale: 32.0
@@ -166,36 +166,41 @@ local_costmap:
   local_costmap:
     ros__parameters:
       update_frequency: 20.0
-      publish_frequency: 2.0
+      publish_frequency: 5.0
       global_frame: odom
       robot_base_frame: base_link
       use_sim_time: True
-      rolling_window: true
+      rolling_window: True
       width: 3
       height: 3
       resolution: 0.05
       footprint: "[[0.24, 0.24], [0.24, -0.24], [-0.24, -0.24], [-0.24, 0.24]]"
-      plugins: ["voxel_layer", "inflation_layer", "obstacle_layer"]
+      plugins: [
+      #"voxel_layer", 
+      "inflation_layer", 
+      "obstacle_layer" 
+      #"social_layer"
+       ]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
         inflation_radius: 0.55
-      voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
-        enabled: False
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: scan
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
+      # voxel_layer:
+      #   plugin: "nav2_costmap_2d::VoxelLayer"
+      #   enabled: False
+      #   publish_voxel_map: True
+      #   origin_z: 0.0
+      #   z_resolution: 0.05
+      #   z_voxels: 16
+      #   max_obstacle_height: 2.0
+      #   mark_threshold: 0
+      #   observation_sources: scan
+      #   scan:
+      #     topic: /scan
+      #     max_obstacle_height: 2.0
+      #     clearing: True
+      #     marking: True
+      #     data_type: "LaserScan"
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -208,6 +213,8 @@ local_costmap:
           data_type: "LaserScan"
       static_layer:
         map_subscribe_transient_local: True
+      #social_layer:
+      #  plugin: "nav2_social_costmap_plugin::SocialLayer"
       always_send_full_costmap: True
   local_costmap_client:
     ros__parameters:
@@ -228,9 +235,13 @@ global_costmap:
       width: 100
       height: 100
       footprint: "[[0.24, 0.24], [0.24, -0.24], [-0.24, -0.24], [-0.24, 0.24]]"
-      resolution: 0.05
+      resolution: 0.10
       track_unknown_space: true
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      plugins: ["static_layer", 
+      "obstacle_layer", 
+      "inflation_layer"
+      #"social_layer"
+      ]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -253,6 +264,22 @@ global_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
         inflation_radius: 0.55
+      # social_layer:
+      #   plugin: "nav2_social_costmap_plugin::SocialLayer"
+      #   enabled: True
+      #   cutoff: 10.0
+      #   amplitude: 255.0
+      #   publish_occgrid: False
+      #   use_passing: True
+      #   use_vel_factor: True
+      #   speed_factor_multiplier: 5.0
+      #   covariance_front_height: 0.4
+      #   covariance_front_width: 0.25
+      #   covariance_rear_height: 0.25
+      #   covariance_rear_width: 0.25
+      #   covariance_right_height: 0.3
+      #   covariance_right_width: 0.2
+      #   covariance_when_still: 0.25
       always_send_full_costmap: True
   global_costmap_client:
     ros__parameters:
@@ -264,7 +291,7 @@ global_costmap:
 map_server:
   ros__parameters:
     use_sim_time: True
-    yaml_filename: "/root/applr_ws/src/APPLR_social_nav/maps/social_indoor.yaml"
+    yaml_filename: "/root/applr_ws/src/APPLR_social_nav/maps/social_nav_map.yaml"
     frame_id: odom
 
 map_saver:
@@ -310,6 +337,15 @@ recoveries_server:
     max_rotational_vel: 0.6
     min_rotational_vel: 0.4
     rotational_acc_lim: 3.2
+
+lifecycle_manager:
+  ros__parameters:
+    use_sim_time: true
+    autostart: true
+    node_names: ['controller_server', 'planner_server', 'map_server', 'recoveries_server', 'bt_navigator']
+    # bond_timeout: 0.0 # default example 4.0
+    # attempt_respawn_reconnection: false
+    # bond_respawn_max_duration: 10.0
 
 robot_state_publisher:
   ros__parameters:

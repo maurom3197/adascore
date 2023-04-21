@@ -6,17 +6,17 @@ training_params:
 # --show-progress: # Call ``render`` function during training
     --save-model-interval: 20000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/20230224_112719.single_action_applr_TD3/20230224_112719.034129_applr_TD3/20230224T112719.863104_TD3_/' # (str) Directory to restore model.
-#    --dir-suffix: "20230213_154735.655508_applr_SAC/20230213T154738.710494_SAC_  20230131_170816.213510_applr_TD3/20230131T170819.516136_TD3_"  # (str) Suffix for directory that stores results.
+    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/adaptive_social_controller/20230406_224001.972115_applr_TD3/20230406T224002.749787_TD3_/' # (str) Directory to restore model.
+#    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: '/root/applr_ws/src/APPLR_social_nav/pic4rl_testing/Results/' # (str) Output directory name. The default is ``"results"``
 
 # TESTING FLAG
     --evaluate: # Whether evaluate trained model
 
-    --test-interval: 20000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
+    --test-interval: 200000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
-    --test-episodes: 5 # (int) Number of episodes at test. The default is ``5``
+    --test-episodes: 3 # (int) Number of episodes at test. The default is ``5``
 # --save-test-path: # Save trajectories of evaluation.
 # --show-test-images: # Show input images to neural networks when an episode finishes
 # --save-test-movie: # Save rendering results.
@@ -30,7 +30,7 @@ training_params:
     --starting_episodes: 0
     --tflite_flag: False
     --tflite_model_path: '~/inference/actor_fp16.tflite'
-    --batch-size: 64 # (int) Batch size for training. The default is ``32``.
+    --batch-size: 128 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
 
 # For all off-policy algos (DDPG, TD3, SAC)

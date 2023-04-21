@@ -13,7 +13,7 @@ class Compute_Metrics():
     def __init__(self):
         """
         """
-        father_path = '/root/applr_ws/src/APPLR_social_nav/pic4rl_testing/Results/Social_nav_20230301_170841.641914_applr_TD3/'
+        father_path = '/root/applr_ws/src/APPLR_social_nav/pic4rl_testing/Results/Social_nav_20230420_234508.071328_social_plugin_nav2/'
         log_path = self.search_yaml(father_path)
 
         self.metrics_results = {"Clearance_time":None, 
@@ -24,7 +24,7 @@ class Compute_Metrics():
                 "Std_dev_social_work":None,
                 "Path_distance":None}
         self.num_episodes=10
-        self.num_run=5
+        self.num_run=3
 
         self.data_loaded = self.load_data(log_path)
         #train_mean, val_mean = self.get_cumulated_means(train_returns, val_returns)

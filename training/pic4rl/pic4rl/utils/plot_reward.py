@@ -24,7 +24,7 @@ class Training_Rewards(Node):
             train_params = yaml.safe_load(train_param_file)['training_params']
 
         #father_path = train_params['--model-dir'] + "/"
-        father_path = '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/costmap_conv/20230214_111018.878212_applr_TD3/20230214T111023.034125_TD3_/'
+        father_path = '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/adaptive_social_controller/20230406_224001.972115_applr_TD3/20230406T224002.749787_TD3_/'
         log_path = self.search_log(father_path)
         log_file = open(log_path, 'r')
 
