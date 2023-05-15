@@ -30,14 +30,14 @@ from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
 from rcl_interfaces.msg import ParameterDescriptor, ParameterValue
 
-from nav2_simple_commander.robot_navigator import BasicNavigator, NavigationResult
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from people_msgs.msg import People
 
 
 class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
         super().__init__('pic4rl_env_applr')
-        rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
+        #rclpy.logging.set_logger_level('pic4rl_env_applr', 10)
 
         goals_path      = os.path.join(
             get_package_share_directory('pic4rl'), 'goals_and_poses')
@@ -113,7 +113,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             'goal_pose',
             qos)
 
-        self.sfm = SocialForceModel(self, self.agents_config)
+        #self.sfm = SocialForceModel(self, self.agents_config)
 
         self.entity_path = os.path.join(get_package_share_directory("gazebo_sim"), 'models', 
             'goal_box', 'model.sdf')
@@ -144,10 +144,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         #                         ]
         self.init_nav_params = [0.6, 1.5, 1.7, 0.02, 32.0, 24.0, 0.55]
         self.n_navigation_end = 0
-        self.navigator = BasicNavigator()
 
         self.get_logger().info("PIC4RL_Environment: Starting process")
         self.get_logger().info("Navigation params update at: " + str(self.params_update_freq)+' Hz')
+        self.navigator = BasicNavigator()
 
     def step(self, action, episode_step=0):
         """
@@ -168,15 +168,15 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         self.get_logger().debug("sending action...")
 
-        self.send_action(nav_params)
+        #self.send_action(nav_params)
         
         self.spin_sensors_callbacks()
         self.get_logger().debug("getting sensor data...")
         lidar_measurements, goal_info, robot_pose, robot_velocity, collision = self.get_sensor_data()
         self.get_logger().debug("getting people data...")
-        people_state, people_info = self.get_people_state(robot_pose, robot_velocity)
-        wr, wp = self.sfm.computeSocialWork()
-        social_work = wr + wp
+        #people_state, people_info = self.get_people_state(robot_pose, robot_velocity)
+        #wr, wp = self.sfm.computeSocialWork()
+        #social_work = wr + wp
 
         if not reset_step:
             self.get_logger().debug("checking events...")
@@ -197,7 +197,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event)
 
         if done:
-            self.navigator.cancelNav()
+            self.navigator.cancelTask()
             subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
             shell=True,
             stdout=subprocess.DEVNULL
@@ -271,9 +271,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         feedback = self.navigator.getFeedback()
         #self.get_logger().debug('Navigator feedback: '+str(feedback))
         # check if navigation is complete
-        if self.navigator.isNavComplete():
+        if self.navigator.isTaskComplete():
             result = check_navigation(self.navigator)
-            if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED):
+            if (result == TaskResult.FAILED or result == TaskResult.CANCELED):
                 self.send_goal(self.goal_pose)
                 time.sleep(1.0)
                 self.n_navigation_end = self.n_navigation_end +1
@@ -284,7 +284,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                     self.prev_nav_state = "nav2_failed"
                     return True, "nav2_failed"  
                 
-            if result == NavigationResult.SUCCEEDED:
+            if result == TaskResult.SUCCEEDED:
                 if self.prev_nav_state == "goal":
                     self.get_logger().info('uncorrect goal status detected... resending goal.') 
                     self.send_goal(self.goal_pose)
@@ -473,11 +473,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
 
-        if self.episode % 45 == 0.:
-            self.get_logger().debug("Respawning all agents ...")
-            self.respawn_agents(all=True)
-        else:
-            self.respawn_agents()
+        # if self.episode % 45 == 0.:
+        #     self.get_logger().debug("Respawning all agents ...")
+        #     self.respawn_agents(all=True)
+        # else:
+        #     self.respawn_agents()
     
         self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
@@ -565,23 +565,24 @@ class Pic4rlEnvironmentAPPLR(Node):
         #     )
 
     def reset_navigator(self, index):
-        # init_pose = PoseStamped()
-        # if self.episode <= self.starting_episodes:
-        #     x, y, yaw = tuple(self.initial_pose)
-        # else:
-        #     x, y, yaw = tuple(self.poses[index])
+        """
+        """
+        if self.episode <= self.starting_episodes:
+            x, y, yaw = tuple(self.initial_pose)
+        else:
+            x, y, yaw = tuple(self.poses[index])
 
-        # z = math.sin(yaw/2)
-        # w = math.cos(yaw/2)
+        z = math.sin(yaw/2)
+        w = math.cos(yaw/2)
 
-        # init_pose.header.frame_id = 'odom'
-        # init_pose.pose.position.x = x
-        # init_pose.pose.position.y = y
-        # init_pose.pose.position.z = 0.0
-        # init_pose.pose.orientation.x = 0.0
-        # init_pose.pose.orientation.y = 0.0
-        # init_pose.pose.orientation.z = z
-        # init_pose.pose.orientation.w = w
+        initial_pose = PoseStamped()
+        initial_pose.header.frame_id = 'map'
+        initial_pose.header.stamp = self.navigator.get_clock().now().to_msg()
+        initial_pose.pose.position.x = x
+        initial_pose.pose.position.y = y
+        initial_pose.pose.orientation.z = z
+        initial_pose.pose.orientation.w = w
+        self.navigator.setInitialPose(initial_pose)
 
         if not self.simulation_restarted == 1:
             self.get_logger().debug("Restarting LifeCycleNodes...")
@@ -593,7 +594,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.n_navigation_end = 0
 
         self.get_logger().debug("wait until Nav2Active...")
-        self.navigator.waitUntilNav2Active()
+        self.navigator.waitUntilNav2Active(navigator='bt_navigator', localizer='static_transform_publisher')
         self.get_logger().debug("Clearing all costmaps...")
         self.navigator.clearAllCostmaps()
         time.sleep(5.0)
@@ -704,13 +705,14 @@ class Pic4rlEnvironmentAPPLR(Node):
     def send_goal(self,pose):
         # Set the robot's goal pose
         goal_pose = PoseStamped()
-        goal_pose.header.frame_id = 'odom'
+        goal_pose.header.frame_id = 'map'
+        goal_pose.header.stamp = self.navigator.get_clock().now().to_msg()
         goal_pose.pose.position.x = pose[0]
         goal_pose.pose.position.y = pose[1]
         goal_pose.pose.position.z = 0.0
-        goal_pose.pose.orientation.x = 0.0
-        goal_pose.pose.orientation.y = 0.0
-        goal_pose.pose.orientation.z = 0.0
+        # goal_pose.pose.orientation.x = 0.0
+        # goal_pose.pose.orientation.y = 0.0
+        # goal_pose.pose.orientation.z = 0.0
         goal_pose.pose.orientation.w = 1.0
 
         self.goal_pub.publish(goal_pose)
@@ -841,26 +843,26 @@ class Pic4rlEnvironmentAPPLR(Node):
         #     self.get_logger().info('service not available, waiting again...')
         # self.get_req_local = GetParameters.Request()
 
-        self.set_cli_global = self.create_client(SetParameters, '/global_costmap/global_costmap/set_parameters')
-        while not self.set_cli_global.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.set_req_global = SetParameters.Request()
+        # self.set_cli_global = self.create_client(SetParameters, '/global_costmap/global_costmap/set_parameters')
+        # while not self.set_cli_global.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info('service not available, waiting again...')
+        # self.set_req_global = SetParameters.Request()
 
-        self.set_cli_local = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
-        while not self.set_cli_local.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.set_req_local = SetParameters.Request()
+        # self.set_cli_local = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
+        # while not self.set_cli_local.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info('service not available, waiting again...')
+        # self.set_req_local = SetParameters.Request()
 
-        # create Controller parameter client
-        self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
-        while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.get_req_controller = GetParameters.Request()
+        # # create Controller parameter client
+        # self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
+        # while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info('service not available, waiting again...')
+        # self.get_req_controller = GetParameters.Request()
 
-        self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
-        while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.set_req_controller = SetParameters.Request()
+        # self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
+        # while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info('service not available, waiting again...')
+        # self.set_req_controller = SetParameters.Request()
 
         # create reset world client 
         self.reset_world_client = self.create_client(Empty, 'reset_simulation')

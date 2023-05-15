@@ -26,7 +26,7 @@ from rclpy.qos import QoSProfile
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from ament_index_python.packages import get_package_share_directory
-from nav2_simple_commander.robot_navigator import BasicNavigator, NavigationResult
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 
 
 def frequency_control(params_update_freq):
@@ -49,14 +49,14 @@ def get_goals_and_poses(data_path):
 
 def check_navigation(navigator):
     result = navigator.getResult()
-    if result == NavigationResult.SUCCEEDED:
+    if result == TaskResult.SUCCEEDED:
         print('Goal succeeded!')
-    elif result == NavigationResult.CANCELED:
+    elif result == TaskResult.CANCELED:
         print('Goal was canceled!')
-    elif result == NavigationResult.FAILED:
+    elif result == TaskResult.FAILED:
         print('Goal failed!')
-    elif result == NavigationResult.UNKNOWN:
-        print('Navigation Result UNKNOWN!')
+    else:
+        print('Goal has an invalid return status!')
     return result
 
 def filter_people(k_, distances, people_state_, people_info_):

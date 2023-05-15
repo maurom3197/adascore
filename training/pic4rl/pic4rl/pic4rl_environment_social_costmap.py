@@ -30,7 +30,7 @@ from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
 from rcl_interfaces.msg import ParameterDescriptor, ParameterValue
 
-from nav2_simple_commander.robot_navigator import BasicNavigator, NavigationResult
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from people_msgs.msg import People
 
 
@@ -197,7 +197,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event)
 
         if done:
-            self.navigator.cancelNav()
+            self.navigator.cancelTask()
             subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
             shell=True,
             stdout=subprocess.DEVNULL
@@ -269,9 +269,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         feedback = self.navigator.getFeedback()
         #self.get_logger().debug('Navigator feedback: '+str(feedback))
         # check if navigation is complete
-        if self.navigator.isNavComplete():
+        if self.navigator.isTaskComplete():
             result = check_navigation(self.navigator)
-            if (result == NavigationResult.FAILED or result == NavigationResult.CANCELED):
+            if (result == TaskResult.FAILED or result == TaskResult.CANCELED):
                 self.send_goal(self.goal_pose)
                 time.sleep(1.0)
                 self.n_navigation_end = self.n_navigation_end +1
@@ -282,7 +282,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                     self.prev_nav_state = "nav2_failed"
                     return True, "nav2_failed"  
                 
-            if result == NavigationResult.SUCCEEDED:
+            if result == TaskResult.SUCCEEDED:
                 if self.prev_nav_state == "goal":
                     self.get_logger().info('uncorrect goal status detected... resending goal.') 
                     self.send_goal(self.goal_pose)

@@ -68,9 +68,10 @@ class Pic4rlTraining_APPLR_nav2(Pic4rlEnvironmentAPPLR):
         action=[
         [self.min_lin_vel, self.max_lin_vel], # max vel_x
         [self.min_ang_vel, self.max_ang_vel], # max vel_theta
-        [5, 25], # vx_samples
-        [10, 30], #v_theta samples
-        [0.008, 0.08], # base obstacle scale
+        #[5, 25], # vx_samples
+        #[10, 30], # v_theta samples
+        [0.5, 3.0], # sim_time
+        [0.005, 0.5], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
         [0.3, 1.0], # inflation radius
@@ -99,14 +100,20 @@ class Pic4rlTraining_APPLR_nav2(Pic4rlEnvironmentAPPLR):
         for i in range(self.lidar_points):
             state = state + [[0., 2.]]
 
-        state = state + [[-math.pi, math.pi]] # goal angle or yaw
+        state = []
+        # Goal Info [angle, distance]
+        state = state + [
+        [-math.pi, math.pi], # goal angle or yaw
+        [0.0, 15.0] # distance
+        ] 
 
         state = state + [
         [self.min_lin_vel, self.max_lin_vel], # max vel_x
         [self.min_ang_vel, self.max_ang_vel], # max vel_theta
-        [5, 25], # vx_samples
-        [10, 30], #v_theta samples
-        [0.008, 0.08], # base obstacle scale
+        #[5, 25], # vx_samples
+        #[10, 30], # v_theta samples
+        [0.5, 3.0], # sim_time
+        [0.005, 0.5], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
         [0.3, 1.0], # inflation radius
@@ -297,13 +304,13 @@ class Pic4rlTraining_APPLR_nav2(Pic4rlEnvironmentAPPLR):
     def parameters_declaration(self):
         """
         """
-        main_param_path  = os.path.join(
-            get_package_share_directory('pic4rl'), 'config', 'main_param.yaml')
+        main_params_path  = os.path.join(
+            get_package_share_directory('pic4rl'), 'config', 'main_params.yaml')
         train_params_path= os.path.join(
             get_package_share_directory('pic4rl'), 'config', 'training_params.yaml')
         
-        with open(main_param_path, 'r') as main_param_file:
-            main_param = yaml.safe_load(main_param_file)['main_node']['ros__parameters']
+        with open(main_params_path, 'r') as main_params_file:
+            main_params = yaml.safe_load(main_params_file)['main_node']['ros__parameters']
         with open(train_params_path, 'r') as train_param_file:
             train_params = yaml.safe_load(train_param_file)['training_params']
 
@@ -311,10 +318,10 @@ class Pic4rlTraining_APPLR_nav2(Pic4rlEnvironmentAPPLR):
         parameters=[
             ('policy', train_params['--policy']),
             ('policy_trainer', train_params['--policy_trainer']),
-            ('max_lin_vel', main_param['max_lin_vel']),
-            ('min_lin_vel', main_param['min_lin_vel']),
-            ('max_ang_vel', main_param['max_ang_vel']),
-            ('min_ang_vel', main_param['min_ang_vel']),
+            ('max_lin_vel', main_params['max_lin_vel']),
+            ('min_lin_vel', main_params['min_lin_vel']),
+            ('max_ang_vel', main_params['max_ang_vel']),
+            ('min_ang_vel', main_params['min_ang_vel']),
             ('gpu', train_params['--gpu']),
             ('batch_size', train_params['--batch-size']),
             ('n_warmup', train_params['--n-warmup'])
@@ -354,7 +361,7 @@ class Pic4rlTraining_APPLR_nav2(Pic4rlEnvironmentAPPLR):
             'policy': train_params['--policy'],
             'max_steps': train_params['--max-steps'],
             'max_episode_steps': train_params['--episode-max-steps'],
-            'sensor': main_param['sensor'],
+            'sensor': main_params['sensor'],
             'gpu': train_params['--gpu']
         }
 

@@ -1,7 +1,0 @@
----
-bool data_received
-bool person_found
-bool new_goal_flag
-bool to_goal_flag
-float32[] goal_info
-float32[] pose_info

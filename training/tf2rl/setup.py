@@ -10,15 +10,17 @@ install_requires = [
     "scipy",
     "scikit-image"]
 
-tf_version = "2.6"  # Default Version
+tf_version = "2.10"  # Default Version
 
-compatible_tfp = {"2.6": ["tensorflow-probability~=0.14.1"],
+compatible_tfp = {"2.10": ["tensorflow-probability~=0.18.0"],
+		  "2.6": ["tensorflow-probability~=0.14.1"],
 		  "2.4": ["tensorflow-probability~=0.12.0"],
                   "2.3": ["tensorflow-probability~=0.11.0"],
                   "2.2": ["tensorflow-probability~=0.10.0"],
                   "2.1": ["tensorflow-probability~=0.8.0"],
                   "2.0": ["tensorflow-probability~=0.8.0"]}
-compatible_tfa = {"2.6": ["tensorflow_addons~=0.14.0"],
+compatible_tfa = {"2.10": ["tensorflow_addons~=0.18.0"],
+		  "2.6": ["tensorflow_addons~=0.14.0"],
 		  "2.4": ["tensorflow_addons~=0.13.0"],
                   "2.3": ["tensorflow_addons~=0.13.0"],
                   "2.2": ["tensorflow_addons==0.11.2"],

@@ -54,7 +54,7 @@ from ament_index_python.packages import get_package_share_directory
 class Pic4rlTraining_APPLR_social_controller(Pic4rlEnvironmentAPPLR):
     def __init__(self):
         super().__init__()
-        rclpy.logging.set_logger_level('pic4rl_training', 10)
+        #rclpy.logging.set_logger_level('pic4rl_training', 10)
         self.log_check()
         train_params = self.parameters_declaration()
 
