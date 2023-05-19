@@ -67,7 +67,7 @@ def filter_people(k_, distances, people_state_, people_info_):
         for i in range(k_-len(people_state_)):
             distances.append(20.0)
             people_state_.append([20.0, 0.0, 0.0, 0.0])
-            people_info_.append([20.0, 20.0, 0.0, 0.0, 0.0])
+            people_info_.append([20.0, 20.0, 0.0, 0.0, 0.0, 0.0])
 
     distances = np.asarray(distances)
     min_people_distance = np.min(distances)

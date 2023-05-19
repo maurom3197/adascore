@@ -169,7 +169,7 @@
     </gazebo>
       
     <gazebo reference="mid_laser_mount">
-      <sensor type="gpu_ray" name="head_hokuyo_sensor">
+      <sensor type="ray" name="head_hokuyo_sensor">
       <visualize>false</visualize>
       <ray>
         <scan>

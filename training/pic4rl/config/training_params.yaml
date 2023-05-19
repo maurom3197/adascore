@@ -20,7 +20,7 @@ training_params:
     --use-prioritized-rb: # Use prioritized experience replay
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
-    #--restore-rb: # Load experience replay buffer
+# --restore-rb: # Load experience replay buffer
     --rb-path: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/results/rb_TD3_100k_pr_ns4.npz'
     --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'TD3' # training policy

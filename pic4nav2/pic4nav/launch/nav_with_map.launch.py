@@ -129,7 +129,12 @@ def generate_launch_description():
             output='screen',
             parameters=[configured_params],
             remappings=remappings),
-
+            
+	Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            arguments = ['0', '0', '0', '0', '0', '0', 'map','odom']),
+            
         Node(
             package='nav2_bt_navigator',
             executable='bt_navigator',

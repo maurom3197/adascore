@@ -79,7 +79,7 @@ class Pic4rlTraining_APPLR_social_controller(Pic4rlEnvironmentAPPLR):
         [0.005, 0.5], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
-        [0.3, 1.0], # inflation radius
+        [0.3, 1.0] # inflation radius
         ]
 
         low_action = []
@@ -123,7 +123,7 @@ class Pic4rlTraining_APPLR_social_controller(Pic4rlEnvironmentAPPLR):
         [0.005, 0.5], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
-        [0.3, 1.0], # inflation radius
+        [0.3, 1.0] # inflation radius
 
         ]
 
