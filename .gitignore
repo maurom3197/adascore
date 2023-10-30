@@ -1,3 +1,5 @@
 # ignore results folder
 /applr_social_nav/training_results/
 /applr_social_nav/testing_results/
+/training/pic4rl/models/
+/training/pic4rl/results/
