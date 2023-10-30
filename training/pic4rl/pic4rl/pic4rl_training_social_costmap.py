@@ -273,11 +273,13 @@ class Pic4rlTraining_APPLR_social_costmap(Pic4rlEnvironmentAPPLR):
         for k,v in params.items():
             if v is not None:
                 kv = k+'='+str(v)
+                if k == '--logdir':
+                    k += self.logdir
+                    self.get_logger().info(f"LOGGING TO DIRECTORY: {k}\n")
                 self.parser_list.append(kv)
             else:
                 self.parser_list.append(k)
 
-        self.parser_list[5] += self.logdir
 
     def threadFunc(self):
         try:

@@ -206,7 +206,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             #     self.failure_counter += 1
             # else: 
             #     self.failure_counter = 0
-            time.sleep(5.0)
+            time.sleep(2.0)
 
         return observation, reward, done
 
@@ -402,24 +402,22 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.previous_nav_params = nav_params
         self.previous_event = event
 
-    def restart_simulation(self,):
-        """
-        """
-        restart_gazebo(self.gazebo_client)
-        restart_nav2()
-        self.get_logger().debug("Creating parameters clients...")
-        self.create_clients()
+    # def restart_simulation(self,):
+    #     """
+    #     """
+    #     restart_gazebo(self.gazebo_client)
+    #     restart_nav2()
+    #     self.get_logger().debug("Creating parameters clients...")
+    #     self.create_clients()
 
-        self.get_logger().debug("unpausing gazebo...")
-        self.unpause()
-        time.sleep(2.0)
+    #     self.get_logger().debug("unpausing gazebo...")
+    #     self.unpause()
         
-        self.navigator = BasicNavigator()
-        time.sleep(2.0)
-        self.sensors = Sensors(self)
-        self.spin_sensors_callbacks()
-        self.index = 0
-        self.n_navigation_end = 0
+    #     self.navigator = BasicNavigator()
+    #     self.sensors = Sensors(self)
+    #     self.spin_sensors_callbacks()
+    #     self.index = 0
+    #     self.n_navigation_end = 0
 
     def reset(self, n_episode, tot_steps, evaluate=False):
         """
@@ -541,7 +539,6 @@ class Pic4rlEnvironmentAPPLR(Node):
                 shell=True,
                 stdout=subprocess.DEVNULL
                 )
-            time.sleep(1.0)
 
         #ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState '{state: {name: 'agent2',pose: {position: {x: 2.924233, y: 5.0, z: 1.25}}}}'
 
@@ -597,7 +594,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.navigator.waitUntilNav2Active(navigator='bt_navigator', localizer='static_transform_publisher')
         self.get_logger().debug("Clearing all costmaps...")
         self.navigator.clearAllCostmaps()
-        time.sleep(5.0)
+        time.sleep(1.0)
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)

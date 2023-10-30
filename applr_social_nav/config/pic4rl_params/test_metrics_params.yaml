@@ -1,0 +1,15 @@
+main_node:
+  ros__parameters:
+    # Metrics
+    path_distance: False
+    distance_path_ratio: True
+    clearance_time: True
+    velocity: True
+    max_min_accelerations: True
+    cumulative_heading_average: True
+    obstacle_clereance: True
+    controller_params: False
+    social_costmap_params: True
+    social_disturbance: True
+    following_heading_metrics: False
+    vineyard_path_comparison: False

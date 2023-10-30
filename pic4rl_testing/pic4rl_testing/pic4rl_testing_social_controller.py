@@ -274,8 +274,6 @@ class Pic4rlTesting_APPLR_social_controller(Pic4rlEnvironmentAPPLR):
             else:
                 self.parser_list.append(k)
 
-        #self.parser_list[6] += self.log_folder_name
-
     def threadFunc(self):
         try:
             self.tester()

@@ -1,0 +1,39 @@
+training_params:
+# Tester parameters
+    --max-steps: 1200000 # (int) The maximum steps for training. The default is ``int(1e6)``
+    --episode-max-steps: 1000 # (int) The maximum steps for an episode. The default is ``int(1e3)``
+    --n-experiments: 5 # (int) Number of experiments. The default is ``1``
+# --show-progress: # Call ``render`` function during training
+    --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
+    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/adaptive_social_controller/20230406_224001.972115_applr_TD3/20230406T224002.749787_TD3_/' # (str) Directory to restore model.
+#    --dir-suffix: ""  # (str) Suffix for directory that stores results.
+#    --normalize-obs: # Whether normalize observation
+    --logdir: '$(find-pkg-prefix applr_social_nav)../../src/applr_social_nav/testing_results' # (str) Output directory name. The default is ``"results"``
+
+# TESTING FLAG
+    --evaluate: # Whether evaluate trained model
+
+# --show-test-progress: # Call ``render`` function during evaluation.
+# --save-test-path: # Save trajectories of evaluation.
+# --show-test-images: # Show input images to neural networks when an episode finishes
+# --save-test-movie: # Save rendering results.
+    --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
+    --policy: 'TD3' # training policy
+    --policy_trainer: 'off-policy' # trainer off-policy / on-policy
+    --change_goal_and_pose: 1
+    --starting_episodes: 0
+    --tflite_flag: False
+#    --tflite_model_path: '~/inference/actor_fp16.tflite'
+    --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
+
+
+# For only SAC
+    # --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.
+    # --auto-alpha: # Automatic alpha tuning
+# For only SAC-AE
+    # --stop-q-grad: # Whether stop gradient after convolutional layers at Encoder
+
+# For on-policy algorithms (PPO)
+    # --horizon: 2048  # (int) The default is ``2048``.
+    # --normalize-adv: # Normalize Advantage. default True
+    # --enable-gae: # Enable GAE. Default True

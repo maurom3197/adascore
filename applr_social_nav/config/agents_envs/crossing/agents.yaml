@@ -1,0 +1,89 @@
+hunav_loader:
+  ros__parameters:
+    map: cafe
+    publish_people: true
+    agents:
+      - agent1
+      - agent2
+      - agent3
+      - agent4
+    agent1:
+      id: 1
+      skin: 0
+      behavior: 1
+      group_id: -1
+      max_vel: 1.5
+      radius: 0.4
+      init_pose:
+        x: -2.00000
+        y: 4.097434
+        z: 1.250000
+        h: 0.0
+      goal_radius: 0.3
+      cyclic_goals: true
+      goals:
+        - g0
+      g0:
+        x: 2.223393
+        y: -2.661066
+        h: 1.250000
+    agent2:
+      id: 2
+      skin: 2
+      behavior: 1
+      group_id: -1
+      max_vel: 1.5
+      radius: 0.4
+      init_pose:
+        x: 2.994274
+        y: 3.957355
+        z: 1.250000
+        h: 0.0
+      goal_radius: 0.3
+      cyclic_goals: true
+      goals:
+        - g0
+      g0:
+        x: -1.978295
+        y: -2.696076
+        h: 1.250000
+    agent3:
+      id: 3
+      skin: 1
+      behavior: 1
+      group_id: -1
+      max_vel: 1.5
+      radius: 0.4
+      init_pose:
+        x: 2.714108
+        y: -0.945546
+        z: 1.250000
+        h: 0.0
+      goal_radius: 0.3
+      cyclic_goals: true
+      goals:
+        - g0
+      g0:
+        x: -1.978672
+        y: -0.735422
+        h: 1.250000
+    agent4:
+      id: 4
+      skin: 3
+      behavior: 1
+      group_id: -1
+      max_vel: 1.5
+      radius: 0.4
+      init_pose:
+        x: -2.083735
+        y: -1.470868
+        z: 1.250000
+        h: 0.0
+      goal_radius: 0.3
+      cyclic_goals: true
+      goals:
+        - g0
+      g0:
+        x: 2.853647
+        y: -2.135856
+        h: 1.250000
