@@ -7,8 +7,13 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(jackal_navigation REQUIRED)
 find_package(hunav_sim REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(behaviortree_cpp_v3 REQUIRED)
+find_package(rclcpp REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -22,15 +27,72 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+set(dependencies
+  std_srvs
+  behaviortree_cpp_v3
+  rclcpp
+)
+
+include_directories(
+  include
+)
+
+add_library(pause_navigation_bt_node SHARED
+  src/pause_navigation.cpp
+)
+
+ament_target_dependencies(pause_navigation_bt_node
+  ${dependencies}
+)
+
+target_compile_definitions(pause_navigation_bt_node
+  PRIVATE "BT_PLUGIN_EXPORT"
+)
+
+install(TARGETS
+  pause_navigation_bt_node
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(DIRECTORY
+  include/
+  DESTINATION include/
+)
+
+install(FILES pause_navigation.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+
 install(DIRECTORY
   launch
   config
-  goals_and_poses
   maps
   behavior_trees
-  models
-  worlds
+  goals_and_poses
   DESTINATION share/${PROJECT_NAME}/
 )
+
+ament_export_include_directories(
+  include
+)
+
+
+# Install Python modules
+ament_python_install_package(${PROJECT_NAME})
+
+# Install Python executables
+install(PROGRAMS
+  scripts/social_controller_applr
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+ament_export_libraries(
+  pause_navigation_bt_node)
+
+ament_export_dependencies(${dependencies})
+
+
 
 ament_package()

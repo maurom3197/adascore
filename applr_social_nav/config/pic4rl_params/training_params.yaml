@@ -1,15 +1,16 @@
 training_params:
 # Trainer parameters
-    --max-steps: 1000000 # (int) The maximum steps for training. The default is ``int(1e6)``
+    --max-steps: 1500000 # (int) The maximum steps for training. The default is ``int(1e6)``
     --episode-max-steps: 800 # (int) The maximum steps for an episode. The default is ``int(1e3)``
     --n-experiments: 1 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
     --save-model-interval: 5000 # (int) Interval to save model. The default is ``int(1e4)``
-    --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
+    --save-summary-interval: 1000 # (int) Interval to save summary. The default is ``int(1e3)``
 #    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/adaptive_social_controller/20230404_125411.796466_applr_TD3/20230404T125413.557621_TD3_/' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
-    --logdir: '$(find-pkg-prefix applr_social_nav)../../src/applr_social_nav/training_results' # (str) Output directory name. The default is ``"results"``
+    # --logdir: '/home/user/APPL_ws/src/training/pic4rl/results' # (str) Output directory name. The default is ``"results"``
+    --logdir: 'src/Results/' # (str) Output directory name. The default is ``"results"``
 #    --evaluate: # Whether evaluate trained model
     --test-interval: 10000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
@@ -21,8 +22,8 @@ training_params:
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
     #--restore-rb: # Load experience replay buffer
-    #--rb-path: '$(find-pkg-prefix applr_social_nav)../../src/applr_social_nav/results/rb_TD3_500k_pr_ns4.npz'
-    --logging-level: INFO # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
+    # --rb-path: 'src/applr_social_nav/results/rb_TD3_100k_pr_ns4.npz'
+    --logging-level: DEBUG # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'TD3' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
     --change_goal_and_pose: 1
@@ -32,8 +33,8 @@ training_params:
 
 
 # For all off-policy algos (DDPG, TD3, SAC)
-    --n-warmup: 10000 # (int) Number of warmup steps before training. The default is ``1e4``.
-    --memory-capacity: 500000  # (int) Replay Buffer size. The default is ``1e6``.
+    --n-warmup: 200 # (int) Number of warmup steps before training. The default is ``1e4``.
+    --memory-capacity: 1000000  # (int) Replay Buffer size. The default is ``1e6``.
 
 # For only SAC
 #    --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.

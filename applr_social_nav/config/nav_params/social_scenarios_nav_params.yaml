@@ -384,13 +384,6 @@ behavior_server:
     min_rotational_vel: 0.4
     rotational_acc_lim: 3.2
 
-#lifecycle_manager:
-#  ros__parameters:
-#    use_sim_time: true
-#    autostart: true
-#    node_names: ['controller_server', 'planner_server', 'map_server', 'behavior_server', 'bt_navigator']
-    
-
 robot_state_publisher:
   ros__parameters:
     use_sim_time: True

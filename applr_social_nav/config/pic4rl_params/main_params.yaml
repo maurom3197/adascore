@@ -1,8 +1,7 @@
 main_node:
   ros__parameters:
-    # Mode parameters
-    mode: "training" # training or testing
-    
+    # Mode
+    mode: "training" # Training or testing
     # Robot parameters
     robot_name: "jackal"
     max_lin_vel: 0.8
@@ -20,16 +19,15 @@ main_node:
     world_name: "social_scenarios.world" #Leave empty to obtain no world
     data_path: "social_scenarios.json"  #"social_indoor2.json"
     agents_config: "social_scenarios_agents.yaml" #"social_indoor2_agents.yaml"
-    gazebo_client: True
+
     use_localization: False
 
     # Task parameters
-    task: 'goToPose' # goToPose, Following, Vineyards
+    task: 'SocialController' # goToPose, Following, Vineyards
     
     # Sensors parameters
     sensor: 'applr' # lidar or rgb_camera or depth_camera
-    applr_param:
-      update_frequency: 10.0 #20.0 # update the controller parameters at this frequency
+    update_frequency: 10.0 #20.0 # update the controller parameters at this frequency
     visual_data: 'features'
     features: 10000
     channels: 1
@@ -45,8 +43,8 @@ main_node:
       odom_topic: "/jackal/odom"
     laser_param:
       max_distance: 3.0 # Meters
-      total_points: 360  # Number of total laser points (360, 618 Pmb2)
-      num_points: 36 #36 # int divider of 360. Step size to skip laser points
+      total_points: 360  # --Noé. Number of total laser points (360 Husky, 618 Pmb2)
+      num_points: 36 #36 # int divider of 360 (husky). Step size to skip laser points
     depth_param:
       dist_cutoff: 5.0 # Meters
       width: 112
