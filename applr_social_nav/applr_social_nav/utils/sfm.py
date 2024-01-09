@@ -11,7 +11,7 @@ from pathlib import Path
 from ament_index_python.packages import get_package_share_directory
 from people_msgs.msg import People
 from pic4rl.utils.env_utils import normalize, normalize_angle
-from applr_social_nav.utils.env_utils import filter_people, process_people
+from applr_social_nav.utils.nav_utils import filter_people, process_people
 
 import rclpy
 from rclpy.node import Node

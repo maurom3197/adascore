@@ -23,7 +23,7 @@ from geometry_msgs.msg import Twist
 from ament_index_python.packages import get_package_share_directory
 from pic4rl.utils.env_utils import *
 
-from applr_social_nav.utils.env_utils import *
+from applr_social_nav.utils.nav_utils import *
 from applr_social_nav.utils.sfm import SocialForceModel
 
 from rclpy.parameter import Parameter
@@ -120,6 +120,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().info(self.logdir)
 
         self.create_clients()
+        self.is_paused = None
         self.unpause()
 
         self.spin_sensors_callbacks()
@@ -213,11 +214,12 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         if done:
             self.navigator.cancelTask()
-            subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
-            time.sleep(5.0)
+            # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
+            # shell=True,
+            # stdout=subprocess.DEVNULL
+            # )
+
+            time.sleep(1.0)
 
         return observation, reward, done
 
@@ -227,6 +229,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("spinning for sensor_msg...")
         rclpy.spin_once(self)
         while None in self.sensors.sensor_msg.values():
+            self.get_logger().debug("None in sensor_msg... spinning again...")
             rclpy.spin_once(self)
         self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
 
@@ -292,7 +295,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             result = check_navigation(self.navigator)
             if (result == TaskResult.FAILED or result == TaskResult.CANCELED):
                 self.send_goal(self.goal_pose)
-                time.sleep(5.0)
+                time.sleep(1.0)
                 self.n_navigation_end = self.n_navigation_end +1
                 if self.n_navigation_end == 50:
                     self.get_logger().info('Navigation aborted more than 50 times... pausing Nav till next episode.') 
@@ -498,6 +501,14 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
 
+        if self.is_paused:
+            self.get_logger().debug("unpausing...")
+            self.get_logger().debug("This is done to avoid a bug in the navigator")
+            self.unpause()
+            time.sleep(1.0)
+            self.get_logger().debug("pausing...")
+            self.pause()
+
         self.get_logger().debug("Resetting navigator ...")
         self.reset_navigator(self.index)
 
@@ -526,7 +537,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             shell=True,
             stdout=subprocess.DEVNULL
             )
-        time.sleep(5.0)
+        time.sleep(2.0)
 
     def respawn_agents(self, all=False):
         """
@@ -557,7 +568,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 shell=True,
                 stdout=subprocess.DEVNULL
                 )
-            time.sleep(5.0)
+            time.sleep(2.0)
 
         #ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState '{state: {name: 'agent2',pose: {position: {x: 2.924233, y: 5.0, z: 1.25}}}}'
 
@@ -598,14 +609,16 @@ class Pic4rlEnvironmentAPPLR(Node):
         initial_pose.pose.position.y = y
         initial_pose.pose.orientation.z = z
         initial_pose.pose.orientation.w = w
-        self.navigator.setInitialPose(initial_pose)
+        
+        if self.use_localization:
+            self.navigator.setInitialPose(initial_pose)
 
         if not self.simulation_restarted == 1:
             self.get_logger().debug("Restarting LifeCycleNodes...")
-            subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
-                    shell=True,
-                    stdout=subprocess.DEVNULL
-                    )
+            # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
+            #         shell=True,
+            #         stdout=subprocess.DEVNULL
+            #         )
 
             self.n_navigation_end = 0
 
@@ -615,13 +628,15 @@ class Pic4rlEnvironmentAPPLR(Node):
         else:
             localizer = 'controller_server'
         self.navigator.waitUntilNav2Active(navigator='bt_navigator', localizer=localizer)
+
+        # self.waitUnitlInitialPoseIsSet(initial_pose)
         self.get_logger().debug("Clearing all costmaps...")
         self.navigator.clearAllCostmaps()
-        time.sleep(5.0)
+        time.sleep(1.0)
  
         self.get_logger().debug("Sending goal ...")
         self.send_goal(self.goal_pose)
-        time.sleep(5.0)
+        time.sleep(1.0)
 
     def get_people_state(self, robot_pose, robot_velocity):
         """
@@ -732,7 +747,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         goal_pose.pose.position.z = 0.0
         goal_pose.pose.orientation.w = 1.0
 
-        self.goal_pub.publish(goal_pose)
+        # self.goal_pub.publish(goal_pose)
         self.navigator.goToPose(goal_pose)
         
     def get_random_goal(self):
@@ -754,6 +769,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug('Sending action at '+str(action_hz))
 
     def pause(self):
+        self.is_paused = True
 
         req = Empty.Request()
         while not self.pause_physics_client.wait_for_service(timeout_sec=1.0):
@@ -761,6 +777,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.pause_physics_client.call_async(req) 
 
     def unpause(self):
+        self.is_paused = False
 
         req = Empty.Request()
         while not self.unpause_physics_client.wait_for_service(timeout_sec=1.0):
