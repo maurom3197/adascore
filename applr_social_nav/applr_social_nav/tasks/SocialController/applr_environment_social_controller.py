@@ -4,7 +4,6 @@ import os
 import numpy as np
 from numpy import savetxt
 import math
-import subprocess
 import json
 import random
 import sys
@@ -15,6 +14,7 @@ import logging
 from pathlib import Path
 
 from geometry_msgs.msg import Pose,PoseStamped
+from gazebo_msgs.srv import SetEntityState
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
@@ -214,11 +214,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         if done:
             self.navigator.cancelTask()
-            # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 1}'",
-            # shell=True,
-            # stdout=subprocess.DEVNULL
-            # )
-
+            # lifecyclePause(navigator=self.navigator)
             time.sleep(1.0)
 
         return observation, reward, done
@@ -303,7 +299,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                     logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Nav failed") 
                     self.prev_nav_state = "nav2_failed"
                     return True, "nav2_failed"  
-                
+            ## TODO: check if this is necessary
             if result == TaskResult.SUCCEEDED:
                 if self.prev_nav_state == "goal":
                     self.get_logger().info('uncorrect goal status detected... resending goal.') 
@@ -314,6 +310,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
                 self.prev_nav_state = "goal"
                 return True, "goal"
+            self.prev_nav_state = "unknown"
 
         else:
             self.prev_nav_state = "unknown"
@@ -517,9 +514,6 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_robot(self, index):
         """
         """
-        # if self.episode <= self.starting_episodes:
-        #     x, y, yaw = tuple(self.initial_pose)
-        # else:
         x, y , yaw = tuple(self.poses[index])
 
         qz = np.sin(yaw/2)
@@ -527,17 +521,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1} robot pose [x,y,yaw]: {[x, y, yaw]}")
         logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1} robot pose [x,y,yaw]: {[x, y, yaw]}")
-
-        position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(0.07)+"}"
-        orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
-        pose = position+", "+orientation
-        state = "'{state: {name: '"+self.robot_name+"',pose: {"+pose+"}}}'"
-        subprocess.run(
-            "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+state,
-            shell=True,
-            stdout=subprocess.DEVNULL
-            )
-        time.sleep(2.0)
+        self.set_entity_state(self.robot_name, [x, y, 0.07], [qz, qw])
 
     def respawn_agents(self, all=False):
         """
@@ -558,19 +542,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
             self.get_logger().info(f"Respawning Agent at pose [x,y,yaw]: {[x, y, yaw]}")
             agent_name = "agent"+str(agent)
-
-            position = "position: {x: "+str(x)+",y: "+str(y)+",z: "+str(1.50)+"}"
-            #orientation = "orientation: {z: "+str(qz)+",w: "+str(qw)+"}"
-            #pose = position+", "+orientation
-            state = "'{state: {name: '"+agent_name+"',pose: {"+position+"}}}'"
-            subprocess.run(
-                "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+state,
-                shell=True,
-                stdout=subprocess.DEVNULL
-                )
-            time.sleep(2.0)
-
-        #ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState '{state: {name: 'agent2',pose: {position: {x: 2.924233, y: 5.0, z: 1.25}}}}'
+            self.set_entity_state(agent_name, [x, y, 1.50])
 
     def respawn_goal(self, index):
         """
@@ -582,14 +554,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
         logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
-
-        # position = "{x: "+str(self.goal_pose[0])+",y: "+str(self.goal_pose[1])+",z: "+str(0.01)+"}"
-        # pose = "'{state: {name: 'goal',pose: {position: "+position+"}}}'"
-        # subprocess.run(
-        #     "ros2 service call /test/set_entity_state gazebo_msgs/srv/SetEntityState "+pose,
-        #     shell=True,
-        #     stdout=subprocess.DEVNULL
-        #     )
+        # self.set_entity_state('goal', [self.goal_pose[0], self.goal_pose[1], 0.01])
 
     def reset_navigator(self, index):
         """
@@ -615,10 +580,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         if not self.simulation_restarted == 1:
             self.get_logger().debug("Restarting LifeCycleNodes...")
-            # subprocess.run("ros2 service call /lifecycle_manager_navigation/manage_nodes nav2_msgs/srv/ManageLifecycleNodes '{command: 2}'",
-            #         shell=True,
-            #         stdout=subprocess.DEVNULL
-            #         )
+            # lifecycleResume(navigator=self.navigator)
 
             self.n_navigation_end = 0
 
@@ -784,6 +746,32 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.get_logger().info('service not available, waiting again...')
         self.unpause_physics_client.call_async(req)
 
+    def set_entity_state(self, entity_name, position, orientation = [0.0, 1.0]):
+        """
+        """
+        req = SetEntityState.Request()
+
+        req.state.name = f'{entity_name}'
+        req.state.pose.position.x = position[0]
+        req.state.pose.position.y = position[1]
+        req.state.pose.position.z = position[2]
+        req.state.pose.orientation.z = orientation[0]
+        req.state.pose.orientation.w = orientation[1]
+        
+        while not self.set_entity_state_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        
+        success = False
+        while not success:
+            future = self.set_entity_state_client.call_async(req)
+            rclpy.spin_until_future_complete(self, future)
+            if future.result() is not None:
+                success = future.result().success
+                self.get_logger().debug(f'Result of setting entity state: {success}')
+            time.sleep(2.0)
+        return
+
+
     # Global Costmap get_parameter #
     def send_get_request_global(self):
         self.get_req_global.names = [
@@ -892,3 +880,4 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.reset_world_client = self.create_client(Empty, 'reset_simulation')
         self.pause_physics_client = self.create_client(Empty, 'pause_physics')
         self.unpause_physics_client = self.create_client(Empty, 'unpause_physics')
+        self.set_entity_state_client = self.create_client(SetEntityState, 'test/set_entity_state')
