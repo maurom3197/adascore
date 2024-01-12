@@ -1,4 +1,4 @@
-image: /root/applr_ws/src/APPLR_social_nav/maps/adaptive_test.pgm
+image: adaptive_test.pgm
 mode: trinary
 resolution: 0.05
 origin: [-3.56, -14, 0]

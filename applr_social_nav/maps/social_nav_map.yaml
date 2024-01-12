@@ -1,4 +1,4 @@
-image: /root/applr_ws/src/APPLR_social_nav/maps/social_nav_map.pgm
+image: social_nav_map.pgm
 mode: trinary
 resolution: 0.05
 origin: [0.077, -9.92, 0]

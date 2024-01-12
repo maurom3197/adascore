@@ -1,4 +1,4 @@
-image: /root/applr_ws/src/maps/indoor_adaptive.pgm
+image: indoor_adaptive.pgm
 mode: trinary
 resolution: 0.05
 origin: [-10.9, -10.6, 0]
