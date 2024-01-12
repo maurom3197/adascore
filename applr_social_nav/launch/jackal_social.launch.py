@@ -28,7 +28,7 @@ from launch.conditions import IfCondition, UnlessCondition
 def generate_launch_description():
 
     # World generation parameters
-    world_file_name = LaunchConfiguration('base_world')
+    # world_file_name = LaunchConfiguration('base_world')
     gz_obs = LaunchConfiguration('use_gazebo_obs')
     rate = LaunchConfiguration('update_rate')
     robot_name = LaunchConfiguration('robot_name')
@@ -114,14 +114,6 @@ def generate_launch_description():
     )
 
     # Then, launch the generated world in Gazebo
-    my_gazebo_models = PathJoinSubstitution([
-        FindPackageShare('hunav_gazebo_wrapper'),
-        'models',
-    ])
-
-    jackal_gazebo_models = str(Path(get_package_share_directory('jackal_description')).
-                               parent.resolve())
-
 
     config_file_name = 'params.yaml'
     pkg_dir = get_package_share_directory('hunav_gazebo_wrapper')
@@ -130,7 +122,7 @@ def generate_launch_description():
     # the world generator will create this world
     # in this path
     world_path = PathJoinSubstitution([
-        FindPackageShare('gazebo_sim'),
+        this_package_dir,
         'worlds',
         'generatedWorld.world'
     ])
