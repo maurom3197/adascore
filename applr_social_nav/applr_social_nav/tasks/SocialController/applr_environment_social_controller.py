@@ -300,8 +300,8 @@ class Pic4rlEnvironmentAPPLR(Node):
                     self.prev_nav_state = "nav2_failed"
                     return True, "nav2_failed"  
             if result == TaskResult.SUCCEEDED:
-                # if self.prev_nav_state == "goal":
-                #     self.get_logger().info('uncorrect goal status detected... resending goal.') 
+                if self.prev_nav_state == "goal":
+                    self.get_logger().info('uncorrect goal status detected... resending goal.') 
                 #     self.send_goal(self.goal_pose)
                 #     return False, "None"
 

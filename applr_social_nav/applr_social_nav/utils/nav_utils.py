@@ -146,3 +146,19 @@ def lifecycleResume(navigator: BasicNavigator):
                 rclpy.spin_until_future_complete(navigator, future)
                 future.result()
         return
+
+def lifecycleReset(navigator: BasicNavigator):
+        """Reset nav2 lifecycle system."""
+        navigator.info('Reset lifecycle nodes based on lifecycle_manager.')
+        for srv_name, srv_type in navigator.get_service_names_and_types():
+            if srv_type[0] == 'nav2_msgs/srv/ManageLifecycleNodes':
+                navigator.info(f'Reset {srv_name}')
+                mgr_client = navigator.create_client(ManageLifecycleNodes, srv_name)
+                while not mgr_client.wait_for_service(timeout_sec=1.0):
+                    navigator.info(f'{srv_name} service not available, waiting...')
+                req = ManageLifecycleNodes.Request()
+                req.command = ManageLifecycleNodes.Request().RESET
+                future = mgr_client.call_async(req)
+                rclpy.spin_until_future_complete(navigator, future)
+                future.result()
+        return
