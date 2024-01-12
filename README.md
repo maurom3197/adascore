@@ -48,6 +48,11 @@ cd ~/ros2_ws/src/hunav_gazebo_wrapper
 mv <path_to_applr_pkg>/adjustments/env-hooks .
 mv <path_to_applr_pkg>/CMakeLists.txt .
 ``` 
+- if you want to use the modified version of nav2 dwb controller, you need to build the nav2_dwb_controller pkg removing the COLCON_IGNORE file from the nav2_applr folder
+```
+rm <path_to_nav2_applr_pkg>/COLCON_IGNORE
+colcon build --symlink-install
+```
 
 
 
