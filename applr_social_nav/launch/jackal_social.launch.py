@@ -77,8 +77,9 @@ def generate_launch_description():
     )
 
     # world base file
-    world_file = path.join(get_package_share_directory("gazebo_sim"), 
+    world_file = path.join(this_package_dir, 
         'worlds', configParams["world_name"])
+    # if desired to spawn goal model in Gazebo
     goal_entity = path.join(get_package_share_directory("gazebo_sim"), 'models', 
                 'goal_box', 'model.sdf')
 

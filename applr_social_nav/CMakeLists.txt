@@ -71,6 +71,7 @@ install(DIRECTORY
   maps
   behavior_trees
   goals_and_poses
+  worlds
   DESTINATION share/${PROJECT_NAME}/
 )
 
