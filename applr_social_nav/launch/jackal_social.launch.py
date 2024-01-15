@@ -39,12 +39,6 @@ def generate_launch_description():
     use_localization = LaunchConfiguration('use_localization')
     this_package_dir = get_package_share_directory('applr_social_nav')
    
-    # agent configuration file
-    agent_conf_file = PathJoinSubstitution([
-        this_package_dir,
-        'config','agents_envs',
-        LaunchConfiguration('configuration_file')
-    ])
 
     configFilepath = path.join(
         this_package_dir, 'config','pic4rl_params',
@@ -54,6 +48,13 @@ def generate_launch_description():
     with open(configFilepath, 'r') as file:
         configParams = yaml.safe_load(file)['main_node']['ros__parameters']
 
+    # agent configuration file
+    agent_conf_file = path.join(
+        this_package_dir, 'config','agents_envs',
+        configParams['agents_config'],
+        )
+
+    # initial robot pose and goal pose
     goals_path = path.join(this_package_dir, 
         'goals_and_poses', configParams['data_path'])
     goal_and_poses = json.load(open(goals_path,'r'))
@@ -116,8 +117,8 @@ def generate_launch_description():
     # Then, launch the generated world in Gazebo
 
     config_file_name = 'params.yaml'
-    pkg_dir = get_package_share_directory('hunav_gazebo_wrapper')
-    config_file = path.join(pkg_dir, 'launch', config_file_name)
+    hunav_pkg_dir = get_package_share_directory('hunav_gazebo_wrapper')
+    config_file = path.join(hunav_pkg_dir, 'launch', config_file_name)
 
     # the world generator will create this world
     # in this path
@@ -168,8 +169,8 @@ def generate_launch_description():
                     msg='GenerateWorld started, launching Gazebo after 2 seconds...'),
                 TimerAction(
                     period=2.0,
-                    actions=[gzserver_process, gzclient_process],
-                    # actions=[gzserver_process],
+                    # actions=[gzserver_process, gzclient_process],
+                    actions=[gzserver_process],
                 )
             ]
         )
@@ -254,28 +255,24 @@ def generate_launch_description():
             arguments=['jackal_velocity_controller',
                        '-c', '/controller_manager'],
             output='screen',
-            condition=IfCondition(use_gazebo_controllers)
+            condition=IfCondition(use_gazebo_controllers),
         ),
         Node(
             package='controller_manager',
             executable='spawner',
             arguments=['joint_state_broadcaster', '-c', '/controller_manager'],
             output='screen',
-            condition=IfCondition(use_gazebo_controllers)
+            condition=IfCondition(use_gazebo_controllers),
         )
     ])
 
-    # Stop the robot
-
-    gzserver_cmd = [
-        'gzserver ',
-        world_path,
-        _boolean_command('verbose'), '',
-        '-s ', 'libgazebo_ros_init.so',
-        '-s ', 'libgazebo_ros_factory.so',
-        '--ros-args',
-        '--params-file', config_file,
-    ]
+    # Make sure spawn_jackal_controllers starts after spawn_robot
+    jackal_controllers_spawn_callback = RegisterEventHandler(
+        OnProcessExit(
+            target_action=spawn_robot,
+            on_exit=[spawn_jackal_controllers],
+        )
+    )
 
     stop_jackal_cmd = ['ros2 topic pub /stop/cmd_vel geometry_msgs/msg/Twist ',
                        '"{ linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"', ]
@@ -291,14 +288,6 @@ def generate_launch_description():
                 condition=UnlessCondition(
                     use_gazebo_controllers)
             )],
-        )
-    )
-
-    # Make sure spawn_jackal_controllers starts after spawn_robot
-    jackal_controllers_spawn_callback = RegisterEventHandler(
-        OnProcessExit(
-            target_action=spawn_robot,
-            on_exit=[spawn_jackal_controllers],
         )
     )
 
@@ -422,7 +411,7 @@ def generate_launch_description():
     ld.add_action(jackal_controllers_spawn_callback)
     # launch jackal_teleop_base
     ld.add_action(launch_jackal_teleop_base)
-    ld.add_action(static_tf_node)
+    # ld.add_action(static_tf_node)
     # stop the robot when no cmd_vel is received
     ld.add_action(stop_jackal)
 
