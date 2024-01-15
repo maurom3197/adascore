@@ -16,9 +16,9 @@ main_node:
     goal_tolerance: 0.40
 
     # World parameters
-    world_name: "social_scenarios.world" #Leave empty to obtain no world
-    data_path: "social_scenarios.json"  #"social_indoor2.json"
-    agents_config: "social_scenarios_agents.yaml" #"social_indoor2_agents.yaml"
+    world_name: "social_nav.world" #Leave empty to obtain no world
+    data_path: "social_nav.json"  #"social_indoor2.json"
+    agents_config: "social_indoor_agents3.yaml" #"social_indoor2_agents.yaml"
 
     use_localization: False
 
