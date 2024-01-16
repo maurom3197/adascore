@@ -23,8 +23,8 @@ main_node:
     use_localization: False
 
     # Task parameters
-    task: 'SocialController' # goToPose, Following, Vineyards
-    
+    # task: 'SocialController' # goToPose, Following, Vineyards
+    task: 'SocialControllerCostmap' # goToPose, Following, Vineyards
     # Sensors parameters
     sensor: 'applr' # lidar or rgb_camera or depth_camera
     update_frequency: 10.0 #20.0 # update the controller parameters at this frequency

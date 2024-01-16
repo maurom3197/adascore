@@ -42,6 +42,7 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/social_controller_applr
+  scripts/social_controller_costmap_applr
   DESTINATION lib/${PROJECT_NAME}
 )
 
