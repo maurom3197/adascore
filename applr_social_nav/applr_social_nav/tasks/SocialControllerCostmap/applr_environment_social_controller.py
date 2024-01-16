@@ -159,6 +159,8 @@ class Pic4rlEnvironmentAPPLR(Node):
                                 0.02,   # scale BaseObstacle
                                 32.0,   # scale PathDist
                                 24.0,   # scale GoalDist
+                                32.0,    # scale PathAlign
+                                24.0,    # scale GoalAlign
                                 0.55,   # inflation_radius
                                 0.25,   # covariance height
                                 0.25,   # covariance width

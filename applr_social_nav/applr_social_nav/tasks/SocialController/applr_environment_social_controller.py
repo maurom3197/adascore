@@ -157,7 +157,16 @@ class Pic4rlEnvironmentAPPLR(Node):
         #                         #   0.25, 0.25, # covariance right
         #                         #   0.6, 1.5 # max vel robot
         #                         ]
-        self.init_nav_params = [0.6, 1.5, 1.7, 0.02, 32.0, 24.0, 0.55]
+        self.init_nav_params = [0.6,    # max vel_x
+                                1.5,    # max vel theta
+                                1.7,    # sim_time
+                                0.02,   # scale BaseObstacle
+                                32.0,   # scale PathDist
+                                24.0,   # scale GoalDist
+                                32.0,    # scale PathAlign
+                                24.0,    # scale GoalAlign
+                                0.55,   # inflation_radius
+                                ]
         self.n_navigation_end = 0
         self.navigator = BasicNavigator()
 

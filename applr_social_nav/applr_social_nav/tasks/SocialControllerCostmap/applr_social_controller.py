@@ -55,6 +55,8 @@ class SocialControllerCostmapAPPLR(Pic4rlEnvironmentAPPLR):
         [0.005, 0.5], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
+        [10, 40], # path alignement scale
+        [10, 40], # goal alignement scale
         [0.3, 1.0], # inflation radius
         [0.1, 1.0], # covariance height
         [0.1, 1.0], # covariance width
@@ -95,6 +97,8 @@ class SocialControllerCostmapAPPLR(Pic4rlEnvironmentAPPLR):
         [0.005, 0.5], # base obstacle scale
         [10, 40], # path dist scale
         [10, 40], # goal dist scale
+        [10, 40], # path alignement scale
+        [10, 40], # goal alignement scale
         [0.3, 1.0], # inflation radius
         [0.1, 1.0], # covariance height
         [0.1, 1.0], # covariance width
