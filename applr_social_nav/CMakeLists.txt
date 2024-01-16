@@ -12,8 +12,6 @@ find_package(rclpy REQUIRED)
 find_package(jackal_navigation REQUIRED)
 find_package(hunav_sim REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(behaviortree_cpp_v3 REQUIRED)
-find_package(rclcpp REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -27,56 +25,13 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-set(dependencies
-  std_srvs
-  behaviortree_cpp_v3
-  rclcpp
-)
-
-include_directories(
-  include
-)
-
-add_library(pause_navigation_bt_node SHARED
-  src/pause_navigation.cpp
-)
-
-ament_target_dependencies(pause_navigation_bt_node
-  ${dependencies}
-)
-
-target_compile_definitions(pause_navigation_bt_node
-  PRIVATE "BT_PLUGIN_EXPORT"
-)
-
-install(TARGETS
-  pause_navigation_bt_node
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
-
-install(DIRECTORY
-  include/
-  DESTINATION include/
-)
-
-install(FILES pause_navigation.xml
-  DESTINATION share/${PROJECT_NAME}
-)
-
 install(DIRECTORY
   launch
   config
   maps
-  behavior_trees
   goals_and_poses
   worlds
   DESTINATION share/${PROJECT_NAME}/
-)
-
-ament_export_include_directories(
-  include
 )
 
 
@@ -88,11 +43,6 @@ install(PROGRAMS
   scripts/social_controller_applr
   DESTINATION lib/${PROJECT_NAME}
 )
-
-ament_export_libraries(
-  pause_navigation_bt_node)
-
-ament_export_dependencies(${dependencies})
 
 ament_environment_hooks("${CMAKE_CURRENT_SOURCE_DIR}/env-hooks/${PROJECT_NAME}.dsv.in")
 

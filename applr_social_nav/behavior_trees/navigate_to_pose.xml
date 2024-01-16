@@ -13,21 +13,9 @@
           <RecoveryNode number_of_retries="1" name="ComputePathToPose">
             <Fallback>
               <ReactiveSequence>
-                <!-- <Inverter>
-                  <PathExpiringTimer seconds="10" path="{path}"/>
-                </Inverter> -->
                 <Inverter>
                   <GlobalUpdatedGoal/>
                 </Inverter>
-                <!-- <ReactiveFallback>
-                  <Inverter>
-                    <PauseNavigation/>
-                  </Inverter>
-                  <SequenceStar name="CancelingControlAndWait">
-                    <CancelControl name="ControlCancel"/>
-                    <Wait wait_duration="5"/>
-                  </SequenceStar>
-                </ReactiveFallback>  -->
                 <IsPathValid path="{path}"/>
               </ReactiveSequence>
               <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
