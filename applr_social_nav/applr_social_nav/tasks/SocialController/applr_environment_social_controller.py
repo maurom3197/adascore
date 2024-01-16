@@ -186,6 +186,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         """
         self.get_logger().debug("sending action...")
+        self.send_action(nav_params)
 
         self.spin_sensors_callbacks()
         self.get_logger().debug("getting sensor data...")
@@ -263,8 +264,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         costmap_params = [params[-1]]
         controller_params = params[:-1]
-        print(costmap_params)
-        print(controller_params)
+        # print(costmap_params)
+        # print(controller_params)
 
         self.set_costmap_params(costmap_params)
         self.set_controller_params(controller_params)
@@ -652,18 +653,18 @@ class Pic4rlEnvironmentAPPLR(Node):
     def set_costmap_params(self, costmap_params):
         self.get_logger().debug('setting costmap params to: '+str(costmap_params))
 
-        self.set_req_local = SetParameters.Request()
-        future = self.send_set_request_global(costmap_params)
-        rclpy.spin_until_future_complete(self, future)
+        # self.set_req_global = SetParameters.Request()
+        # future = self.send_set_request_global(costmap_params)
+        # rclpy.spin_until_future_complete(self, future)
 
-        try:
-            get_response = future.result()
-            self.get_logger().debug(
-                'Result %s' %
-                (get_response.results[0].successful))
-        except Exception as e:
-            self.get_logger().debug(
-                'Service call failed %r' % (e,))
+        # try:
+        #     get_response = future.result()
+        #     self.get_logger().debug(
+        #         'Result %s' %
+        #         (get_response.results[0].successful))
+        # except Exception as e:
+        #     self.get_logger().debug(
+        #         'Service call failed %r' % (e,))
 
         self.set_req_local = SetParameters.Request()
 
@@ -859,21 +860,21 @@ class Pic4rlEnvironmentAPPLR(Node):
         #     self.get_logger().info('service not available, waiting again...')
         # self.set_req_global = SetParameters.Request()
 
-        # self.set_cli_local = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
-        # while not self.set_cli_local.wait_for_service(timeout_sec=1.0):
-        #     self.get_logger().info('service not available, waiting again...')
-        # self.set_req_local = SetParameters.Request()
+        self.set_cli_local = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
+        while not self.set_cli_local.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.set_req_local = SetParameters.Request()
 
         # # create Controller parameter client
-        # self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
-        # while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
-        #     self.get_logger().info('service not available, waiting again...')
-        # self.get_req_controller = GetParameters.Request()
+        self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
+        while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.get_req_controller = GetParameters.Request()
 
-        # self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
-        # while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
-        #     self.get_logger().info('service not available, waiting again...')
-        # self.set_req_controller = SetParameters.Request()
+        self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
+        while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.set_req_controller = SetParameters.Request()
 
         # create reset world client 
         self.reset_world_client = self.create_client(Empty, 'reset_simulation')
