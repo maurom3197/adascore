@@ -27,6 +27,7 @@ endif()
 
 install(DIRECTORY
   launch
+  behavior_trees
   config
   maps
   goals_and_poses
