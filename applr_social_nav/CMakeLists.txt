@@ -43,6 +43,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/social_controller_applr
   scripts/social_controller_costmap_applr
+  scripts/social_force_window_applr
   DESTINATION lib/${PROJECT_NAME}
 )
 
