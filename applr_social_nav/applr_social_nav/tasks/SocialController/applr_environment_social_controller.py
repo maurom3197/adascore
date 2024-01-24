@@ -117,7 +117,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.logdir = create_logdir(
             training_params["--policy"], self.sensor_type, log_path
         )
-        self.get_logger().info(self.logdir)
+        self.get_logger().info(f"Logdir: {self.logdir}")
+
+        if "--model-dir" in training_params:
+            self.model_path = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--model-dir"])
 
         self.create_clients()
         self.is_paused = None

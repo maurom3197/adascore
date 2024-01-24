@@ -127,7 +127,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.logdir = create_logdir(
             training_params["--policy"], self.sensor_type, log_path
         )
-        self.get_logger().info(self.logdir)
+        self.get_logger().info(f"Logdir: {self.logdir}")
+
+        if "--model-dir" in training_params:
+            self.model_path = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--model-dir"])
 
         self.create_clients()
         self.is_paused = None
@@ -596,9 +599,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         return people_state, people_info
 
     def send_set_request_controller(self, param_values):
-        self.set_req_controller.parameters = [Parameter(name='FollowPath.social_weight ', value=param_values[0]).to_parameter_msg(),
-                                              Parameter(name='FollowPath.costmap_weight ', value=param_values[1]).to_parameter_msg(),
-                                              Parameter(name='FollowPath.velocity_weight ', value=param_values[2]).to_parameter_msg(),
+        self.set_req_controller.parameters = [Parameter(name='FollowPath.social_weight', value=param_values[0]).to_parameter_msg(),
+                                              Parameter(name='FollowPath.costmap_weight', value=param_values[1]).to_parameter_msg(),
+                                              Parameter(name='FollowPath.velocity_weight', value=param_values[2]).to_parameter_msg(),
                                               Parameter(name='FollowPath.angle_weight', value=param_values[3]).to_parameter_msg(),
                                               Parameter(name='FollowPath.distance_weight', value=param_values[4]).to_parameter_msg()
                                               ]
