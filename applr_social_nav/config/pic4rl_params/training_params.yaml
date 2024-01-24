@@ -4,12 +4,11 @@ training_params:
     --episode-max-steps: 800 # (int) The maximum steps for an episode. The default is ``int(1e3)``
     --n-experiments: 1 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
-    --save-model-interval: 5000 # (int) Interval to save model. The default is ``int(1e4)``
-    --save-summary-interval: 1000 # (int) Interval to save summary. The default is ``int(1e3)``
-#    --model-dir: '/root/applr_ws/src/APPLR_social_nav/training/pic4rl/models/adaptive_social_controller/20230404_125411.796466_applr_TD3/20230404T125413.557621_TD3_/' # (str) Directory to restore model.
+    --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
+    --save-summary-interval: 10000 # (int) Interval to save summary. The default is ``int(1e3)``
+#    --model-dir: 'src/APPLR_social_nav/applr_social_nav/trained_agents/SocialController/20231017T211306.665432_SAC_' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
-    # --logdir: '/home/user/APPL_ws/src/training/pic4rl/results' # (str) Output directory name. The default is ``"results"``
     --logdir: 'src/Results/' # (str) Output directory name. The default is ``"results"``
 #    --evaluate: # Whether evaluate trained model
     --test-interval: 10000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
