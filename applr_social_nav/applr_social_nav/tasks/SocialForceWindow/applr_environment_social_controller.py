@@ -162,6 +162,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.k_people = 4
         self.min_people_distance = 10.0
         self.max_person_dist_allowed = 5.0
+        self.previous_local_goal_info = [0.0,0.0]
 
         self.initial_pose, self.goals, self.poses, self.agents = self.get_goals_and_poses()
         self.goal_pose = self.goals[0]
@@ -224,7 +225,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             done = False
             event = 'None'
 
-        self.update_state(lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event)
+        self.update_state(lidar_measurements, local_goal_info, robot_pose, people_state, nav_params, done, event)
 
         if done:
             self.navigator.cancelTask()
@@ -356,30 +357,35 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         # Distance Reward
         # Positive reward if the distance to the goal is decreased
-        cd = 0.1
-        Rd = (self.previous_goal_info[0] - local_goal_info[0])  
+        cd = 1.0
+        Rd = (self.previous_local_goal_info[0] - local_goal_info[0])*20.0
+        
+        Rd = np.minimum(Rd, 2.5) 
+        Rd = np.maximum(Rd, -2.5)
 
         # Heading Reward
-        ch = 0.3
+        ch = 0.5
         Rh = (1-2*math.sqrt(math.fabs(local_goal_info[1]/math.pi))) #heading reward v.2
         
         # Linear Velocity Reward
-        cv = 0.1
-        Rv = robot_velocity[0] - self.max_lin_vel # velocity reward
+        cv = 1.0
+        Rv = (robot_velocity[0] - self.max_lin_vel)/self.max_lin_vel # velocity reward
         
         # Obstacle Reward
-        co = 0.1
-        Ro = self.min_obstacle_distance - 3.0 # obstacle reward
+        co = 2.0
+        Ro = (self.min_obstacle_distance - self.lidar_distance)/self.lidar_distance # obstacle reward
 
         # Social Disturbance Reward
         Rp = 0.
         if self.min_people_distance < 1.5: #1.2
-            Rp += -1/self.min_people_distance # personal space reward
-        cp = 2.0 
+            Rp += 1/self.min_people_distance # personal space reward
+        Rp = -np.minimum(Rp, 2.0)
+        cp = 1.0
 
         # Social work
-        Rs = -social_work
-        cs = 10. 
+        Rs = social_work * 10
+        Rs = -np.minimum(Rs, 5.0) 
+        cs = 1.0
 
         # Total Reward
         reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
@@ -390,7 +396,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug('Goal Distance Reward Rd: ' +str(cd*Rd))
         self.get_logger().debug('Velocity Reward Rv: ' +str(cv*Rv))
         self.get_logger().debug('Obstacle Reward Ro: ' +str(co*Ro))
-        self.get_logger().debug('total reward: ' +str(reward))
+        self.get_logger().debug('Dense reward : ' +str(reward))
 
         if event == "goal":
             reward += 0 
@@ -426,11 +432,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         #self.get_logger().debug('state=[goal,params,people,lidar]: '+str(state))
         return state
 
-    def update_state(self,lidar_measurements, goal_info, robot_pose, people_state, nav_params, done, event):
+    def update_state(self,lidar_measurements, local_goal_info, robot_pose, people_state, nav_params, done, event):
         """
         """
         self.previous_lidar_measurements = lidar_measurements
-        self.previous_goal_info = goal_info
+        self.previous_local_goal_info = local_goal_info
         self.previous_robot_pose = robot_pose
         self.people_state = people_state
         self.previous_nav_params = nav_params
