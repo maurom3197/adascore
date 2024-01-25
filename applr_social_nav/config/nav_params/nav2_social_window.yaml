@@ -111,7 +111,7 @@ controller_server:
       controller_frame: map
       robot_base_frame: base_link
 
-      max_trans_vel:        0.8 
+      max_trans_vel:        0.6
       min_trans_vel:        0.08
       max_rot_vel:          1.57 
       min_rot_vel:          0.52 
