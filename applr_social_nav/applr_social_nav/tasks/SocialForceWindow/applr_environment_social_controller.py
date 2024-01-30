@@ -132,6 +132,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         if "--model-dir" in training_params:
             self.model_path = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--model-dir"])
 
+        if "--rb-path-load" in training_params:
+            self.rb_path_load = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--rb-path-load"])
+
         self.create_clients()
         self.is_paused = None
         self.unpause()
@@ -290,6 +293,7 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         # Regulate the step frequency of the environment
         action_hz, t1 = compute_frequency(self.t0)
+        self.get_logger().debug(f"frequency : {action_hz}")
         self.t0 = t1
         if action_hz > self.params_update_freq:
             frequency_control(self.params_update_freq)

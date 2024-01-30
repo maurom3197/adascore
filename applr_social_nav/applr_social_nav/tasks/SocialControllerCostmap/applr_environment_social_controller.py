@@ -122,6 +122,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         if "--model-dir" in training_params:
             self.model_path = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--model-dir"])
 
+        if "--rb-path-load" in training_params:
+            self.rb_path_load = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--rb-path-load"])
 
         self.create_clients()
         self.is_paused = None
