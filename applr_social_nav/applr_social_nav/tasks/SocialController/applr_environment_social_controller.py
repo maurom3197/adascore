@@ -216,7 +216,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
 
             self.get_logger().debug("getting reward...")
-            reward = self.get_reward(lidar_measurements, goal_info, robot_pose, people_state, social_work, done, event)
+            reward = self.get_reward(goal_info, social_work, robot_velocity, event)
 
             self.get_logger().debug("getting observation...")
             observation = self.get_observation(lidar_measurements, goal_info, robot_pose, people_state, nav_params)
@@ -349,41 +349,51 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return False, "None"
 
-    def get_reward(self,lidar_measurements, goal_info, robot_pose, people_state, social_work, done, event):
+    def get_reward(self, goal_info, social_work, robot_velocity, event):
         """
         """
-        # Distance Reward
-        #dist_reward = (self.previous_goal_info[0] - goal_info[0])*30 
-
-        # p_t = np.array([robot_pose[0], robot_pose[1]], dtype=np.float32)
-        # p_tp1 = np.array([self.previous_robot_pose[0], self.previous_robot_pose[1]], dtype=np.float32)
-        # goal_pose = np.asarray(self.goal_pose, dtype=np.float32)
+       # Distance Reward
+        # Positive reward if the distance to the goal is decreased
+        cd = 1.0
+        Rd = (self.previous_goal_info[0] - goal_info[0])*20.0
+        
+        Rd = np.minimum(Rd, 2.5) 
+        Rd = np.maximum(Rd, -2.5)
 
         # Heading Reward
-        ch = 0.3
-        #Rh = np.dot((p_tp1 - p_t), (goal_pose - p_t)) / goal_info[0] #heading reward v.1
+        ch = 0.5
         Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
         
+        # Linear Velocity Reward
+        cv = 1.0
+        Rv = (robot_velocity[0] - self.max_lin_vel)/self.max_lin_vel # velocity reward
+        
+        # Obstacle Reward
+        co = 2.0
+        Ro = (self.min_obstacle_distance - self.lidar_distance)/self.lidar_distance # obstacle reward
+
         # Social Disturbance Reward
-        #avg_people_dist = np.mean(people_state[:,0])
-        #Rs = -1/avg_people_dist # people distance reward
         Rp = 0.
         if self.min_people_distance < 1.5: #1.2
-            Rp += -1/self.min_people_distance # personal space reward
-        cp = 2.0 #1.5
+            Rp += 1/self.min_people_distance # personal space reward
+        Rp = -np.minimum(Rp, 2.0)
+        cp = 1.0
 
         # Social work
-        Rs = -social_work
-        cs = 15. #15.0
+        Rs = social_work * 10
+        Rs = -np.minimum(Rs, 5.0) 
+        cs = 1.0
 
         # Total Reward
-        reward = ch*Rh + cs*Rs + cp*Rp
-        #reward = cs*Rs
-
+        reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
+        
         self.get_logger().debug('Goal Heading Reward Rh: ' +str(ch*Rh))
         self.get_logger().debug('People proxemics reward Rp: ' +str(cp*Rp))
         self.get_logger().debug('Social work reward Rs: ' +str(cs*Rs))
-        self.get_logger().debug('sparse reward: '+str(reward))
+        self.get_logger().debug('Goal Distance Reward Rd: ' +str(cd*Rd))
+        self.get_logger().debug('Velocity Reward Rv: ' +str(cv*Rv))
+        self.get_logger().debug('Obstacle Reward Ro: ' +str(co*Ro))
+        self.get_logger().debug('Dense reward : ' +str(reward))
 
         if event == "goal":
             reward += 0 
@@ -506,9 +516,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
 
-        if self.episode % 30 == 0.:
+        if self.episode % 3 == 0.:
             self.get_logger().debug("Respawning all agents ...")
-            self.respawn_agents(all=True)
+            self.respawn_agents()
     
         self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
@@ -544,9 +554,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         if self.index in [0,1]:
             agents2reset = [1]
         elif self.index in [2,3,4]:
-            agents2reset = [2,3]
+            agents2reset = [2] #2,3 
         elif self.index > 4:
-            agents2reset = [3,4,5,9]
+            agents2reset = [3,6] # 3,4,5,9
         elif all:
             agents2reset = list(range(1,len(self.agents)+1))
         else:

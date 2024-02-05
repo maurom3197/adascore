@@ -7,7 +7,7 @@ training_params:
     # --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-model-interval: 5000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-#    --model-dir: 'src/Models/<name_of_the_model>' # (str) Directory to restore model.
+#    --model-dir: 'src/Models/DWB_social_controller/20240131T161230.210550_SAC_' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: 'src/Results/' # (str) Output directory name. The default is ``"results"``
@@ -22,11 +22,11 @@ training_params:
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
     --rb-path-save: 'Social_controller_SAC_500K' # Save experience replay buffer in case of save
-    # --rb-path-load: 'src/Results/<name_of_the_model_to_restore>' # Load experience replay buffer in case of restore
+#    --rb-path-load: 'src/Results/20240131_161229.452056_applr_SAC/Social_controller_SAC_500K.npz' # Load experience replay buffer in case of restore
     --logging-level: DEBUG # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'SAC' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
-    --change_goal_and_pose: 3
+    --change_goal_and_pose: 1
     --starting_episodes: 0
     --batch-size: 64 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
