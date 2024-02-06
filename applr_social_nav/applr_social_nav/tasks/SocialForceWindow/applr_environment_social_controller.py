@@ -179,8 +179,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.navigator = BasicNavigator()
 
         self.get_logger().info(f'Gym mode: {self.mode}')
-        if self.mode == "testing":
-            self.nav_metrics = Navigation_Metrics(self.logdir)
+        #if self.mode == "testing":
+        #    self.nav_metrics = Navigation_Metrics(self.logdir)
 
         self.get_logger().info("PIC4RL_Environment: Starting process")
         self.get_logger().info("Navigation params update at: " + str(self.params_update_freq)+' Hz')
@@ -449,10 +449,10 @@ class Pic4rlEnvironmentAPPLR(Node):
     def reset(self, n_episode, tot_steps, evaluate=False):
         """
         """
-        if self.mode == "testing":
-            self.nav_metrics.calc_metrics(n_episode, self.initial_pose, self.goal_pose)
-            self.nav_metrics.log_metrics_results(n_episode)
-            self.nav_metrics.save_metrics_results(n_episode)
+        # if self.mode == "testing":
+        #     self.nav_metrics.calc_metrics(n_episode, self.initial_pose, self.goal_pose)
+        #     self.nav_metrics.log_metrics_results(n_episode)
+        #     self.nav_metrics.save_metrics_results(n_episode)
 
         self.episode = n_episode
         self.evaluate = evaluate
@@ -466,6 +466,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         logging.info("Initializing new episode ...")
         self.new_episode()
         self.get_logger().debug("unpausing...")
+        if self.mode == "testing":
+            subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={self.model_path} &",
+                shell=True,
+                stdout=subprocess.DEVNULL
+                )
         self.unpause()
 
         self.get_logger().debug("Performing null step to reset variables")

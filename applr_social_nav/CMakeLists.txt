@@ -44,6 +44,7 @@ install(PROGRAMS
   scripts/social_controller_applr
   scripts/social_controller_costmap_applr
   scripts/social_force_window_applr
+  scripts/dumb_nav_applr
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -475,6 +475,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         logging.info("Initializing new episode ...")
         self.new_episode()
         #self.simulation_restarted = 0
+        if self.mode == "testing":
+            subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={self.model_path} &",
+                shell=True,
+                stdout=subprocess.DEVNULL
+                )
 
         self.get_logger().debug("unpausing...")
         self.unpause()

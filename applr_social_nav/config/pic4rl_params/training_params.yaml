@@ -1,7 +1,7 @@
 training_params:
 # Trainer parameters
     --max-steps: 1000000 # (int) The maximum steps for training. The default is ``int(1e6)``
-    --episode-max-steps: 200 # (int) The maximum steps for an episode. The default is ``int(1e3)``
+    --episode-max-steps: 300 # (int) The maximum steps for an episode. The default is ``int(1e3)``
     --n-experiments: 1 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
     # --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
@@ -11,10 +11,10 @@ training_params:
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: 'src/Results/' # (str) Output directory name. The default is ``"results"``
-#    --evaluate: # Whether evaluate trained model
+    --evaluate: # Whether evaluate trained model
     --test-interval: 5000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
-    --test-episodes: 3 # (int) Number of episodes at test. The default is ``5``
+    --test-episodes: 10 # (int) Number of episodes at test. The default is ``5``
 # --save-test-path: # Save trajectories of evaluation.
 # --show-test-images: # Show input images to neural networks when an episode finishes
 # --save-test-movie: # Save rendering results.
