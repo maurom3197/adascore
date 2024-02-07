@@ -132,7 +132,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.spin_sensors_callbacks()
 
         # init goal publisher
-        self.goal_pub = self.create_publisher(
+        self.hunav_goal_pub = self.create_publisher(
             PoseStamped,
             'goal_pose',
             qos)
@@ -521,7 +521,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
 
-        if self.episode % 3 == 0.:
+        if self.episode % 3 == 0. or self.mode == "testing":
             self.get_logger().debug("Respawning all agents ...")
             self.respawn_agents()
     
@@ -740,6 +740,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         goal_pose.pose.orientation.w = 1.0
 
         # self.goal_pub.publish(goal_pose)
+        if self.mode == "testing":
+            self.get_logger().debug("Sending goal pose to navigator...")
+            self.hunav_goal_pub.publish(goal_pose)
         self.navigator.goToPose(goal_pose)
         
     def get_random_goal(self):
