@@ -1,8 +1,8 @@
 repositories:
-  APPLR_social_nav:
-    type: git
-    url: https://github.com/maurom3197/APPLR_social_nav.git
-    version: humble
+  # APPLR_social_nav:
+  #   type: git
+  #   url: https://github.com/maurom3197/APPLR_social_nav.git
+  #   version: humble
   hunav/lightsfm:
     type: git
     url: https://github.com/robotics-upo/lightsfm.git
