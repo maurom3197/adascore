@@ -23,10 +23,15 @@ hunav_loader:
       cyclic_goals: true
       goals:
         - g0
+        - g1
       g0:
         x: 2.223393
         y: -2.661066
         h: 1.250000
+      g1:
+        x: -2.00000
+        y: 4.097434
+        h: 0.0
     agent2:
       id: 2
       skin: 2
@@ -43,10 +48,15 @@ hunav_loader:
       cyclic_goals: true
       goals:
         - g0
+        - g1
       g0:
         x: -1.978295
         y: -2.696076
         h: 1.250000
+      g1:
+        x: 2.994274
+        y: 3.957355
+        h: 0.0
     agent3:
       id: 3
       skin: 1
@@ -63,10 +73,15 @@ hunav_loader:
       cyclic_goals: true
       goals:
         - g0
+        - g1
       g0:
         x: -1.978672
         y: -0.735422
         h: 1.250000
+      g1:
+        x: 2.714108
+        y: -0.945546
+        h: 0.0
     agent4:
       id: 4
       skin: 3
@@ -83,7 +98,12 @@ hunav_loader:
       cyclic_goals: true
       goals:
         - g0
+        - g1
       g0:
         x: 2.853647
         y: -2.135856
         h: 1.250000
+      g1:
+        x: -2.083735
+        y: -1.470868
+        h: 0.0
