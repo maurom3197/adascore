@@ -349,7 +349,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 return False, "collision"
 
         # check timeout steps
-        if self.episode_step == self.timeout_steps:
+        if self.episode_step == self.timeout_steps-1:
             self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Timeout")
             logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Timeout")
             return True, "timeout"
@@ -467,7 +467,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.new_episode()
         self.get_logger().debug("unpausing...")
         if self.mode == "testing":
-            subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={self.model_path} &",
+            Path(os.path.join(self.logdir, 'evaluator/')).mkdir(parents=True, exist_ok=True)
+            evaluator_path = str(Path(os.path.join(self.logdir, 'evaluator','metrics')))
+            subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &",
                 shell=True,
                 stdout=subprocess.DEVNULL
                 )
@@ -494,7 +496,11 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         if self.episode % 3 == 0. or self.mode == "testing":
             self.get_logger().debug("Respawning all agents ...")
-            self.respawn_agents()
+            if self.mode == "testing":
+                self.get_logger().info("Respawning all agents ...")
+                self.respawn_agents(all=True)
+            else:
+                self.respawn_agents()
     
         self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
@@ -527,17 +533,17 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_agents(self, all=False):
         """
         """
-        if self.index in [0,1]:
+        if all:
+            agents2reset = list(range(1,len(self.agents)+1))
+        elif self.index in [0,1]:
             agents2reset = [1]
         elif self.index in [2,3,4]:
             agents2reset = [2,3]
         elif self.index > 4:
             agents2reset = [3,4,5,9]
-        elif all:
-            agents2reset = list(range(1,len(self.agents)+1))
         else:
             return
-            
+             
         for agent in agents2reset:
             x, y , yaw = tuple(self.agents[agent-1])
 
