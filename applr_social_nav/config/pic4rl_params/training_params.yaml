@@ -1,20 +1,20 @@
 training_params:
 # Trainer parameters
     --max-steps: 1000000 # (int) The maximum steps for training. The default is ``int(1e6)``
-    --episode-max-steps: 300 # (int) The maximum steps for an episode. The default is ``int(1e3)``
+    --episode-max-steps: 200 # (int) The maximum steps for an episode. The default is ``int(1e3)``
     --n-experiments: 1 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
     # --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-model-interval: 5000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-#    --model-dir: 'src/Models/DWB_social_controller/20240131T161230.210550_SAC_' # (str) Directory to restore model.
+    --model-dir: 'src/Results/20240223_155436.484927_applr_SAC/20240223T155437.256401_SAC_' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: 'src/Results/' # (str) Output directory name. The default is ``"results"``
-    --evaluate: # Whether evaluate trained model
+#    --evaluate: # Whether evaluate trained model
     --test-interval: 5000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
-    --test-episodes: 10 # (int) Number of episodes at test. The default is ``5``
+    --test-episodes: 3 # (int) Number of episodes at test. The default is ``5``
 # --save-test-path: # Save trajectories of evaluation.
 # --show-test-images: # Show input images to neural networks when an episode finishes
 # --save-test-movie: # Save rendering results.
@@ -22,11 +22,11 @@ training_params:
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
     --rb-path-save: 'Social_controller_SAC_500K' # Save experience replay buffer in case of save
-#    --rb-path-load: 'src/Results/20240131_161229.452056_applr_SAC/Social_controller_SAC_500K.npz' # Load experience replay buffer in case of restore
+    --rb-path-load: 'src/Results/20240223_155436.484927_applr_SAC/Social_controller_SAC_500K.npz' # Load experience replay buffer in case of restore
     --logging-level: DEBUG # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'SAC' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
-    --change_goal_and_pose: 1
+    --change_goal_and_pose: 3
     --starting_episodes: 0
     --batch-size: 64 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
@@ -37,8 +37,8 @@ training_params:
     --memory-capacity: 500000  # (int) Replay Buffer size. The default is ``1e6``.
 
 # For only SAC
-#    --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.
-#    --auto-alpha: # Automatic alpha tuning
+    --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.
+    --auto-alpha: # Automatic alpha tuning
 # For only SAC-AE
 #   --stop-q-grad: # Whether stop gradient after convolutional layers at Encoder
 

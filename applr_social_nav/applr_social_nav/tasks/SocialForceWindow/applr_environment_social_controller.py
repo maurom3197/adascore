@@ -378,17 +378,17 @@ class Pic4rlEnvironmentAPPLR(Node):
         # Distance Reward
         # Positive reward if the distance to the goal is decreased
         cd = 1.0
-        Rd = (self.previous_local_goal_info[0] - local_goal_info[0])*20.0
+        Rd = (self.previous_local_goal_info[0] - local_goal_info[0])*10.0
         
-        Rd = np.minimum(Rd, 2.5) 
-        Rd = np.maximum(Rd, -2.5)
+        Rd = np.minimum(Rd, 2.0) 
+        Rd = np.maximum(Rd, -2.0)
 
         # Heading Reward
-        ch = 0.5
+        ch = 0.4
         Rh = (1-2*math.sqrt(math.fabs(local_goal_info[1]/math.pi))) #heading reward v.2
         
         # Linear Velocity Reward
-        cv = 1.0
+        cv = 0.8
         Rv = (robot_velocity[0] - self.max_lin_vel)/self.max_lin_vel # velocity reward
         
         # Obstacle Reward
@@ -397,15 +397,15 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         # Social Disturbance Reward
         Rp = 0.
-        if self.min_people_distance < 1.5: #1.2
+        if self.min_people_distance < 2.0: #1.2
             Rp += 1/self.min_people_distance # personal space reward
-        Rp = -np.minimum(Rp, 2.0)
-        cp = 1.5 # 1.0
+        Rp = -np.minimum(Rp, 2.5)
+        cp = 2.0
 
         # Social work
-        Rs = social_work * 15
+        Rs = social_work * 20
         Rs = -np.minimum(Rs, 3.0) 
-        cs = 1.5 # 1.0
+        cs = 2.0
 
         # Total Reward
         reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
@@ -526,7 +526,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
 
-        if self.episode % 3 == 0. or self.mode == "testing":
+        if self.episode % 1 == 0. or self.mode == "testing":
             self.get_logger().debug("Respawning all agents ...")
             if not self.is_paused:
                 self.pause()
@@ -572,7 +572,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         elif self.index in [0,1]:
             agents2reset = [1]
         elif self.index in [2,3,4]:
-            agents2reset = [2,3]
+            agents2reset = [2] #2,3 
         elif self.index > 4:
             agents2reset = [3,4,5,9]
         else:
