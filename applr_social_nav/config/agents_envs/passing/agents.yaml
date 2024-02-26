@@ -10,7 +10,7 @@ hunav_loader:
     agent1:
       id: 1
       skin: 0
-      behavior: 1
+      behavior: 2
       group_id: -1
       max_vel: 0.45
       radius: 0.4
@@ -35,7 +35,7 @@ hunav_loader:
     agent2:
       id: 2
       skin: 2
-      behavior: 1
+      behavior: 2
       group_id: -1
       max_vel: 0.45
       radius: 0.4
@@ -60,7 +60,7 @@ hunav_loader:
     agent3:
       id: 3
       skin: 4
-      behavior: 1
+      behavior: 2
       group_id: -1
       max_vel: 0.45
       radius: 0.4
@@ -85,7 +85,7 @@ hunav_loader:
     agent4:
       id: 4
       skin: 3
-      behavior: 1
+      behavior: 2
       group_id: -1
       max_vel: 0.45
       radius: 0.4

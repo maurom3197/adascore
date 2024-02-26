@@ -19,6 +19,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from std_srvs.srv import Empty
+from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
 from ament_index_python.packages import get_package_share_directory
 from pic4rl.utils.env_utils import *
@@ -109,6 +110,8 @@ class Pic4rlEnvironmentAPPLR(Node):
             "sensor").get_parameter_value().string_value
         self.use_localization = self.get_parameter(
             "use_localization").get_parameter_value().bool_value
+        self.bag_process = None
+        self.bag_episode = 0
         
         # create Sensor class to get and process sensor data
         qos = QoSProfile(depth=10)
@@ -145,6 +148,12 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.hunav_goal_pub = self.create_publisher(
             PoseStamped,
             'goal_pose',
+            qos)
+        
+        # init weights publisher
+        self.cost_weights_pub = self.create_publisher(
+            Float32MultiArray,
+            'cost_weights',
             qos)
 
         self.sfm = SocialForceModel(self, self.agents_config)
@@ -232,6 +241,10 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         if done:
             self.navigator.cancelTask()
+            if self.mode == "testing" and self.bag_process is not None:
+                self.bag_process.terminate()
+                self.bag_process.communicate()
+                self.bag_process = None
             # lifecyclePause(navigator=self.navigator)
             time.sleep(1.0)
 
@@ -290,6 +303,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         controller_params = params
         
         self.set_controller_params(controller_params)
+
+        # for testing purposes
+        self.cost_weights_pub.publish(Float32MultiArray(data=controller_params))
 
         # Regulate the step frequency of the environment
         action_hz, t1 = compute_frequency(self.t0)
@@ -460,12 +476,18 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("pausing...")
         self.pause()
 
+        if self.mode == "testing" and self.bag_process is not None:
+            self.bag_process.terminate()
+            self.bag_process.communicate()
+            self.bag_process = None
+
+
         logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
         
         self.get_logger().info("Initializing new episode ...")
         logging.info("Initializing new episode ...")
         self.new_episode()
-        self.get_logger().debug("unpausing...")
+        
         if self.mode == "testing":
             Path(os.path.join(self.logdir, 'evaluator/')).mkdir(parents=True, exist_ok=True)
             evaluator_path = str(Path(os.path.join(self.logdir, 'evaluator','metrics')))
@@ -473,6 +495,16 @@ class Pic4rlEnvironmentAPPLR(Node):
                 shell=True,
                 stdout=subprocess.DEVNULL
                 )
+            topic_list = " ".join(["/jackal/odom", "/people", '/cost_weights', '/goal_pose', ])
+            if self.bag_episode == 0:
+                Path(os.path.join(self.logdir, 'bags')).mkdir(parents=True, exist_ok=True)
+            self.bag_process = subprocess.Popen(f"ros2 bag record {topic_list} -o {self.logdir}/bags/episode_{self.bag_episode}",
+                shell=True,
+                stdout=subprocess.DEVNULL
+                )
+            self.bag_episode += 1
+
+        self.get_logger().debug("unpausing...")
         self.unpause()
 
         self.get_logger().debug("Performing null step to reset variables")
@@ -496,6 +528,8 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         if self.episode % 3 == 0. or self.mode == "testing":
             self.get_logger().debug("Respawning all agents ...")
+            if not self.is_paused:
+                self.pause()
             if self.mode == "testing":
                 self.get_logger().info("Respawning all agents ...")
                 self.respawn_agents(all=True)
@@ -689,7 +723,17 @@ class Pic4rlEnvironmentAPPLR(Node):
         req = Empty.Request()
         while not self.pause_physics_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
-        self.pause_physics_client.call_async(req) 
+        
+        #self.pause_physics_client.call_async(req) 
+        success = None
+        while success is None:
+            future = self.pause_physics_client.call_async(req)
+            rclpy.spin_until_future_complete(self, future)
+            if future.result() is not None:
+                success = future.result()
+                self.get_logger().debug(f'Result of pausing Gazebo {success}')
+            time.sleep(0.5)
+
 
     def unpause(self):
         self.is_paused = False
@@ -697,7 +741,15 @@ class Pic4rlEnvironmentAPPLR(Node):
         req = Empty.Request()
         while not self.unpause_physics_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
-        self.unpause_physics_client.call_async(req)
+        #self.unpause_physics_client.call_async(req)
+        success = None
+        while success is None:
+            future = self.unpause_physics_client.call_async(req)
+            rclpy.spin_until_future_complete(self, future)
+            if future.result() is not None:
+                success = future.result()
+                self.get_logger().debug(f'Result of unpausing Gazebo {success}')
+            time.sleep(0.5)
 
     def set_entity_state(self, entity_name, position, orientation = [0.0, 1.0]):
         """
