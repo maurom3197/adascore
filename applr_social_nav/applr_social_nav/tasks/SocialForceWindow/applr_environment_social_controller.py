@@ -566,14 +566,15 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_agents(self, all=False):
         """
         """
-        if all:
+        if all: # if testing
             agents2reset = list(range(1,len(self.agents)+1))
-        elif self.index in [0,1]:
-            agents2reset = [1]
-        elif self.index in [2,3,4]:
-            agents2reset = [2] #2,3 
-        elif self.index > 4:
-            agents2reset = [3,4,5,9]
+        # if training
+        elif self.index in range(8):
+            agents2reset = [1,2,3,12]
+        elif self.index in range(8,18):
+            agents2reset = [4,5,6,9,13,14] #2,3 
+        elif self.index > 18:
+            agents2reset = [7,8,9,10,11]
         else:
             return
             

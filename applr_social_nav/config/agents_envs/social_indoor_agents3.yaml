@@ -15,6 +15,8 @@ hunav_loader:
       - agent10
       - agent11
       - agent12
+      - agent13
+      - agent14
     agent1:
       id: 1
       skin: 4
@@ -24,7 +26,7 @@ hunav_loader:
       radius: 0.4
       init_pose:
         x: 3.8
-        y: 7.85
+        y: 8.5
         z: 1.250000
         h: -3.14
       goal_radius: 0.3
@@ -34,11 +36,11 @@ hunav_loader:
         - g1
       g0:
         x: 8.7
-        y: 7.85
+        y: 8.5
         z: 1.250000
       g1:
         x: 3.8
-        y: 7.85
+        y: 8.5
         z: 1.250000
     agent2:
       id: 2
@@ -73,8 +75,8 @@ hunav_loader:
       max_vel: 0.4
       radius: 0.4
       init_pose:
-        x: 1.5
-        y: -0.4
+        x: 1.85
+        y: -0.1
         z: 1.250000
         h: -1.57
       goal_radius: 0.3
@@ -82,18 +84,13 @@ hunav_loader:
       goals:
         - g0
         - g1
-        - g2
       g0:
-        x: 1.5
+        x: 1.85
         y: -4.1
         z: 1.250000
       g1:
-        x: 3.63
-        y: -8.0
-        z: 1.250000
-      g2:
-        x: 1.5
-        y: -0.4
+        x: 1.85
+        y: -0.1
         z: 1.250000
     agent4:
       id: 4
@@ -319,7 +316,7 @@ hunav_loader:
       radius: 0.4
       init_pose:
         x: 0.65
-        y: -4.0
+        y: 3.41
         z: 1.250000
         h: 1.68
       goal_radius: 0.1
@@ -329,9 +326,69 @@ hunav_loader:
         - g1
       g0:
         x: 0.65
-        y: -4.05
+        y: 3.41
         z: 1.250000
       g1:
         x: 0.65
-        y: -4.1
+        y: 3.41
+        z: 1.250000
+    agent13:
+      id: 13
+      skin: 3
+      behavior: 2
+      group_id: -1
+      max_vel: 0.4
+      radius: 0.4
+      init_pose:
+        x: 1.1
+        y: -6.0
+        z: 1.250000
+        h: -1.57
+      goal_radius: 0.3
+      cyclic_goals: true
+      goals:
+        - g0
+        - g1
+        - g2
+        - g3
+      g0:
+        x: 4.0
+        y: -8.0
+        z: 1.250000
+      g1:
+        x: 3.85
+        y: -0.1
+        z: 1.250000
+      g2:
+        x: 4.0
+        y: -8.0
+        z: 1.250000
+      g3:
+        x: 1.1
+        y: -6.1
+        z: 1.250000
+    agent14:
+      id: 14
+      skin: 1
+      behavior: 2
+      group_id: -1
+      max_vel: 0.15
+      radius: 0.4
+      init_pose:
+        x: 7.65
+        y: 1.41
+        z: 1.250000
+        h: 1.68
+      goal_radius: 0.1
+      cyclic_goals: true
+      goals:
+        - g0
+        - g1
+      g0:
+        x: 6.85
+        y: 1.7
+        z: 1.250000
+      g1:
+        x: 7.65
+        y: 1.41
         z: 1.250000

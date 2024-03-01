@@ -17,7 +17,7 @@ main_node:
 
     # World parameters
     world_name: "social_nav.world" #Leave empty to obtain no world
-    data_path: "social_nav_test.json"  #"social_indoor2.json"
+    data_path: "social_nav.json"  #"social_indoor2.json"
     agents_config: "social_indoor_agents3.yaml" #"social_indoor2_agents.yaml"
 
     use_localization: False
