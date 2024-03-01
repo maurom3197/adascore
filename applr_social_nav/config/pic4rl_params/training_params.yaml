@@ -7,11 +7,11 @@ training_params:
     # --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-model-interval: 5000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-    --model-dir: 'src/Models/SFW/SAC_Last/20240225T124040.356479_SAC_' # (str) Directory to restore model.
+#    --model-dir: 'src/Models/SFW/SAC_Last/20240225T124040.356479_SAC_' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
-    --logdir: 'src/Results/test/SFW/SAC_Last_1.0f/social_nav' # (str) Output directory name. The default is ``"results"``
-    --evaluate: # Whether evaluate trained model
+    --logdir: 'src/Results' # (str) Output directory name. The default is ``"results"``
+#    --evaluate: # Whether evaluate trained model
     --test-interval: 5000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
     --test-episodes: 3 # (int) Number of episodes at test. The default is ``5``
@@ -21,7 +21,7 @@ training_params:
     --use-prioritized-rb: # Use prioritized experience replay
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
-#    --rb-path-save: 'Social_controller_SAC_500K' # Save experience replay buffer in case of save
+    --rb-path-save: 'SFW_SAC_500K' # Save experience replay buffer in case of save
 #    --rb-path-load: 'src/Results/20240223_155436.484927_applr_SAC/Social_controller_SAC_500K.npz' # Load experience replay buffer in case of restore
     --logging-level: DEBUG # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'SAC' # training policy

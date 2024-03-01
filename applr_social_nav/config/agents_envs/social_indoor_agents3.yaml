@@ -12,6 +12,9 @@ hunav_loader:
       - agent7
       - agent8
       - agent9
+      - agent10
+      - agent11
+      - agent12
     agent1:
       id: 1
       skin: 4
@@ -147,7 +150,7 @@ hunav_loader:
       skin: 1
       behavior: 2
       group_id: -1
-      max_vel: 0.2
+      max_vel: 0.1
       radius: 0.4
       init_pose:
         x: 6.6
@@ -256,4 +259,79 @@ hunav_loader:
       g2:
         x: 5.46
         y: -2.1
+        z: 1.250000
+    agent10:
+      id: 10
+      skin: 1
+      behavior: 2
+      group_id: -1
+      max_vel: 0.1
+      radius: 0.4
+      init_pose:
+        x: 2.86
+        y: -6.0
+        z: 1.250000
+        h: 1.68
+      goal_radius: 0.1
+      cyclic_goals: true
+      goals:
+        - g0
+        - g1
+      g0:
+        x: 2.83
+        y: -5.88
+        z: 1.250000
+      g1:
+        x: 2.86
+        y: -6.0
+        z: 1.250000
+    agent11:
+      id: 11
+      skin: 1
+      behavior: 2
+      group_id: -1
+      max_vel: 0.1
+      radius: 0.4
+      init_pose:
+        x: 6.862
+        y: -6.0
+        z: 1.250000
+        h: 1.68
+      goal_radius: 0.1
+      cyclic_goals: true
+      goals:
+        - g0
+        - g1
+      g0:
+        x: 6.83
+        y: -5.88
+        z: 1.250000
+      g1:
+        x: 6.86
+        y: -6.0
+        z: 1.250000
+    agent12:
+      id: 12
+      skin: 1
+      behavior: 2
+      group_id: -1
+      max_vel: 0.1
+      radius: 0.4
+      init_pose:
+        x: 0.65
+        y: -4.0
+        z: 1.250000
+        h: 1.68
+      goal_radius: 0.1
+      cyclic_goals: true
+      goals:
+        - g0
+        - g1
+      g0:
+        x: 0.65
+        y: -4.05
+        z: 1.250000
+      g1:
+        x: 0.65
+        y: -4.1
         z: 1.250000
