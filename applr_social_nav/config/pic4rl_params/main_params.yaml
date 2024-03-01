@@ -17,7 +17,7 @@ main_node:
 
     # World parameters
     world_name: "social_nav.world" #Leave empty to obtain no world
-    data_path: "social_nav.json"  #"social_indoor2.json"
+    data_path: "social_nav_test.json"  #"social_indoor2.json"
     agents_config: "social_indoor_agents3.yaml" #"social_indoor2_agents.yaml"
 
     use_localization: False
@@ -26,7 +26,7 @@ main_node:
     task: 'SocialForceWindow' # SocialForceWindow, SocialForceWindowCostmap, SocialController, SocialController
     # Sensors parameters
     sensor: 'applr' # lidar or rgb_camera or depth_camera
-    update_frequency: 1.0 #20.0 # update the controller parameters at this frequency
+    update_frequency: 2.0 #20.0 # update the controller parameters at this frequency
     visual_data: 'features'
     features: 10000
     channels: 1

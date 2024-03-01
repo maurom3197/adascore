@@ -121,7 +121,7 @@ controller_server:
       yaw_goal_tolerance:   0.2
       xy_goal_tolerance:    0.2
       wp_tolerance:         2.0
-      sim_time:             2.5 
+      sim_time:             2.5
       sim_granularity:      0.25
       robot_radius:         0.4
       people_radius:        0.35
@@ -147,7 +147,7 @@ controller_server:
         odom_topic:         /jackal/odom
         max_obstacle_dist:  3.0
         naive_goal_time:    1.0
-        people_velocity:    1.7
+        people_velocity:    0.5
 
 local_costmap:
   local_costmap:
@@ -158,8 +158,8 @@ local_costmap:
       global_frame: map
       robot_base_frame: base_link
       rolling_window: true
-      width: 6
-      height: 6
+      width: 5
+      height: 5
       resolution: 0.05
       # robot_radius: 0.22
       footprint: "[[0.24, 0.24], [0.24, -0.24], [-0.24, -0.24], [-0.24, 0.24]]"
@@ -219,7 +219,7 @@ map_server:
     use_sim_time: True
     # Overridden in launch by the "map" launch configuration or provided default value.
     # To use in yaml, remove the default "map" value in the tb3_simulation_launch.py file & provide full path to map below.
-    yaml_filename: "$(find-pkg-share applr_social_nav)/maps/experiment.yaml"
+    yaml_filename: "$(find-pkg-share applr_social_nav)/maps/social_nav_map.yaml"
     topic_name: "map"
     frame_id: "map"
 

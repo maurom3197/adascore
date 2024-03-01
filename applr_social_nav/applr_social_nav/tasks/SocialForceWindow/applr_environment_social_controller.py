@@ -380,8 +380,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         cd = 1.0
         Rd = (self.previous_local_goal_info[0] - local_goal_info[0])*10.0
         
-        Rd = np.minimum(Rd, 2.0) 
-        Rd = np.maximum(Rd, -2.0)
+        Rd = np.minimum(Rd, 1.0) 
+        Rd = np.maximum(Rd, -1.0)
 
         # Heading Reward
         ch = 0.4
@@ -397,15 +397,14 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         # Social Disturbance Reward
         Rp = 0.
-        if self.min_people_distance < 2.0: #1.2
-            Rp += 1/self.min_people_distance # personal space reward
+        Rp += 1/self.min_people_distance # personal space reward 1.2 m social 3.6
         Rp = -np.minimum(Rp, 2.5)
         cp = 2.0
 
         # Social work
         Rs = social_work * 20
         Rs = -np.minimum(Rs, 3.0) 
-        cs = 2.0
+        cs = 3.0
 
         # Total Reward
         reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
@@ -419,11 +418,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug('Dense reward : ' +str(reward))
 
         if event == "goal":
-            reward += 0 
+            reward += 1.0
         elif event == "collision":
             reward += -200
-        elif event == "None":
-            reward += -1.0
+        elif event == "timeout":
+            reward += -50
 
         self.get_logger().debug('total reward: ' +str(reward))
 

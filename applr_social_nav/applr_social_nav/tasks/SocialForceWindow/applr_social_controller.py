@@ -49,11 +49,11 @@ class SocialForceWindowAPPLR(Pic4rlEnvironmentAPPLR):
         ACTION AND OBSERVATION SPACES settings
         """
         action=[
-        [0.1,5.0], # social_weight
-        [0.1,5.0], # costmap_weight
-        [0.1,5.0], # velocity_weight
-        [0.1,5.0], # angle_weight
-        [0.1,5.0], # distance_weight
+        [0.5,3.0], # social_weight
+        [0.5,3.0], # costmap_weight
+        [0.1,1.0], # velocity_weight
+        [0.1,1.0], # angle_weight
+        [0.1,1.5], # distance_weight
         ]
 
         low_action = []

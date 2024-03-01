@@ -85,7 +85,7 @@
     <scene>
       <ambient>0.4 0.4 0.4 1</ambient>
       <background>0.7 0.7 0.7 1</background>
-      <shadows>1</shadows>
+      <shadows>0</shadows>
     </scene>
     <wind/>
     <spherical_coordinates>
@@ -327,6 +327,7 @@
       </light>
     </state>
     <gui fullscreen='0'>
+      <shadows> 0 </shadows>
       <camera name='user_camera'>
         <pose>4.68752 0.707502 45.0302 0 1.51564 -3.12699</pose>
         <view_controller>orbit</view_controller>
