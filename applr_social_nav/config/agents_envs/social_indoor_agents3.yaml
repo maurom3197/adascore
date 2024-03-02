@@ -23,7 +23,7 @@ hunav_loader:
       behavior: 2
       group_id: -1
       max_vel: 0.35
-      radius: 0.4
+      radius: 0.35
       init_pose:
         x: 3.8
         y: 8.5
@@ -160,12 +160,12 @@ hunav_loader:
         - g0
         - g1
       g0:
-        x: 6.501
-        y: 3.695
+        x: 6.601
+        y: 3.395
         z: 1.250000
       g1:
         x: 6.601
-        y: 3.365
+        y: 3.360
         z: 1.250000
     agent7:
         id: 7
@@ -235,27 +235,27 @@ hunav_loader:
       max_vel: 0.3
       radius: 0.4
       init_pose:
-        x: 7.27
-        y: -1.57
+        x: 5.82
+        y: -0.06
         z: 1.250000
         h: 1.57
-      goal_radius: 0.2
+      goal_radius: 0.12
       cyclic_goals: true
       goals:
         - g0
         - g1
         - g2
       g0:
-        x: 5.82
-        y: -0.06
-        z: 1.250000
-      g1:
         x: 7.27
         y: -1.57
         z: 1.250000
-      g2:
+      g1:
         x: 5.46
         y: -2.1
+        z: 1.250000
+      g2:
+        x: 5.82
+        y: -0.06
         z: 1.250000
     agent10:
       id: 10
@@ -284,7 +284,7 @@ hunav_loader:
         z: 1.250000
     agent11:
       id: 11
-      skin: 1
+      skin: 3
       behavior: 2
       group_id: -1
       max_vel: 0.1
@@ -309,7 +309,7 @@ hunav_loader:
         z: 1.250000
     agent12:
       id: 12
-      skin: 1
+      skin: 2
       behavior: 2
       group_id: -1
       max_vel: 0.1
@@ -337,7 +337,7 @@ hunav_loader:
       skin: 3
       behavior: 2
       group_id: -1
-      max_vel: 0.4
+      max_vel: 0.8
       radius: 0.4
       init_pose:
         x: 1.1
@@ -357,7 +357,7 @@ hunav_loader:
         z: 1.250000
       g1:
         x: 3.85
-        y: -0.1
+        y: -6.1
         z: 1.250000
       g2:
         x: 4.0
@@ -372,7 +372,7 @@ hunav_loader:
       skin: 1
       behavior: 2
       group_id: -1
-      max_vel: 0.15
+      max_vel: 0.25
       radius: 0.4
       init_pose:
         x: 7.65
@@ -385,8 +385,8 @@ hunav_loader:
         - g0
         - g1
       g0:
-        x: 6.85
-        y: 1.7
+        x: 7.95
+        y: -1.4
         z: 1.250000
       g1:
         x: 7.65
