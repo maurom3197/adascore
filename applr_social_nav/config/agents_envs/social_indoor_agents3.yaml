@@ -26,7 +26,7 @@ hunav_loader:
       radius: 0.35
       init_pose:
         x: 3.8
-        y: 8.5
+        y: 8.15
         z: 1.250000
         h: -3.14
       goal_radius: 0.3
@@ -36,11 +36,11 @@ hunav_loader:
         - g1
       g0:
         x: 8.7
-        y: 8.5
+        y: 8.15
         z: 1.250000
       g1:
         x: 3.8
-        y: 8.5
+        y: 8.15
         z: 1.250000
     agent2:
       id: 2
@@ -376,7 +376,7 @@ hunav_loader:
       radius: 0.4
       init_pose:
         x: 7.65
-        y: 1.41
+        y: 0.5
         z: 1.250000
         h: 1.68
       goal_radius: 0.1
@@ -386,9 +386,9 @@ hunav_loader:
         - g1
       g0:
         x: 7.95
-        y: -1.4
+        y: -1.3
         z: 1.250000
       g1:
         x: 7.65
-        y: 1.41
+        y: 0.5
         z: 1.250000

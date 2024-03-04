@@ -403,8 +403,8 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         # Social work
         Rs = social_work * 20
-        Rs = -np.minimum(Rs, 3.0) 
-        cs = 3.0
+        Rs = -np.minimum(Rs, 2.5) 
+        cs = 2.5
 
         # Total Reward
         reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
@@ -418,9 +418,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug('Dense reward : ' +str(reward))
 
         if event == "goal":
-            reward += 1.0
+            reward += 5.0
         elif event == "collision":
-            reward += -200
+            reward += -400
         elif event == "timeout":
             reward += -50
 
@@ -581,7 +581,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         for agent in agents2reset:
             x, y , yaw = tuple(self.agents[agent-1])
 
-            self.get_logger().info(f"Respawning Agent at pose [x,y,yaw]: {[x, y, yaw]}")
+            self.get_logger().debug(f"Respawning Agent at pose [x,y,yaw]: {[x, y, yaw]}")
             agent_name = "agent"+str(agent)
             self.set_entity_state(agent_name, [x, y, 1.50])
 
@@ -782,7 +782,9 @@ class Pic4rlEnvironmentAPPLR(Node):
             'FollowPath.costmap_weight',
             'FollowPath.velocity_weight',
             'FollowPath.angle_weight',
-            'FollowPath.distance_weight'
+            'FollowPath.distance_weight',
+            'FollowPath.wp_tolerance',
+            'FollowPath.sim_time'
         ]
         future = self.get_cli_controller.call_async(self.get_req_controller)
         return future
@@ -798,7 +800,9 @@ class Pic4rlEnvironmentAPPLR(Node):
                     get_response.values[1].double_value, 
                     get_response.values[2].integer_value, 
                     get_response.values[3].integer_value,
-                    get_response.values[4].double_value
+                    get_response.values[4].double_value,
+                    get_response.values[5].double_value, # only if wp_tolerance is used
+                    get_response.values[6].double_value  # only if sim_time is used
                     ))
 
         except Exception as e:

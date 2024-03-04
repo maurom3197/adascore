@@ -53,9 +53,9 @@ class SocialForceWindowAPPLR(Pic4rlEnvironmentAPPLR):
         [0.5,3.0], # costmap_weight
         [0.1,1.0], # velocity_weight
         [0.1,1.0], # angle_weight
-        [0.1,1.5] # distance_weight
-        #[1.5,3.0], # sim_time
-        #[1.0,2.5], # wp_tolerance
+        [0.1,1.5], # distance_weight
+        [1.5,3.0], # sim_time
+        [1.0,2.5]  # wp_tolerance
         ]
 
         low_action = []
