@@ -7,11 +7,11 @@ training_params:
     # --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-model-interval: 5000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-#    --model-dir: 'src/Results/20240301_191712.280195_applr_SAC/20240301T191713.697683_SAC_' # (str) Directory to restore model.
+    --model-dir: 'src/Models/DumbNav' # (str) Directory to restore model.
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: 'src/Results' # (str) Output directory name. The default is ``"results"``
-#    --evaluate: # Whether evaluate trained model
+    --evaluate: # Whether evaluate trained model
     --test-interval: 5000 # (int) Interval to evaluate trained model. The default is ``int(1e4)``
 # --show-test-progress: # Call ``render`` function during evaluation.
     --test-episodes: 3 # (int) Number of episodes at test. The default is ``5``
