@@ -4,4 +4,4 @@ origin: [-5.000000, -12.000000, 0.0]
 resolution: 0.050000
 mode: trinary
 occupied_thresh: 0.95
-image: social_obstacles.pgm
+image: social_nav_obstacles_map.pgm

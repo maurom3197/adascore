@@ -19,14 +19,14 @@ hunav_loader:
       skin: 4
       behavior: 2
       group_id: -1
-      max_vel: 0.4
+      max_vel: 0.2
       radius: 0.35
       init_pose:
         x: -5.0
         y: 3.23
         z: 1.250000
         h: 0.0
-      goal_radius: 0.3
+      goal_radius: 0.15
       cyclic_goals: true
       goals:
         - g0
@@ -51,7 +51,7 @@ hunav_loader:
         y: 4.1
         z: 1.250000
         h: 0.0
-      goal_radius: 0.3
+      goal_radius: 0.15
       cyclic_goals: true
       goals:
         - g0
@@ -76,7 +76,7 @@ hunav_loader:
         y: -3.53
         z: 1.250000
         h: 1.57
-      goal_radius: 0.3
+      goal_radius: 0.1
       cyclic_goals: true
       goals:
         - g0
@@ -101,7 +101,7 @@ hunav_loader:
         y: -0.359162
         z: 1.250000
         h: 0.0
-      goal_radius: 0.3
+      goal_radius: 0.15
       cyclic_goals: true
       goals:
         - g0
@@ -176,7 +176,7 @@ hunav_loader:
           y: 1.545410
           z: 1.250000
           h: 0.0
-        goal_radius: 0.3
+        goal_radius: 0.15
         cyclic_goals: true
         goals:
           - g0
@@ -208,10 +208,10 @@ hunav_loader:
       radius: 0.4
       init_pose:
         x: 3.224787
-        y: -0.80
+        y: -0.90
         z: 1.250000
         h: 2.615592
-      goal_radius: 0.3
+      goal_radius: 0.15
       cyclic_goals: true
       goals:
         - g0
@@ -219,20 +219,20 @@ hunav_loader:
         - g2
         - g3
       g0:
-        x: 2.402110
-        y: 0.079120
+        x: 2.302110
+        y: 0.4120
         z: 1.250000
       g1:
         x: 3.258020
-        y: 1.045410
+        y: 1.145410
         z: 1.250000
       g2:
-        x: 2.402110
-        y: 0.079120
+        x: 2.302110
+        y: 0.3120
         z: 1.250000
       g3:
         x: 3.224787
-        y: -0.80
+        y: -0.90
         z: 1.250000
     agent9:
       id: 9
@@ -246,7 +246,7 @@ hunav_loader:
         y: -4.0
         z: 1.250000
         h: 1.57
-      goal_radius: 0.12
+      goal_radius: 0.15
       cyclic_goals: true
       goals:
         - g0
@@ -271,7 +271,7 @@ hunav_loader:
         y: -3.0
         z: 1.250000
         h: 1.57
-      goal_radius: 0.1
+      goal_radius: 0.15
       cyclic_goals: true
       goals:
         - g0
@@ -296,7 +296,7 @@ hunav_loader:
         y: -2.0
         z: 1.250000
         h: -0.824005
-      goal_radius: 0.1
+      goal_radius: 0.15
       cyclic_goals: true
       goals:
         - g0

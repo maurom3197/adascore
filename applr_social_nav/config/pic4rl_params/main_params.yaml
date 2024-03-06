@@ -11,14 +11,14 @@ main_node:
     robot_type: "rectangular" #"circular" # rectangular or circular
     robot_radius: 0.26 #0.2 # [m], If robot_type is circular
     robot_size: [0.508, 0.430] # [m, m], Lenght, Width if robot_type is rectangular
-    collision_tolerance: 0.05 # [m], tollerance of collision added to robot_radius or robot_size
+    collision_tolerance: 0.05 # [m], tolerance of collision added to robot_radius or robot_size
     warning_tolerance: 0.1 # [m], warning window added to robot_radius or robot_size
     goal_tolerance: 0.40
 
     # World parameters
-    world_name: "social_env_test.world" #Leave empty to obtain no world
-    data_path: "social_env_test.json"  #"social_indoor2.json"
-    agents_config: "social_env_test.yaml" #"social_indoor2_agents.yaml"
+    world_name: "social_nav_obstacles.world" #Leave empty to obtain no world
+    data_path: "social_nav_obstacles.json"  #"social_indoor2.json"
+    agents_config: "social_nav_obstacles.yaml" #"social_indoor2_agents.yaml"
 
     use_localization: False
 
@@ -42,7 +42,7 @@ main_node:
       odom_topic: "/jackal/odom"
     laser_param:
       max_distance: 3.0 # Meters
-      total_points: 360  # --Noé. Number of total laser points (360 Husky, 618 Pmb2)
+      total_points: 360  # Number of total laser points (360 Husky, 618 Pmb2)
       num_points: 36 #36 # int divider of 360 (husky). Step size to skip laser points
     depth_param:
       dist_cutoff: 5.0 # Meters

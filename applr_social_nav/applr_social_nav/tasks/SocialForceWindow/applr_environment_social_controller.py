@@ -183,8 +183,8 @@ class Pic4rlEnvironmentAPPLR(Node):
                                 0.8,    # velocity_weight
                                 0.6,    # angle_weight
                                 1.0,    # distance_weight
-                                2.0,    # wp tolerance
-                                2.5,    # sim time
+                                # 2.0,    # wp tolerance
+                                # 2.5,    # sim time
                                 ]
         self.n_navigation_end = 0
         self.navigator = BasicNavigator()
@@ -661,6 +661,8 @@ class Pic4rlEnvironmentAPPLR(Node):
                                               Parameter(name='FollowPath.velocity_weight', value=param_values[2]).to_parameter_msg(),
                                               Parameter(name='FollowPath.angle_weight', value=param_values[3]).to_parameter_msg(),
                                               Parameter(name='FollowPath.distance_weight', value=param_values[4]).to_parameter_msg()
+                                              #Parameter(name='FollowPath.wp_tolerance', value=param_values[5]).to_parameter_msg(),
+                                              #Parameter(name='FollowPath.sim_time', value=param_values[6]).to_parameter_msg()
                                               ]
         future = self.set_cli_controller.call_async(self.set_req_controller)
         return future
