@@ -181,8 +181,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.init_nav_params = [2.0,    # social_weight
                                 2.0,    # costmap_weight
                                 0.8,    # velocity_weight
-                                0.6,   # angle_weight
-                                1.0,   # distance_weight
+                                0.6,    # angle_weight
+                                1.0,    # distance_weight
+                                2.0,    # wp tolerance
+                                2.5,    # sim time
                                 ]
         self.n_navigation_end = 0
         self.navigator = BasicNavigator()
@@ -782,9 +784,9 @@ class Pic4rlEnvironmentAPPLR(Node):
             'FollowPath.costmap_weight',
             'FollowPath.velocity_weight',
             'FollowPath.angle_weight',
-            'FollowPath.distance_weight',
-            'FollowPath.wp_tolerance',
-            'FollowPath.sim_time'
+            'FollowPath.distance_weight'
+            #'FollowPath.wp_tolerance',
+            #'FollowPath.sim_time'
         ]
         future = self.get_cli_controller.call_async(self.get_req_controller)
         return future
@@ -800,9 +802,9 @@ class Pic4rlEnvironmentAPPLR(Node):
                     get_response.values[1].double_value, 
                     get_response.values[2].integer_value, 
                     get_response.values[3].integer_value,
-                    get_response.values[4].double_value,
-                    get_response.values[5].double_value, # only if wp_tolerance is used
-                    get_response.values[6].double_value  # only if sim_time is used
+                    get_response.values[4].double_value
+                    #get_response.values[5].double_value, # only if wp_tolerance is used
+                    #get_response.values[6].double_value  # only if sim_time is used
                     ))
 
         except Exception as e:
