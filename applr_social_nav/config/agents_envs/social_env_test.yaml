@@ -289,7 +289,7 @@ hunav_loader:
       skin: 2
       behavior: 2
       group_id: -1
-      max_vel: 0.4
+      max_vel: 0.5
       radius: 0.4
       init_pose:
         x: 4.9

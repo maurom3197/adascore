@@ -1,6 +1,6 @@
 hunav_loader:
   ros__parameters:
-    map: social_nav_map2
+    map: social_nav_map
     publish_people: true
     agents:
       - agent1
