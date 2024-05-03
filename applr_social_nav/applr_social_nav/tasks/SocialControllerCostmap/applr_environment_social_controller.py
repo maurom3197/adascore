@@ -478,6 +478,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         if self.mode == "testing":
             Path(os.path.join(self.logdir, 'evaluator/')).mkdir(parents=True, exist_ok=True)
             evaluator_path = str(Path(os.path.join(self.logdir, 'evaluator','metrics')))
+            self.get_logger().info("Starting evaluator node ...")
+            logging.info("Starting evaluator node ...")
             subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &",
                 shell=True,
                 stdout=subprocess.DEVNULL

@@ -132,8 +132,8 @@ controller_server:
       sfm_obstacle_weight:  15.0
       sfm_people_weight:    8.0
 
-      # cost function weights
-      social_weight:        2.0 # 2.0 for SFW 0.0 for DWA
+      # cost function weights  #[0.1,5.0]
+      social_weight:        0.0 # 2.0 for SFW 0.0 for DWA
       costmap_weight:       2.0
       velocity_weight:      0.8 
       angle_weight:         0.6 

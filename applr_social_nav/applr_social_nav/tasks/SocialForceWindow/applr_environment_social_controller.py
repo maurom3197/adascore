@@ -36,6 +36,7 @@ from pic4rl.testing.nav_metrics import Navigation_Metrics
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from people_msgs.msg import People
+from std_srvs.srv import Trigger
 
 
 class Pic4rlEnvironmentAPPLR(Node):
@@ -111,6 +112,8 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.use_localization = self.get_parameter(
             "use_localization").get_parameter_value().bool_value
         self.bag_process = None
+        self.hunav_eval = None
+        self.eval_running = False
         self.bag_episode = 0
         
         # create Sensor class to get and process sensor data
@@ -147,7 +150,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         # init goal publisher
         self.hunav_goal_pub = self.create_publisher(
             PoseStamped,
-            'goal_pose',
+            'hunav_goal_pose',
             qos)
         
         # init weights publisher
@@ -247,6 +250,26 @@ class Pic4rlEnvironmentAPPLR(Node):
                 self.bag_process.terminate()
                 self.bag_process.communicate()
                 self.bag_process = None
+                
+            if self.mode == "testing" and self.hunav_eval is not None and self.eval_running:
+                self.get_logger().info("Sending request to stop recording...")
+                self.get_logger().info("DONE called")
+                result = False
+                # while not result:
+                result = self.call_hunav_service(stop = True)
+                    # time.sleep(1.0)
+                    # dovrei fare un check se il servizio è stato chiuso
+                print(f"Recording stopped, hunav_eval terminated: {result}")
+                self.get_logger().info("Recording stopped")
+                self.hunav_eval.terminate()
+                self.get_logger().info("hunav_eval terminated")
+                try:
+                    self.hunav_eval.communicate(timeout=1.0)
+                except subprocess.TimeoutExpired:
+                    self.get_logger().info("hunav_eval timeout...")
+                    pass
+                # self.hunav_eval = None
+                self.eval_running = False
             # lifecyclePause(navigator=self.navigator)
             time.sleep(1.0)
 
@@ -482,6 +505,26 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.bag_process.communicate()
             self.bag_process = None
 
+        if self.mode == "testing" and self.hunav_eval is not None and self.eval_running:
+            self.get_logger().info("Sending request to stop recording...")
+            self.get_logger().info("RESET called")
+            result = False
+            # while not result:
+            result = self.call_hunav_service(stop = True)
+                # time.sleep(1.0)
+                # dovrei fare un check se il servizio è stato chiuso
+            print(f"Recording stopped, hunav_eval terminated: {result}")
+            self.get_logger().info("Recording stopped")
+            self.hunav_eval.terminate()
+            self.get_logger().info("hunav_eval terminated")
+            try:
+                self.hunav_eval.communicate(timeout=1.0)
+            except subprocess.TimeoutExpired:
+                self.get_logger().info("hunav_eval timeout...")
+                pass
+            # self.hunav_eval = None
+            self.eval_running = False
+
         logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
         
         self.get_logger().info("Initializing new episode ...")
@@ -491,15 +534,16 @@ class Pic4rlEnvironmentAPPLR(Node):
         if self.mode == "testing":
             Path(os.path.join(self.logdir, 'evaluator/')).mkdir(parents=True, exist_ok=True)
             evaluator_path = str(Path(os.path.join(self.logdir, 'evaluator','metrics')))
-            self.get_logger().debug(f"Evaluator metrics file path: {evaluator_path}")
-            results = subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &",
-                shell=True,
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE,
-                universal_newlines = True 
-                )
-            self.get_logger().debug(f"Evaluator run output: {results.stdout} {results.stderr}")
-            topic_list = " ".join(["/jackal/odom", "/people", '/cost_weights', '/goal_pose', ])
+            self.get_logger().info("Starting evaluator node ...")
+            self.get_logger().info(f"metrics_output_path:={evaluator_path}")
+            logging.info("Starting evaluator node ...")
+            if self.hunav_eval is None: 
+                self.hunav_eval = subprocess.Popen(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &" ,
+                    shell=True,
+                    # stdout=subprocess.PIPE,
+                    # stderr=subprocess.PIPE
+                    )
+            topic_list = " ".join(["/jackal/odom", "/people", '/cost_weights', '/hunav_goal_pose', ])
             if self.bag_episode == 0:
                 Path(os.path.join(self.logdir, 'bags')).mkdir(parents=True, exist_ok=True)
             self.bag_process = subprocess.Popen(f"ros2 bag record {topic_list} -o {self.logdir}/bags/episode_{self.bag_episode}",
@@ -510,6 +554,17 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().debug("unpausing...")
         self.unpause()
+        # time.sleep(2.0)
+        if self.mode == "testing" and self.hunav_eval is not None and not self.eval_running:
+            self.get_logger().info("Sending request to start recording...")            
+            result = False
+            # while not result:
+            result = self.call_hunav_service(stop = False)
+                # time.sleep(1.0)
+                # dovrei fare un check se il servizio è stato chiuso
+            print(f"Recording started : {result}")
+            self.hunav_goal_pub.publish(self.goal_pose_msg)
+            self.eval_running = True
 
         self.get_logger().debug("Performing null step to reset variables")
         self.episode_step = 0
@@ -699,11 +754,12 @@ class Pic4rlEnvironmentAPPLR(Node):
         goal_pose.pose.position.y = pose[1]
         goal_pose.pose.position.z = 0.0
         goal_pose.pose.orientation.w = 1.0
+        self.goal_pose_msg = goal_pose
 
         # self.goal_pub.publish(goal_pose)
         if self.mode == "testing":
             self.get_logger().debug("Sending goal pose to navigator...")
-            self.hunav_goal_pub.publish(goal_pose)
+            # self.hunav_goal_pub.publish(goal_pose)
         self.navigator.goToPose(goal_pose)
         
     def get_random_goal(self):
@@ -827,6 +883,32 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.unpause_physics_client = self.create_client(Empty, 'unpause_physics')
         self.set_entity_state_client = self.create_client(SetEntityState, 'test/set_entity_state')
 
+        self.hunav_trigger_recording_client = self.create_client(Trigger, 'hunav_trigger_recording')
     def local_goal_callback(self, msg):
         self.local_goal_pose = [msg.pose.position.x, msg.pose.position.y]
 
+    def call_hunav_service(self, stop):
+        req = Trigger.Request()
+        while not self.hunav_trigger_recording_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+            self.get_logger().info(f"Process: {self.hunav_eval} : is it None? {self.hunav_eval is None}")
+        self.get_logger().info(f"Sending request to {'stop' if stop else 'start'} recording...")
+        future = self.hunav_trigger_recording_client.call_async(req)
+        self.get_logger().info(f"Waiting for response...")
+        # return True
+        # if not stop:
+        #     rclpy.spin_until_future_complete(self, future)
+        # else:
+        #     return True
+        rclpy.spin_until_future_complete(self, future)
+        self.get_logger().info(f"Response received...")
+        if future.result() is not None:
+            self.get_logger().info(f"Result of trigger: {future.result()}")
+            message = future.result().message
+        else:
+            self.get_logger().info(f"Service call failed: {future.exception()}")
+            return False
+        if stop:
+            return message == 'Hunav recording stopped'
+        else: 
+            return message == 'Hunav recording started'
