@@ -23,17 +23,17 @@ if gpus:
 def main(args=None):
     rclpy.init(args=args)
 
-    pic4rl_lidar = SocialControllerAPPLR()
+    pic4rl_training = SocialControllerAPPLR()
 
     # executor = MultiThreadedExecutor()
-    # executor.add_node(pic4rl_lidar)
+    # executor.add_node(pic4rl_training)
 
     try:
         # executor.spin()
-        pic4rl_lidar.threadFunc()
+        pic4rl_training.threadFunc()
     except KeyboardInterrupt:
         # executor.shutdown()
-        pic4rl_lidar.destroy_node()
+        pic4rl_training.destroy_node()
         rclpy.shutdown()
 
 

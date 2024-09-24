@@ -4,6 +4,7 @@ import os
 import numpy as np
 from numpy import savetxt
 import math
+import subprocess
 import json
 import random
 import sys
@@ -12,35 +13,26 @@ import datetime
 import yaml
 import logging
 from pathlib import Path
-
 from geometry_msgs.msg import Pose,PoseStamped
 from gazebo_msgs.srv import SetEntityState
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from std_srvs.srv import Empty
-from nav_msgs.msg import Path as path_msg
+from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
 from ament_index_python.packages import get_package_share_directory
+from pic4rl.sensors import Sensors
 from pic4rl.utils.env_utils import *
+from pic4rl.testing.nav_metrics import Navigation_Metrics
+from people_msgs.msg import People
 
 from applr_social_nav.utils.nav_utils import *
 from applr_social_nav.utils.sfm import SocialForceModel
 
-from rclpy.parameter import Parameter
-from rcl_interfaces.msg import ParameterValue
-from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
-from rcl_interfaces.msg import ParameterDescriptor, ParameterValue
-from pic4rl.sensors import Sensors
-from pic4rl.testing.nav_metrics import Navigation_Metrics
-
-from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
-from people_msgs.msg import People
-
-
 class Pic4rlEnvironmentAPPLR(Node):
     def __init__(self):
-        super().__init__('pic4rl_env_applr')
+        super().__init__("pic4rl_env_applr")
         self.declare_parameter("package_name", "applr_social_nav")
         self.declare_parameter("main_params_path", rclpy.Parameter.Type.STRING)
         self.declare_parameter("training_params_path", rclpy.Parameter.Type.STRING)
@@ -71,65 +63,62 @@ class Pic4rlEnvironmentAPPLR(Node):
                 ("data_path", rclpy.Parameter.Type.STRING),
                 ("saved_paths_file", rclpy.Parameter.Type.STRING),
                 ("robot_name", rclpy.Parameter.Type.STRING),
-                ("goal_tolerance", rclpy.Parameter.Type.DOUBLE),
                 ('agents_config', rclpy.Parameter.Type.STRING),
-                ("update_frequency", rclpy.Parameter.Type.DOUBLE),
+                ("goal_tolerance", rclpy.Parameter.Type.DOUBLE),
                 ('max_lin_vel', rclpy.Parameter.Type.DOUBLE),
                 ("laser_param.max_distance", rclpy.Parameter.Type.DOUBLE),
                 ("laser_param.num_points", rclpy.Parameter.Type.INTEGER),
                 ('laser_param.total_points', rclpy.Parameter.Type.INTEGER),
+                ("update_frequency", rclpy.Parameter.Type.DOUBLE),
                 ("sensor", rclpy.Parameter.Type.STRING),
-                ("use_localization", rclpy.Parameter.Type.BOOL),
-                ]
-            )
-        
+            ],
+        )
+
         self.mode           = self.get_parameter(
             'mode').get_parameter_value().string_value
         self.data_path      = self.get_parameter(
             'data_path').get_parameter_value().string_value
-        self.data_path      = os.path.join(goals_path, self.data_path)
-        print("Changing navigation scenario every ", training_params["--change_goal_and_pose"], " episodes.")
+        self.data_path = os.path.join(goals_path, self.data_path)
+        print(training_params["--change_goal_and_pose"])
         self.saved_paths_file = self.get_parameter(
             'saved_paths_file').get_parameter_value().string_value
         self.saved_paths_path = os.path.join(saved_paths_dir, self.saved_paths_file)
-        print("Global path file:", self.saved_paths_path)
         self.change_episode = int(training_params["--change_goal_and_pose"])
         self.starting_episodes = int(training_params["--starting_episodes"])
         self.timeout_steps = int(training_params["--episode-max-steps"])
-        self.robot_name     = self.get_parameter(
-            'robot_name').get_parameter_value().string_value
+        self.robot_name = (
+            self.get_parameter("robot_name").get_parameter_value().string_value
+        )
         self.agents_config     = self.get_parameter(
             'agents_config').get_parameter_value().string_value
-        self.goal_tolerance     = self.get_parameter(
-            'goal_tolerance').get_parameter_value().double_value
         self.max_lin_vel     = self.get_parameter(
             'max_lin_vel').get_parameter_value().double_value
-        self.params_update_freq   = self.get_parameter(
-            'update_frequency').get_parameter_value().double_value
-        self.lidar_distance = self.get_parameter(
-            'laser_param.max_distance').get_parameter_value().double_value
-        self.lidar_points   = self.get_parameter(
-            'laser_param.num_points').get_parameter_value().integer_value
+        self.goal_tolerance = (
+            self.get_parameter("goal_tolerance").get_parameter_value().double_value
+        )
+        self.lidar_distance = (
+            self.get_parameter("laser_param.max_distance")
+            .get_parameter_value()
+            .double_value
+        )
+        self.lidar_points = (
+            self.get_parameter("laser_param.num_points")
+            .get_parameter_value()
+            .integer_value
+        )
         self.total_points   = self.get_parameter(
             'laser_param.total_points').get_parameter_value().integer_value
-        self.sensor_type = self.get_parameter(
-            "sensor").get_parameter_value().string_value
-        self.use_localization = self.get_parameter(
-            "use_localization").get_parameter_value().bool_value
+        self.update_freq = (
+            self.get_parameter("update_frequency").get_parameter_value().double_value
+        )
+        self.sensor_type = (
+            self.get_parameter("sensor").get_parameter_value().string_value
+        )
         self.bag_process = None
         self.bag_episode = 0
-        
-        # create Sensor class to get and process sensor data
+
         qos = QoSProfile(depth=10)
         self.sensors = Sensors(self)
-        # create local goal info and subscribe to local goal topic
-        self.local_goal_pose = None
-        self.local_goal_sub = self.create_subscription(
-            PoseStamped,
-            'local_goal',
-            self.local_goal_callback,
-            qos)
-
         log_path = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--logdir"])
 
         # create log dir 
@@ -137,17 +126,15 @@ class Pic4rlEnvironmentAPPLR(Node):
             training_params["--policy"], self.sensor_type, log_path
         )
         self.get_logger().info(f"Logdir: {self.logdir}")
-
+        
         if "--model-dir" in training_params:
             self.model_path = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--model-dir"])
-
         if "--rb-path-load" in training_params:
             self.rb_path_load = os.path.join(get_package_share_directory(self.package_name),'../../../../', training_params["--rb-path-load"])
 
         self.create_clients()
         self.is_paused = None
-        self.unpause()
-
+        self.unpause()        
         self.spin_sensors_callbacks()
 
         # init goal publisher
@@ -155,15 +142,18 @@ class Pic4rlEnvironmentAPPLR(Node):
             PoseStamped,
             'goal_pose',
             qos)
+        
+        # init cmd_vel publisher
+        self.cmd_vel_pub = self.create_publisher(
+            Twist,
+            "cmd_vel",
+            qos)
 
         self.sfm = SocialForceModel(self, self.agents_config)
 
         self.episode_step = 0
         self.previous_twist = None
         self.previous_event = "None"
-        self.prev_nav_state = "unknown"
-        self.simulation_restarted = 0
-        self.failure_counter = 0
         self.episode = 0
         self.collision_count = 0
         self.min_obstacle_distance = 12.0
@@ -175,82 +165,90 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.min_people_distance = 10.0
         self.max_person_dist_allowed = 5.0
         self.previous_local_goal_info = [0.0,0.0]
-        self.paths_dict = {}
-        self.save_paths_file = True
+        self.Lt = 2.5
+        self.pind = 0
 
         self.initial_pose, self.goals, self.poses, self.agents = self.get_goals_and_poses()
+        self.get_logger().info(f"Robot initial pose: {str(self.initial_pose)}")
         self.goal_pose = self.goals[0]
-        self.init_nav_params = [2.0,    # social_weight
-                                2.0,    # costmap_weight
-                                0.8,    # velocity_weight
-                                0.6,   # angle_weight
-                                1.0,   # distance_weight
-                                ]
-        self.n_navigation_end = 0
-        self.navigator = BasicNavigator()
+        self.local_goal_pose = [0.0, 0.0]
 
-        self.get_logger().info(f'Gym mode: {self.mode}')
-        #if self.mode == "testing":
-        #    self.nav_metrics = Navigation_Metrics(self.logdir)
+        # Load precomputed global paths from file
+        with open(self.saved_paths_path) as json_file:
+            self.global_path_dict = json.load(json_file)
 
-        self.get_logger().info("PIC4RL_Environment: Starting process")
-        self.get_logger().info("Navigation params update at: " + str(self.params_update_freq)+' Hz')
+        self.get_logger().info(f"Gym mode: {self.mode}")
+        # if self.mode == "testing":
+        #     self.nav_metrics = Navigation_Metrics(self.logdir)
+        self.get_logger().debug("PIC4RL_Environment: Starting process")
 
     def step(self, action, episode_step=0):
         """
         """
         self.get_logger().debug("Env step : " + str(episode_step))
+        twist = Twist()
+        twist.linear.x = float(action[0])
+        twist.angular.z = float(action[1])
         self.episode_step = episode_step
-
-        self.get_logger().debug("Action received (nav2 params): "+str(action))
-        params = action.tolist()
-
-        observation, reward, done = self._step(params)
+        self.get_logger().debug("Action received: "+str(action))
+        observation, reward, done = self._step(twist)
         info = None
 
         return observation, reward, done, info
 
-    def _step(self, nav_params=None, reset_step = False):
+    def _step(self, twist=Twist(), reset_step=False):
         """
         """
         self.get_logger().debug("sending action...")
-        self.send_action(nav_params)
+        self.send_action(twist)
 
-        self.spin_sensors_callbacks()
         self.get_logger().debug("getting sensor data...")
-        lidar_measurements, goal_info, local_goal_info, robot_pose, robot_velocity, collision = self.get_sensor_data()
+        self.spin_sensors_callbacks()
+        (
+            lidar_measurements, 
+            goal_info, 
+            local_goal_info, 
+            robot_pose, 
+            robot_velocity, 
+            collision
+        ) = self.get_sensor_data()
+
         self.get_logger().debug("getting people data...")
         people_state, people_info = self.get_people_state(robot_pose, robot_velocity)
         wr, wp = self.sfm.computeSocialWork()
         social_work = wr + wp
 
         if not reset_step:
+  
             self.get_logger().debug("checking events...")
-            done, event = self.check_events(lidar_measurements, goal_info, robot_pose, collision)
-
+            done, event = self.check_events(
+                goal_info, local_goal_info, robot_pose, collision
+            )
             self.get_logger().debug("getting reward...")
-            reward = self.get_reward(local_goal_info, social_work, robot_velocity, event)
+            reward = self.get_reward(
+                local_goal_info, social_work, robot_velocity, event
+            )
 
             self.get_logger().debug("getting observation...")
-            observation = self.get_observation(lidar_measurements, local_goal_info, robot_pose, people_state, nav_params)
+            observation = self.get_observation(
+                twist, lidar_measurements, local_goal_info, robot_pose, people_state
+            )
         else:
             reward = None
             observation = None
             done = False
-            event = 'None'
+            event = None
 
-        self.update_state(lidar_measurements, local_goal_info, robot_pose, people_state, nav_params, done, event)
-
-        if done:
-            self.navigator.cancelTask()
-            if self.mode == "testing" and self.bag_process is not None:
-                self.bag_process.terminate()
-                self.bag_process.communicate()
-                self.bag_process = None
-            # lifecyclePause(navigator=self.navigator)
-            time.sleep(1.0)
+        self.update_state(twist, lidar_measurements, local_goal_info, robot_pose, people_state, done, event)
 
         return observation, reward, done
+
+    def get_goals_and_poses(self):
+        """
+        """
+        data = json.load(open(self.data_path, "r"))
+
+        return data["initial_pose"], data["goals"], data["poses"], data["agents"]
 
     def spin_sensors_callbacks(self):
         """
@@ -262,12 +260,21 @@ class Pic4rlEnvironmentAPPLR(Node):
             rclpy.spin_once(self)
         self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
         rclpy.spin_once(self)
+        
+    def send_action(self, twist):
+        """
+        """
+        
+        self.cmd_vel_pub.publish(twist)
+        # Regulate frequency of send action if needed
+        freq, t1 = compute_frequency(self.t0)
+        self.get_logger().debug(f"frequency : {freq}")
+        self.t0 = t1
+        if freq > self.update_freq:
+            frequency_control(self.update_freq)
 
-    def get_goals_and_poses(self):
-        """ """
-        data = json.load(open(self.data_path, "r"))
-
-        return data["initial_pose"], data["goals"], data["poses"], data["agents"]
+        # self.get_logger().debug("pausing...")
+        # self.pause()
 
     def get_sensor_data(self):
         """
@@ -299,61 +306,23 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return lidar_measurements, goal_info, local_goal_info, robot_pose, velocity, collision
 
-    def send_action(self, params):
+    def get_people_state(self, robot_pose, robot_velocity):
         """
         """
-        controller_params = params
-        
-        # self.set_controller_params(controller_params)
+        # Spin once to get the people message
+        rclpy.spin_once(self)
 
-        # Regulate the step frequency of the environment
-        action_hz, t1 = compute_frequency(self.t0)
-        self.get_logger().debug(f"frequency : {action_hz}")
-        self.t0 = t1
-        if action_hz > self.params_update_freq:
-            frequency_control(self.params_update_freq)
-            self.get_logger().debug('Sending action at '+str(action_hz))
+        people_state, people_info, min_people_distance = self.sfm.get_people(robot_pose, robot_velocity)
+        self.min_people_distance = min_people_distance
+        self.get_logger().debug('Min people distance: '+str(min_people_distance))
 
-        # If desired to get params
-        #self.get_costmap_params()
-        #self.get_controller_params()
-
-    def check_events(self, lidar_measurements, goal_info, robot_pose, collision):
+        return people_state, people_info
+    
+    def check_events(self, goal_info, local_goal_info, robot_pose, collision):
         """
         """
-        # get action feedback from navigator
-        feedback = self.navigator.getFeedback()
-        #self.get_logger().debug('Navigator feedback: '+str(feedback))
-        # check if navigation is complete
-        if self.navigator.isTaskComplete():
-            result = check_navigation(self.navigator)
-            if (result == TaskResult.FAILED or result == TaskResult.CANCELED):
-                self.send_goal(self.goal_pose)
-                time.sleep(1.0)
-                self.n_navigation_end = self.n_navigation_end +1
-                if self.n_navigation_end == 50:
-                    self.get_logger().info('Navigation aborted more than 50 times... pausing Nav till next episode.') 
-                    self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: 'Nav failed'")
-                    logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Nav failed") 
-                    self.prev_nav_state = "nav2_failed"
-                    return True, "nav2_failed"  
-            if result == TaskResult.SUCCEEDED:
-                if self.prev_nav_state == "goal":
-                    self.get_logger().info('uncorrect goal status detected... resending goal.') 
-                #     self.send_goal(self.goal_pose)
-                #     return False, "None"
-
-                self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
-                logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
-                self.prev_nav_state = "goal"
-                return True, "goal"
-            self.prev_nav_state = "unknown"
-
-        else:
-            self.prev_nav_state = "unknown"
-
         # check collision
-        if  collision or self.min_people_distance < 0.50:
+        if collision or self.min_people_distance < 0.50:
             self.collision_count += 1
             if self.collision_count >= 3:
                 self.collision_count = 0
@@ -363,6 +332,18 @@ class Pic4rlEnvironmentAPPLR(Node):
             else:
                 return False, "collision"
 
+        # check goal reached
+        if goal_info[0] < self.goal_tolerance and self.goal_pose==self.local_goal_pose:
+            self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
+            logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
+            return True, "goal"
+        
+        # check waypoint reached
+        if local_goal_info[0] < self.goal_tolerance:
+            self.get_logger().debug(f"Local goal reached..")
+            self.set_local_goal(robot_pose)
+            return False, "local_goal"
+
         # check timeout steps
         if self.episode_step == self.timeout_steps-1:
             self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Timeout")
@@ -371,23 +352,23 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         return False, "None"
 
-    def get_reward(self, local_goal_info, social_work, robot_velocity, event):
+    def get_reward(self, goal_info, social_work, robot_velocity, event):
         """
         """
         # Distance Reward
         # Positive reward if the distance to the goal is decreased
         cd = 1.0
-        Rd = (self.previous_local_goal_info[0] - local_goal_info[0])*20.0
+        Rd = (self.previous_local_goal_info[0] - goal_info[0])*10.0
         
-        Rd = np.minimum(Rd, 2.5) 
-        Rd = np.maximum(Rd, -2.5)
+        Rd = np.minimum(Rd, 1.0) 
+        Rd = np.maximum(Rd, -1.0)
 
         # Heading Reward
-        ch = 0.5
-        Rh = (1-2*math.sqrt(math.fabs(local_goal_info[1]/math.pi))) #heading reward v.2
+        ch = 0.4
+        Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
         
         # Linear Velocity Reward
-        cv = 1.0
+        cv = 0.8
         Rv = (robot_velocity[0] - self.max_lin_vel)/self.max_lin_vel # velocity reward
         
         # Obstacle Reward
@@ -396,15 +377,14 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         # Social Disturbance Reward
         Rp = 0.
-        if self.min_people_distance < 1.5: #1.2
-            Rp += 1/self.min_people_distance # personal space reward
-        Rp = -np.minimum(Rp, 2.0)
-        cp = 1.0
+        Rp += 1/self.min_people_distance # personal space reward 1.2 m social 3.6
+        Rp = -np.minimum(Rp, 2.5)
+        cp = 2.0
 
         # Social work
-        Rs = social_work * 10
-        Rs = -np.minimum(Rs, 5.0) 
-        cs = 1.0
+        Rs = social_work * 20
+        Rs = -np.minimum(Rs, 2.5) 
+        cs = 2.5
 
         # Total Reward
         reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
@@ -418,26 +398,32 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug('Dense reward : ' +str(reward))
 
         if event == "goal":
-            reward += 0 
+            reward += 500.0
+        elif event == "local_goal":
+            reward += 25.0
         elif event == "collision":
             reward += -200
-        elif event == "None":
-            reward += -1.0
+        elif event == "timeout":
+            reward += -50
 
         self.get_logger().debug('total reward: ' +str(reward))
-
         return reward
 
-    def get_observation(self, lidar_measurements, goal_info, robot_pose, people_state, nav_params):
-        
+    def get_observation(self, twist, lidar_measurements, goal_info, robot_pose, people_state):
+        """
+        """
         state_list = []
 
         # goal info
         state_list.append(goal_info[1])
         state_list.append(goal_info[0])
 
-        # costmap previous parameters
-        state_list.extend(nav_params)
+        # add previous Twist command
+        # previous velocity state
+        v = twist.linear.x
+        w = twist.angular.z
+        state_list.append(v)
+        state_list.append(w)
 
         # People info
         people_state = people_state.flatten().tolist()
@@ -448,17 +434,19 @@ class Pic4rlEnvironmentAPPLR(Node):
             state_list.append(float(point))
 
         state = np.array(state_list, dtype = np.float32)
-        #self.get_logger().debug('state=[goal,params,people,lidar]: '+str(state))
+        #self.get_logger().debug('state=[goal,people,lidar]: '+str(state))
         return state
 
-    def update_state(self,lidar_measurements, local_goal_info, robot_pose, people_state, nav_params, done, event):
+    def update_state(
+        self, twist, lidar_measurements, local_goal_info, robot_pose, people_state, done, event
+    ):
         """
         """
+        self.previous_twist = twist
         self.previous_lidar_measurements = lidar_measurements
         self.previous_local_goal_info = local_goal_info
         self.previous_robot_pose = robot_pose
         self.people_state = people_state
-        self.previous_nav_params = nav_params
         self.previous_event = event
 
     def reset(self, n_episode, tot_steps, evaluate=False):
@@ -480,22 +468,24 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.bag_process.communicate()
             self.bag_process = None
 
-
-
         logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
         
         self.get_logger().info("Initializing new episode ...")
         logging.info("Initializing new episode ...")
         self.new_episode()
-        self.get_logger().debug("unpausing...")
+
         if self.mode == "testing":
             Path(os.path.join(self.logdir, 'evaluator/')).mkdir(parents=True, exist_ok=True)
             evaluator_path = str(Path(os.path.join(self.logdir, 'evaluator','metrics')))
-            subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &",
+            self.get_logger().debug(f"Evaluator metrics file path: {evaluator_path}")
+            results = subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &",
                 shell=True,
-                stdout=subprocess.DEVNULL
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE,
+                universal_newlines = True 
                 )
-            topic_list = " ".join(["/jackal/odom", "/people", '/goal_pose', ])
+            self.get_logger().debug(f"Evaluator run output: {results.stdout} {results.stderr}")
+            topic_list = " ".join(["/jackal/odom", "/people", '/cost_weights', '/goal_pose', ])
             if self.bag_episode == 0:
                 Path(os.path.join(self.logdir, 'bags')).mkdir(parents=True, exist_ok=True)
             self.bag_process = subprocess.Popen(f"ros2 bag record {topic_list} -o {self.logdir}/bags/episode_{self.bag_episode}",
@@ -503,16 +493,18 @@ class Pic4rlEnvironmentAPPLR(Node):
                 stdout=subprocess.DEVNULL
                 )
             self.bag_episode += 1
+
+        self.get_logger().debug("unpausing...")
         self.unpause()
 
         self.get_logger().debug("Performing null step to reset variables")
         self.episode_step = 0
 
-        nav_params = self.init_nav_params
-        _,_,_, = self._step(nav_params,reset_step = True)
-        observation,_,_, = self._step(nav_params)
+        _, _, _, = self._step(reset_step=True)
+        observation, _, _, = self._step()
+
         return observation
-    
+
     def new_episode(self):
         """
         """
@@ -524,7 +516,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
 
-        if self.episode % 3 == 0. or self.mode == "testing":
+        if self.episode % 1 == 0. or self.mode == "testing":
             self.get_logger().debug("Respawning all agents ...")
             if not self.is_paused:
                 self.pause()
@@ -533,20 +525,9 @@ class Pic4rlEnvironmentAPPLR(Node):
                 self.respawn_agents(all=True)
             else:
                 self.respawn_agents()
-    
+
         self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
-
-        if self.is_paused:
-            self.get_logger().debug("unpausing...")
-            self.get_logger().debug("This is done to avoid a bug in the navigator")
-            self.unpause()
-            time.sleep(1.0)
-            self.get_logger().debug("pausing...")
-            self.pause()
-
-        self.get_logger().debug("Resetting navigator ...")
-        self.reset_navigator(self.index)
 
         self.get_logger().debug("Environment reset performed ...")
 
@@ -565,7 +546,7 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_agents(self, all=False):
         """
         """
-        if all:
+        if all: # if testing
             agents2reset = list(range(1,len(self.agents)+1))
         # if training
         elif self.index in range(8):
@@ -576,7 +557,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             agents2reset = [7,8,9,10,11]
         else:
             return
-             
+            
         for agent in agents2reset:
             x, y , yaw = tuple(self.agents[agent-1])
 
@@ -594,136 +575,69 @@ class Pic4rlEnvironmentAPPLR(Node):
 
         self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
         logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
-        # self.set_entity_state('goal', [self.goal_pose[0], self.goal_pose[1], 0.01])
 
-    def reset_navigator(self, index):
-        """
-        """
-        if self.episode <= self.starting_episodes:
-            x, y, yaw = tuple(self.initial_pose)
-        else:
-            x, y, yaw = tuple(self.poses[index])
-
-        z = math.sin(yaw/2)
-        w = math.cos(yaw/2)
-
-        initial_pose = PoseStamped()
-        initial_pose.header.frame_id = 'map'
-        initial_pose.header.stamp = self.navigator.get_clock().now().to_msg()
-        initial_pose.pose.position.x = x
-        initial_pose.pose.position.y = y
-        initial_pose.pose.orientation.z = z
-        initial_pose.pose.orientation.w = w
-        
-        if self.use_localization:
-            self.navigator.setInitialPose(initial_pose)
-
-        if not self.simulation_restarted == 1:
-            self.get_logger().debug("Restarting LifeCycleNodes...")
-            # lifecycleResume(navigator=self.navigator)
-
-            self.n_navigation_end = 0
-
-        self.get_logger().debug("wait until Nav2Active...")
-        if self.use_localization:
-            localizer = 'amcl'
-        else:
-            localizer = 'controller_server'
-        self.navigator.waitUntilNav2Active(navigator='bt_navigator', localizer=localizer)
-
-        # self.waitUnitlInitialPoseIsSet(initial_pose)
-        self.get_logger().debug("Clearing all costmaps...")
-        self.navigator.clearAllCostmaps()
-        time.sleep(1.0)
- 
-        self.get_logger().debug("Sending goal ...")
-        self.send_goal(self.goal_pose, reset=True)
-        time.sleep(1.0)
-
-    def get_people_state(self, robot_pose, robot_velocity):
-        """
-        """
-        # Spin once to get the people message
-        rclpy.spin_once(self)
-
-        people_state, people_info, min_people_distance = self.sfm.get_people(robot_pose, robot_velocity)
-        self.min_people_distance = min_people_distance
-        self.get_logger().debug('Min people distance: '+str(min_people_distance))
-
-        return people_state, people_info
-
-    def send_set_request_controller(self, param_values):
-        self.set_req_controller.parameters = [Parameter(name='FollowPath.social_weight', value=param_values[0]).to_parameter_msg(),
-                                              Parameter(name='FollowPath.costmap_weight', value=param_values[1]).to_parameter_msg(),
-                                              Parameter(name='FollowPath.velocity_weight', value=param_values[2]).to_parameter_msg(),
-                                              Parameter(name='FollowPath.angle_weight', value=param_values[3]).to_parameter_msg(),
-                                              Parameter(name='FollowPath.distance_weight', value=param_values[4]).to_parameter_msg()
-                                              ]
-        future = self.set_cli_controller.call_async(self.set_req_controller)
-        return future
-
-    def set_controller_params(self, controller_params):
-        self.get_logger().debug('setting controller params to: '+str(controller_params))
-        self.set_req_controller = SetParameters.Request()
-        future = self.send_set_request_controller(controller_params)
-        rclpy.spin_until_future_complete(self, future)
-
-        try:
-            get_response = future.result()
-            self.get_logger().debug(
-                'Result %s' %
-                (get_response.results[0].successful))
-        except Exception as e:
-            self.get_logger().debug(
-                'Service call failed %r' % (e,))
+        self.global_path = self.global_path_dict["Ep"+str(index)+"_poses"]
+        x, y, _ = tuple(self.poses[index])
+        self.set_local_goal([x,y])
 
     def get_goal(self, index):
         # get goal from predefined list
         self.goal_pose = self.goals[index]
         self.get_logger().info("New goal: (x,y) : " + str(self.goal_pose))
+    
+    def set_local_goal(self, robot_pose):
+        """""
+        Compute local goal at a fixed distance on the global path
+        """""
+        goal_pose = np.array(self.goal_pose)
+        local_goal_pose = np.array(self.local_goal_pose)
 
-    def send_goal(self, pose, reset=False):
-        # Set the robot's goal pose
-        goal_pose = PoseStamped()
-        goal_pose.header.frame_id = 'map'
-        goal_pose.header.stamp = self.navigator.get_clock().now().to_msg()
-        goal_pose.pose.position.x = pose[0]
-        goal_pose.pose.position.y = pose[1]
-        goal_pose.pose.position.z = 0.0
-        goal_pose.pose.orientation.w = 1.0
+        if np.linalg.norm(goal_pose - local_goal_pose) > self.Lt:
+            self.local_goal_pose, _ = self.lookahead_point(robot_pose)
+        else:
+            self.local_goal_pose = self.goal_pose
 
-        # self.goal_pub.publish(goal_pose)
-        if self.mode == "testing":
-            self.get_logger().debug("Sending goal pose to navigator...")
-            self.hunav_goal_pub.publish(goal_pose)
+        self.get_logger().info("New local goal: (x,y) : " + str(self.local_goal_pose))
         
-        # compute path to be saved
-        if self.save_paths_file and reset:
-            path_to_goal = None
-            while path_to_goal is None:
-                path_to_goal = self.navigator.getPath(start=PoseStamped(),goal=goal_pose)
-            self.print_path_to_goal(path_to_goal)
+    
+    def lookahead_point(self, robot_pose):
+        """
+        Find the goal point on the path to the robot
 
-        # send goal
-        self.navigator.goToPose(goal_pose)
-        
+        Return:   
+        goal_point: goal point on the path
+        goal_index: index of the goal point on the path to the robot
+        """
+        index = self.pind
+        global_path = np.array(self.global_path)
+        robot_pose = np.array(robot_pose[:2])
+
+        while (index + 1) < len(global_path):
+            distance = np.linalg.norm(global_path[index] - robot_pose)
+            if distance > self.Lt:
+                break
+            index += 1
+        if self.pind <= index:
+            self.pind = index
+        goal_point = global_path[self.pind]
+        return goal_point, index
+
+
     def get_random_goal(self):
-
-        x = random.randrange(-35, 30) / 10.0
-        y = random.randrange(-88, 28) / 10.0
+        """
+        """
+        if self.episode < 6 or self.episode % 25 == 0:
+            x = 0.55
+            y = 0.55
+        else:
+            x = random.randrange(-35, 30) / 10.0
+            y = random.randrange(-88, 28) / 10.0
 
         x += self.initial_pose[0]
         y += self.initial_pose[1]
-            
-        self.get_logger().info("New goal: (x,y) : " + str(x) + "," +str(y))
+
         self.goal_pose = [x, y]
 
-    def compute_frequency(self,):
-        t1 = time.perf_counter()
-        step_time = t1-self.t0
-        self.t0 = t1
-        action_hz = 1./(step_time)
-        self.get_logger().debug('Sending action at '+str(action_hz))
 
     def pause(self):
         self.is_paused = True
@@ -783,80 +697,10 @@ class Pic4rlEnvironmentAPPLR(Node):
                 self.get_logger().debug(f'Result of setting entity state: {success}')
             time.sleep(2.0)
         return
-
-    def send_get_request_controller(self):
-        self.get_req_controller.names = [
-            'FollowPath.social_weight',
-            'FollowPath.costmap_weight',
-            'FollowPath.velocity_weight',
-            'FollowPath.angle_weight',
-            'FollowPath.distance_weight'
-        ]
-        future = self.get_cli_controller.call_async(self.get_req_controller)
-        return future
-
-    def get_controller_params(self,):
-        future = self.send_get_request_controller()
-        rclpy.spin_until_future_complete(self, future)
-        try:
-            get_response = future.result()
-            self.get_logger().info(
-                    'Result %s %s %s %s %s %s %s' %(
-                    get_response.values[0].double_value,
-                    get_response.values[1].double_value, 
-                    get_response.values[2].integer_value, 
-                    get_response.values[3].integer_value,
-                    get_response.values[4].double_value
-                    ))
-
-        except Exception as e:
-            self.get_logger().info(
-                'Service call failed %r' % (e,))
-
+    
     def create_clients(self,):
-        # # create Controller parameter client
-        self.get_cli_controller = self.create_client(GetParameters, '/controller_server/get_parameters')
-        while not self.get_cli_controller.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.get_req_controller = GetParameters.Request()
-
-        self.set_cli_controller = self.create_client(SetParameters, '/controller_server/set_parameters')
-        while not self.set_cli_controller.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        self.set_req_controller = SetParameters.Request()
-
         # create reset world client 
         self.reset_world_client = self.create_client(Empty, 'reset_simulation')
         self.pause_physics_client = self.create_client(Empty, 'pause_physics')
         self.unpause_physics_client = self.create_client(Empty, 'unpause_physics')
         self.set_entity_state_client = self.create_client(SetEntityState, 'test/set_entity_state')
-
-    def local_goal_callback(self, msg):
-        self.local_goal_pose = [msg.pose.position.x, msg.pose.position.y]
-
-    def print_path_to_goal(self, path_to_goal):
-        # print paths dict to file
-
-        poses = []
-        # check if path not empty
-        if not isinstance(path_to_goal, path_msg):
-            print("Empty Path received...")
-            
-        else:              
-            for pose in path_to_goal.poses:
-                x_pose = pose.pose.position.x
-                y_pose = pose.pose.position.y
-                poses.append([x_pose, y_pose])
-
-        self.paths_dict.update({"Ep"+str(self.episode)+"_poses":poses})
-        json_paths = json.dumps(self.paths_dict, indent=2)
-
-        self.get_logger().info('printing path to file...')
-
-        # Writing to json file
-        with open(self.saved_paths_path, "w") as outfile:
-            outfile.write(json_paths)
-
-        
-
-

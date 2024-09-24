@@ -3,7 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from applr_social_nav.tasks.DumbNav.applr_social_controller import DumbNavAPPLR
+from applr_social_nav.tasks.EndRL.end_rl_controller import EndRLSocialController
 
 import tensorflow as tf
 
@@ -23,7 +23,7 @@ if gpus:
 def main(args=None):
     rclpy.init(args=args)
 
-    pic4rl_training = DumbNavAPPLR()
+    pic4rl_training = EndRLSocialController()
 
     # executor = MultiThreadedExecutor()
     # executor.add_node(pic4rl_training)

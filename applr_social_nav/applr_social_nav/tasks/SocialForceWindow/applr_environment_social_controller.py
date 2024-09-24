@@ -356,7 +356,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.prev_nav_state = "unknown"
 
         # check collision
-        if  collision or self.min_people_distance < 0.50:
+        if collision or self.min_people_distance < 0.50:
             self.collision_count += 1
             if self.collision_count >= 3:
                 self.collision_count = 0
@@ -482,7 +482,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             self.bag_process.communicate()
             self.bag_process = None
 
-
         logging.info(f"Total_episodes: {'evaluate' if evaluate else n_episode}, Total_steps: {tot_steps}, episode_steps: {self.episode_step+1}\n")
         
         self.get_logger().info("Initializing new episode ...")
@@ -492,10 +491,14 @@ class Pic4rlEnvironmentAPPLR(Node):
         if self.mode == "testing":
             Path(os.path.join(self.logdir, 'evaluator/')).mkdir(parents=True, exist_ok=True)
             evaluator_path = str(Path(os.path.join(self.logdir, 'evaluator','metrics')))
-            subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &",
+            self.get_logger().debug(f"Evaluator metrics file path: {evaluator_path}")
+            results = subprocess.run(f"ros2 launch hunav_evaluator hunav_evaluator_launch.py metrics_output_path:={evaluator_path} &",
                 shell=True,
-                stdout=subprocess.DEVNULL
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE,
+                universal_newlines = True 
                 )
+            self.get_logger().debug(f"Evaluator run output: {results.stdout} {results.stderr}")
             topic_list = " ".join(["/jackal/odom", "/people", '/cost_weights', '/goal_pose', ])
             if self.bag_episode == 0:
                 Path(os.path.join(self.logdir, 'bags')).mkdir(parents=True, exist_ok=True)
@@ -713,13 +716,6 @@ class Pic4rlEnvironmentAPPLR(Node):
             
         self.get_logger().info("New goal: (x,y) : " + str(x) + "," +str(y))
         self.goal_pose = [x, y]
-
-    def compute_frequency(self,):
-        t1 = time.perf_counter()
-        step_time = t1-self.t0
-        self.t0 = t1
-        action_hz = 1./(step_time)
-        self.get_logger().debug('Sending action at '+str(action_hz))
 
     def pause(self):
         self.is_paused = True
