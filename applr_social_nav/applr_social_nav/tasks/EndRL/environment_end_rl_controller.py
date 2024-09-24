@@ -164,6 +164,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.k_people = 4
         self.min_people_distance = 10.0
         self.max_person_dist_allowed = 5.0
+        self.use_local_goal = False
         self.previous_local_goal_info = [0.0,0.0]
         self.Lt = 2.5
         self.pind = 0
@@ -173,9 +174,10 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.goal_pose = self.goals[0]
         self.local_goal_pose = [0.0, 0.0]
 
-        # Load precomputed global paths from file
-        with open(self.saved_paths_path) as json_file:
-            self.global_path_dict = json.load(json_file)
+        if self.use_local_goal:
+            # Load precomputed global paths from file
+            with open(self.saved_paths_path) as json_file:
+                self.global_path_dict = json.load(json_file)
 
         self.get_logger().info(f"Gym mode: {self.mode}")
         # if self.mode == "testing":
@@ -256,8 +258,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("spinning for sensor_msg...")
         rclpy.spin_once(self)
         while None in self.sensors.sensor_msg.values():
-            self.get_logger().debug("None in sensor_msg... spinning again...")
+            #self.get_logger().debug("None in sensor_msg... spinning again...")
             rclpy.spin_once(self)
+        self.get_logger().debug("sensor msgs spinning complete...")
         self.sensors.sensor_msg = dict.fromkeys(self.sensors.sensor_msg.keys(), None)
         rclpy.spin_once(self)
         
@@ -339,7 +342,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             return True, "goal"
         
         # check waypoint reached
-        if local_goal_info[0] < self.goal_tolerance:
+        if local_goal_info[0] < self.goal_tolerance and self.use_local_goal:
             self.get_logger().debug(f"Local goal reached..")
             self.set_local_goal(robot_pose)
             return False, "local_goal"
@@ -358,7 +361,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         # Distance Reward
         # Positive reward if the distance to the goal is decreased
         cd = 1.0
-        Rd = (self.previous_local_goal_info[0] - goal_info[0])*10.0
+        Rd = (self.previous_local_goal_info[0] - goal_info[0])*20.0
         
         Rd = np.minimum(Rd, 1.0) 
         Rd = np.maximum(Rd, -1.0)
@@ -368,11 +371,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
         
         # Linear Velocity Reward
-        cv = 0.8
+        cv = 0.5
         Rv = (robot_velocity[0] - self.max_lin_vel)/self.max_lin_vel # velocity reward
         
         # Obstacle Reward
-        co = 2.0
+        co = 1.0
         Ro = (self.min_obstacle_distance - self.lidar_distance)/self.lidar_distance # obstacle reward
 
         # Social Disturbance Reward
@@ -382,7 +385,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         cp = 2.0
 
         # Social work
-        Rs = social_work * 20
+        Rs = social_work * 10
         Rs = -np.minimum(Rs, 2.5) 
         cs = 2.5
 
@@ -398,11 +401,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug('Dense reward : ' +str(reward))
 
         if event == "goal":
-            reward += 500.0
+            reward += 1000.0
         elif event == "local_goal":
-            reward += 25.0
+            reward += 50.0
         elif event == "collision":
-            reward += -200
+            reward += -500
         elif event == "timeout":
             reward += -50
 
@@ -434,7 +437,7 @@ class Pic4rlEnvironmentAPPLR(Node):
             state_list.append(float(point))
 
         state = np.array(state_list, dtype = np.float32)
-        #self.get_logger().debug('state=[goal,people,lidar]: '+str(state))
+        self.get_logger().debug('state=[goal,people,lidar]: '+str(state))
         return state
 
     def update_state(
@@ -516,7 +519,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.get_logger().debug("Respawning robot ...")
         self.respawn_robot(self.index)
 
-        if self.episode % 1 == 0. or self.mode == "testing":
+        if self.episode % 12 == 0. or self.mode == "testing":
             self.get_logger().debug("Respawning all agents ...")
             if not self.is_paused:
                 self.pause()
@@ -524,7 +527,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 self.get_logger().info("Respawning all agents ...")
                 self.respawn_agents(all=True)
             else:
-                self.respawn_agents()
+                self.respawn_agents(all=True)
 
         self.get_logger().debug("Respawning goal ...")
         self.respawn_goal(self.index)
@@ -534,7 +537,7 @@ class Pic4rlEnvironmentAPPLR(Node):
     def respawn_robot(self, index):
         """
         """
-        x, y , yaw = tuple(self.poses[index])
+        x, y, yaw = tuple(self.poses[index])
 
         qz = np.sin(yaw/2)
         qw = np.cos(yaw/2)
@@ -548,7 +551,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         if all: # if testing
             agents2reset = list(range(1,len(self.agents)+1))
-        # if training
+        # if training in social_nav.world
         elif self.index in range(8):
             agents2reset = [1,2,3,12]
         elif self.index in range(8,18):
@@ -569,16 +572,20 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         """
         if self.episode < self.starting_episodes:
-            self.get_random_goal()
+            self.get_random_goal(index)
         else:
             self.get_goal(index)
 
         self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
         logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1} goal pose [x, y]: {self.goal_pose}")
 
-        self.global_path = self.global_path_dict["Ep"+str(index)+"_poses"]
-        x, y, _ = tuple(self.poses[index])
-        self.set_local_goal([x,y])
+        if self.use_local_goal:
+            self.global_path = self.global_path_dict["Ep"+str(index)+"_poses"]
+            x, y, _ = tuple(self.poses[index])
+            self.pind = 0
+            self.set_local_goal([x,y])
+        else:
+            self.local_goal_pose = self.goal_pose
 
     def get_goal(self, index):
         # get goal from predefined list
@@ -623,18 +630,18 @@ class Pic4rlEnvironmentAPPLR(Node):
         return goal_point, index
 
 
-    def get_random_goal(self):
+    def get_random_goal(self, index):
         """
         """
-        if self.episode < 6 or self.episode % 25 == 0:
+        if self.episode < 12 or self.episode % 24 == 0:
             x = 0.55
-            y = 0.55
+            y = 0.05
         else:
-            x = random.randrange(-35, 30) / 10.0
-            y = random.randrange(-88, 28) / 10.0
+            x = random.randrange(-15, 10) / 10.0
+            y = random.randrange(-18, 18) / 10.0
 
-        x += self.initial_pose[0]
-        y += self.initial_pose[1]
+        x += self.poses[index][0]
+        y += self.poses[index][1]
 
         self.goal_pose = [x, y]
 
