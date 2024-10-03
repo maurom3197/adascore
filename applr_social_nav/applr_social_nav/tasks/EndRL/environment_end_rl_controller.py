@@ -71,6 +71,7 @@ class Pic4rlEnvironmentAPPLR(Node):
                 ('laser_param.total_points', rclpy.Parameter.Type.INTEGER),
                 ("update_frequency", rclpy.Parameter.Type.DOUBLE),
                 ("sensor", rclpy.Parameter.Type.STRING),
+                ("use_local_goal", rclpy.Parameter.Type.BOOL),
             ],
         )
 
@@ -113,6 +114,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         )
         self.sensor_type = (
             self.get_parameter("sensor").get_parameter_value().string_value
+        )
+        self.use_local_goal =  (
+            self.get_parameter("use_local_goal").get_parameter_value().bool_value
         )
         self.bag_process = None
         self.bag_episode = 0
@@ -164,7 +168,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.k_people = 4
         self.min_people_distance = 10.0
         self.max_person_dist_allowed = 5.0
-        self.use_local_goal = False
         self.previous_local_goal_info = [0.0,0.0]
         self.Lt = 2.5
         self.pind = 0
@@ -363,31 +366,31 @@ class Pic4rlEnvironmentAPPLR(Node):
         cd = 1.0
         Rd = (self.previous_local_goal_info[0] - goal_info[0])*20.0
         
-        Rd = np.minimum(Rd, 1.0) 
-        Rd = np.maximum(Rd, -1.0)
+        Rd = np.minimum(Rd, 2.0) 
+        Rd = np.maximum(Rd, -2.0)
 
         # Heading Reward
         ch = 0.4
         Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
         
         # Linear Velocity Reward
-        cv = 0.5
+        cv = 0.25
         Rv = (robot_velocity[0] - self.max_lin_vel)/self.max_lin_vel # velocity reward
         
         # Obstacle Reward
-        co = 1.0
+        co = 0.8
         Ro = (self.min_obstacle_distance - self.lidar_distance)/self.lidar_distance # obstacle reward
 
         # Social Disturbance Reward
         Rp = 0.
         Rp += 1/self.min_people_distance # personal space reward 1.2 m social 3.6
-        Rp = -np.minimum(Rp, 2.5)
-        cp = 2.0
+        Rp = -np.minimum(Rp, 1.5)
+        cp = 1.25
 
         # Social work
         Rs = social_work * 10
-        Rs = -np.minimum(Rs, 2.5) 
-        cs = 2.5
+        Rs = -np.minimum(Rs, 2.0) 
+        cs = 1.25
 
         # Total Reward
         reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
@@ -405,7 +408,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         elif event == "local_goal":
             reward += 50.0
         elif event == "collision":
-            reward += -500
+            reward += -300
         elif event == "timeout":
             reward += -50
 
@@ -633,11 +636,11 @@ class Pic4rlEnvironmentAPPLR(Node):
     def get_random_goal(self, index):
         """
         """
-        if self.episode < 12 or self.episode % 24 == 0:
-            x = 0.55
+        if self.episode < self.starting_episodes/2 or self.episode % 25 == 0:
+            x = 0.65
             y = 0.05
         else:
-            x = random.randrange(-15, 10) / 10.0
+            x = random.randrange(-25, 10) / 10.0
             y = random.randrange(-18, 18) / 10.0
 
         x += self.poses[index][0]

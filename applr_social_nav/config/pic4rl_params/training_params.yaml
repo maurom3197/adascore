@@ -1,7 +1,7 @@
 training_params:
 # Trainer parameters
     --max-steps: 1000000 # (int) The maximum steps for training. The default is ``int(1e6)``
-    --episode-max-steps: 200 # (int) The maximum steps for an episode. The default is ``int(1e3)``
+    --episode-max-steps: 500 # (int) The maximum steps for an episode. The default is ``int(1e3)``
     --n-experiments: 1 # (int) Number of experiments. The default is ``1``
 # --show-progress: # Call ``render`` function during training
     # --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
@@ -21,19 +21,19 @@ training_params:
     --use-prioritized-rb: # Use prioritized experience replay
     --use-nstep-rb: # Use Nstep experience replay
     --n-step: 4 # (int) Number of steps for nstep experience reward. The default is ``4``
-    --rb-path-save: 'SFW_SAC_500K' # Save experience replay buffer in case of save
+    --rb-path-save: 'SAC_1M' # Save experience replay buffer in case of save
 #    --rb-path-load: 'src/Results/20240301_191712.280195_applr_SAC/SFW_SAC_500K.npz' # Load experience replay buffer in case of restore
     --logging-level: DEBUG # (DEBUG, INFO, WARNING) Choose logging level. The default is ``INFO``
     --policy: 'SAC' # training policy
     --policy_trainer: 'off-policy' # trainer off-policy / on-policy
     --change_goal_and_pose: 1
-    --starting_episodes: 0
+    --starting_episodes: 80
     --batch-size: 32 # (int) Batch size for training. The default is ``32``.
     --gpu: 0 # (int) GPU id. ``-1`` disables GPU. The default is ``0``.
 
 # For all off-policy algos (DDPG, TD3, SAC)
     --n-warmup: 10000 # (int) Number of warmup steps before training. The default is ``1e4``.
-    --memory-capacity: 500000  # (int) Replay Buffer size. The default is ``1e6``.
+    --memory-capacity: 1000000  # (int) Replay Buffer size. The default is ``1e6``.
 
 # For only SAC
     --alpha: 0.2 # (float) Temperature parameter. The default is ``0.2``.
