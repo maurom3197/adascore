@@ -46,6 +46,7 @@ install(PROGRAMS
   scripts/social_force_window_applr
   scripts/dumb_nav_applr
   scripts/end_rl_applr
+  scripts/social_force_window_real_applr
   DESTINATION lib/${PROJECT_NAME}
 )
 

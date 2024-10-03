@@ -7,7 +7,7 @@ training_params:
     # --save-model-interval: 10000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-model-interval: 5000 # (int) Interval to save model. The default is ``int(1e4)``
     --save-summary-interval: 5000 # (int) Interval to save summary. The default is ``int(1e3)``
-#    --model-dir: 'src/Models/DumbNav' # (str) Directory to restore model.
+    # --model-dir: 'src/Models/SFW/SFW_SAC_160kstep_20240306T232749.683208_SAC_' # (str) Directory to restore model. src/Models/SFW/SFW_SAC_160kstep_20240306T232749.683208_SAC_
 #    --dir-suffix: ""  # (str) Suffix for directory that stores results.
 #    --normalize-obs: # Whether normalize observation
     --logdir: 'src/Results' # (str) Output directory name. The default is ``"results"``

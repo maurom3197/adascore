@@ -25,7 +25,7 @@ main_node:
     use_local_goal: false
 
     # Task parameters
-    task: 'EndRl' # SocialForceWindow, SocialForceWindowCostmap, SocialController, SocialController
+    task: 'EndRl' # SocialForceWindow, SocialForceWindowCostmap, SocialController, SocialController, SocialForceWindowReal, EndRl
     # Sensors parameters
     sensor: 'applr' # lidar or rgb_camera or depth_camera
     update_frequency: 15.0 #20.0 # update the controller parameters at this frequency
