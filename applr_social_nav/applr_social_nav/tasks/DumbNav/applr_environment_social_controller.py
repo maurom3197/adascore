@@ -625,6 +625,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         if all:
             agents2reset = list(range(1,len(self.agents)+1))
+            self.get_logger().debug(f"Respawning all Agents with ID: {agents2reset}")
         # if training
         elif self.index in range(8):
             agents2reset = [1,2,3,12]
@@ -917,7 +918,6 @@ class Pic4rlEnvironmentAPPLR(Node):
         with open(self.saved_paths_path, "w") as outfile:
             outfile.write(json_paths)
 
-    
 
     def call_hunav_service(self, stop):
         req = Trigger.Request()

@@ -16,13 +16,13 @@ main_node:
     goal_tolerance: 0.40
 
     # World parameters
-    world_name: "social_scenarios.world" # Leave empty to obtain no world
-    data_path: "social_scenarios.json"  # "social_nav.json"
-    agents_config: "social_scenarios.yaml" # "social_nav.yaml"
+    world_name: "social_nav.world" # Leave empty to obtain no world
+    data_path: "social_nav.json"  # "social_nav.json"
+    agents_config: "social_nav.yaml" # "social_nav.yaml"
     saved_paths_file: "social_nav_paths.json"  # "social_nav_paths.json"
 
     use_localization: False
-    use_local_goal: false
+    use_local_goal: True
 
     # Task parameters
     task: 'EndRl' # SocialForceWindow, SocialForceWindowCostmap, SocialController, SocialController, SocialForceWindowReal, EndRl

@@ -169,7 +169,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         self.min_people_distance = 10.0
         self.max_person_dist_allowed = 5.0
         self.previous_local_goal_info = [0.0,0.0]
-        self.Lt = 2.5
+        self.Lt = 2.0
         self.pind = 0
 
         self.initial_pose, self.goals, self.poses, self.agents = self.get_goals_and_poses()
@@ -339,6 +339,9 @@ class Pic4rlEnvironmentAPPLR(Node):
                 return False, "collision"
 
         # check goal reached
+        if not isinstance(self.local_goal_pose, list):
+            print("Anomaly local goal pose: ", self.local_goal_pose)
+            self.local_goal_pose = list(self.local_goal_pose)
         if goal_info[0] < self.goal_tolerance and self.goal_pose==self.local_goal_pose:
             self.get_logger().info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
             logging.info(f"Ep {'evaluate' if self.evaluate else self.episode+1}: Goal")
@@ -370,11 +373,11 @@ class Pic4rlEnvironmentAPPLR(Node):
         Rd = np.maximum(Rd, -2.0)
 
         # Heading Reward
-        ch = 0.4
+        ch = 0.3
         Rh = (1-2*math.sqrt(math.fabs(goal_info[1]/math.pi))) #heading reward v.2
         
         # Linear Velocity Reward
-        cv = 0.25
+        cv = 0.6
         Rv = (robot_velocity[0] - self.max_lin_vel)/self.max_lin_vel # velocity reward
         
         # Obstacle Reward
@@ -384,13 +387,13 @@ class Pic4rlEnvironmentAPPLR(Node):
         # Social Disturbance Reward
         Rp = 0.
         Rp += 1/self.min_people_distance # personal space reward 1.2 m social 3.6
-        Rp = -np.minimum(Rp, 1.5)
-        cp = 1.25
+        Rp = -np.minimum(Rp, 2.0)
+        cp = 1.0
 
         # Social work
         Rs = social_work * 10
         Rs = -np.minimum(Rs, 2.0) 
-        cs = 1.25
+        cs = 1.0
 
         # Total Reward
         reward = ch*Rh + cs*Rs + cp*Rp + cd*Rd + cv*Rv + co*Ro
@@ -406,9 +409,9 @@ class Pic4rlEnvironmentAPPLR(Node):
         if event == "goal":
             reward += 1000.0
         elif event == "local_goal":
-            reward += 50.0
+            reward += 100.0
         elif event == "collision":
-            reward += -300
+            reward += -400
         elif event == "timeout":
             reward += -50
 
@@ -575,7 +578,7 @@ class Pic4rlEnvironmentAPPLR(Node):
         """
         """
         if self.episode < self.starting_episodes:
-            self.get_random_goal(index)
+            self.get_goal(index)
         else:
             self.get_goal(index)
 
@@ -630,13 +633,13 @@ class Pic4rlEnvironmentAPPLR(Node):
         if self.pind <= index:
             self.pind = index
         goal_point = global_path[self.pind]
-        return goal_point, index
+        return list(goal_point), index
 
 
     def get_random_goal(self, index):
         """
         """
-        if self.episode < self.starting_episodes/2 or self.episode % 25 == 0:
+        if self.episode < self.starting_episodes or self.episode % 25 == 0:
             x = 0.65
             y = 0.05
         else:

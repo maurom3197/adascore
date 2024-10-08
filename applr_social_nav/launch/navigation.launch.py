@@ -60,7 +60,7 @@ def generate_launch_description():
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
-        'map': map_yaml_file,
+        'yaml_filename': map_yaml_file,
         'use_sim_time': use_sim_time,
         'autostart': autostart}
 
