@@ -6,7 +6,7 @@
 
 
 <p align="center">
-  <img src=/readme_images/IROS2024_2634.jpg alt="Alternative text" width="450"/>
+  <img src=/readme_images/IROS2024_2634.jpg alt="Alternative text" width="650"/>
 </p>
 
 This is the official repo for the IROS 2024 paper "Adaptive Social Force Window Planner with Reinforcement Learning" (https://arxiv.org/abs/2404.13678). The project aims at developing an adaptive social controller algorithm to tackle different social scenarios with people moving. Our system can be declined in different tasks coupling standard navigation algorithms (DWA) and a Reinforcement Learning agent. The RL agent can be trained end-to-end to learn different policies: robot direct commands ('EndRl' task), cost weights ('SocialForceWindow' task), and social costmap parameters ('SocialControllerCostmap'), and new future tasks. 
@@ -15,7 +15,7 @@ We use the PIC4rl_gym (https://github.com/PIC4SeR/PIC4rl_gym) as the ROS 2 gym e
 
 
 <p align="center">
-  <img src=/readme_images/social_nav_test.png alt="Alternative Text" width="750"/>
+  <img src=/readme_images/social_nav_test.png alt="Alternative Text" width="550"/>
 </p>
 
 
