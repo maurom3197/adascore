@@ -116,4 +116,4 @@ If you want to use this code for your research, please cite our work ([Adaptive 
 ```
 
 # Acknowledgements
-[This work has been realized thanks to a joint effort by researchers at PIC4SeR Centre for Service Robotics at Politecnico di Torino (https://pic4ser.polito.it/) and the Service Robotics Lab of the Pablo de Olavide University, Sevilla (https://robotics.upo.es/).]
+This work has been realized thanks to a joint effort by researchers at PIC4SeR Centre for Service Robotics at Politecnico di Torino (https://pic4ser.polito.it/) and the Service Robotics Lab of the Pablo de Olavide University, Sevilla (https://robotics.upo.es/).
