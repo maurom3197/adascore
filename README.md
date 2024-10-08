@@ -85,33 +85,34 @@ This repository is intended for scientific research purposes.
 If you want to use this code for your research, please cite our work ([Adaptive Social Force Window Planner with Reinforcement Learning](https://arxiv.org/abs/2404.13678)).
 
 ```
-[@article{martini2024adaptive,
+@article{martini2024adaptive,
   title={Adaptive Social Force Window Planner with Reinforcement Learning},
   author={Martini, Mauro and P{\'e}rez-Higueras, No{\'e} and Ostuni, Andrea and Chiaberge, Marcello and Caballero, Fernando and Merino, Luis},
   journal={arXiv preprint arXiv:2404.13678},
   year={2024}
-}]
+}
 ```
 
 
 # References
 ```
-[@article{perez2023hunavsim,
+@article{perez2023hunavsim,
   title={Hunavsim: A ros 2 human navigation simulator for benchmarking human-aware robot navigation},
   author={P{\'e}rez-Higueras, No{\'e} and Otero, Roberto and Caballero, Fernando and Merino, Luis},
   journal={IEEE Robotics and Automation Letters},
   year={2023},
   publisher={IEEE}
-}]
-
-[@inproceedings{martini2023pic4rl,
+}
+```
+```
+@inproceedings{martini2023pic4rl,
   title={Pic4rl-gym: a ros2 modular framework for robots autonomous navigation with deep reinforcement learning},
   author={Martini, Mauro and Eirale, Andrea and Cerrato, Simone and Chiaberge, Marcello},
   booktitle={2023 3rd international conference on computer, control and robotics (ICCCR)},
   pages={198--202},
   year={2023},
   organization={IEEE}
-}]
+}
 ```
 
 # Acknowledgements
