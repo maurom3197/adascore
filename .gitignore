@@ -1,7 +1,8 @@
 # ignore results folder
-/applr_social_nav/training_results/
-/applr_social_nav/testing_results/
+/adascore/training_results/
+/adascore/testing_results/
 /training/pic4rl/models/
 /training/pic4rl/results/
 /adjustments/*
-/nav2_applr/*
+/nav2_adascore_utils/*
+.vscode/*

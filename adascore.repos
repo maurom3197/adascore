@@ -1,0 +1,54 @@
+repositories:
+  # adascore:
+  #   type: git
+  #   url: https://github.com/maurom3197/adascore.git
+  #   version: humble
+  hunav/lightsfm:
+    type: git
+    url: https://github.com/robotics-upo/lightsfm.git
+    version: master
+  hunav/hunav_gazebo_wrapper:
+    type: git
+    url: https://github.com/robotics-upo/hunav_gazebo_wrapper.git
+    branch: humble
+  hunav/hunav_sim:
+    type: git
+    url: https://github.com/robotics-upo/hunav_sim.git
+    branch: humble
+  hunav/people:
+    type: git
+    url: https://github.com/wg-perception/people.git
+    version: ros2
+  jackal/jackal:
+    type: git
+    url: https://github.com/andreaostuni/jackal.git
+    version: humble
+  jackal/jackal_desktop:
+    type: git
+    url: https://github.com/andreaostuni/jackal_desktop.git
+    version: humble
+  jackal/jackal_simulator:
+    type: git
+    url: https://github.com/andreaostuni/jackal_simulator.git
+    version: humble
+  gazebo_ros_additional_pkgs:
+    type: git
+    url: https://github.com/andreaostuni/gazebo_ros_additional_pkgs.git
+  pic4rl_gym:
+    type: git
+    url: https://github.com/PIC4SeR/PIC4rl_gym.git
+  
+  # plotjuggler/plotjuggler:
+  #   type: git
+  #   url: https://github.com/facontidavide/PlotJuggler.git
+  #   version: "3.7.1"
+  # plotjuggler/plotjuggler_msgs:
+  #   type: git
+  #   url: https://github.com/PlotJuggler/plotjuggler_msgs.git
+  #   version: ros2
+  # plotjuggler/plotjuggler-ros-plugins:
+  #   type: git
+  #   url: https://github.com/PlotJuggler/plotjuggler-ros-plugins.git
+  #   version: humble
+
+  

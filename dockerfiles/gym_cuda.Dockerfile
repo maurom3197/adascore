@@ -125,13 +125,13 @@ RUN rosdep update
 
 # WORKDIR $ROBOT_WS
 
-ARG APPLR_WS=/home/$USERNAME/applr_ws
-RUN mkdir -p $APPLR_WS
-WORKDIR $APPLR_WS
+ARG ADASCORE_WS=/home/$USERNAME/adascore_ws
+RUN mkdir -p $ADASCORE_WS
+WORKDIR $ADASCORE_WS
 
-COPY ./applr_social_nav.repos ./
+COPY ./adascore.repos ./
 
-RUN mkdir src && vcs import src < ./applr_social_nav.repos
+RUN mkdir src && vcs import src < ./adascore.repos
 
 # # General ROS development tools
 RUN sudo apt update && sudo apt install -y \
@@ -162,7 +162,7 @@ RUN colcon mixin add default \
   https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml \
   && colcon mixin update default
 
-# # Build APPLR_WS
+# # Build ADASCORE_WS
 ARG OVERLAY_MIXINS="release"
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
     colcon build \
@@ -170,11 +170,11 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
       --symlink-install \
       --executor sequential
 
-ENV APPLR_WS $APPLR_WS
+ENV ADASCORE_WS $ADASCORE_WS
 
-# Build applr_social_nav
-RUN mkdir -p src/APPLR_social_nav
-COPY . src/APPLR_social_nav/
+# Build adascore
+RUN mkdir -p src/adascore
+COPY . src/adascore/
 
 RUN . /opt/ros/$ROS_DISTRO/setup.bash && \
     sudo apt-get update && rosdep install -y \
@@ -182,7 +182,7 @@ RUN . /opt/ros/$ROS_DISTRO/setup.bash && \
       --ignore-src \
     && sudo rm -rf /var/lib/apt/lists/*
 
-RUN . ${APPLR_WS}/install/setup.bash && \
+RUN . ${ADASCORE_WS}/install/setup.bash && \
     colcon build \
       --mixin $OVERLAY_MIXINS \
       --symlink-install 
