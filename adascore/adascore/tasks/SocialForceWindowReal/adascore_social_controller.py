@@ -31,12 +31,12 @@ from tf2rl.algos.sac import SAC
 from tf2rl.algos.ppo import PPO
 from tf2rl.experiments.tester_real import TesterReal
 from adascore.tasks.SocialForceWindowReal.adascore_environment_social_cotroller import (
-    Pic4rlEnvironmentADASCORE,
+    Pic4rlEnvironmentAdascore,
 )
 from ament_index_python.packages import get_package_share_directory
 
 
-class SocialForceWindowADASCORE(Pic4rlEnvironmentADASCORE):
+class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
     def __init__(self):
         super().__init__()
         self.log_check()

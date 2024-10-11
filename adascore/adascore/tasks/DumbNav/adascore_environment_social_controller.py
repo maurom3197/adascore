@@ -39,7 +39,7 @@ from people_msgs.msg import People
 from std_srvs.srv import Trigger
 
 
-class Pic4rlEnvironmentADASCORE(Node):
+class Pic4rlEnvironmentAdascore(Node):
     def __init__(self):
         super().__init__('pic4rl_env_adascore')
         self.declare_parameter("package_name", "adascore")

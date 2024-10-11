@@ -30,7 +30,7 @@ from people_msgs.msg import People
 from adascore.utils.nav_utils import *
 from adascore.utils.sfm import SocialForceModel
 
-class Pic4rlEnvironmentADASCORE(Node):
+class Pic4rlEnvironmentAdascore(Node):
     def __init__(self):
         super().__init__("pic4rl_env_adascore")
         self.declare_parameter("package_name", "adascore")

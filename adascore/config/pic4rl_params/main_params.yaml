@@ -1,7 +1,7 @@
 main_node:
   ros__parameters:
     # Mode
-    mode: "testing" # Training or testing
+    mode: "training" # Training or testing
     # Robot parameters
     robot_name: "jackal"
     max_lin_vel: 0.6
@@ -22,10 +22,10 @@ main_node:
     saved_paths_file: "social_nav_paths.json"  # "social_nav_paths.json"
 
     use_localization: False
-    use_local_goal: True
+    use_local_goal: False
 
     # Task parameters
-    task: 'DumbNav' # SocialForceWindow, SocialForceWindowCostmap, SocialController, SocialController, SocialForceWindowReal, EndRl
+    task: 'EndRl' # SocialForceWindow, SocialForceWindowCostmap, SocialController, SocialController, SocialForceWindowReal, EndRl
     # Sensors parameters
     sensor: 'adascore' # lidar or rgb_camera or depth_camera
     update_frequency: 15.0 #20.0 # update the controller parameters at this frequency

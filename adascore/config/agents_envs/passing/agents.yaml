@@ -10,10 +10,20 @@ hunav_loader:
     agent1:
       id: 1
       skin: 0
-      behavior: 2
       group_id: -1
-      max_vel: 0.45
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: 3.014608
         y: 0.390217
@@ -35,10 +45,20 @@ hunav_loader:
     agent2:
       id: 2
       skin: 2
-      behavior: 2
       group_id: -1
-      max_vel: 0.45
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -1.857564
         y: -0.685386
@@ -60,10 +80,20 @@ hunav_loader:
     agent3:
       id: 3
       skin: 4
-      behavior: 2
       group_id: -1
-      max_vel: 0.45
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -8.085175
         y: 0.751799
@@ -85,10 +115,20 @@ hunav_loader:
     agent4:
       id: 4
       skin: 3
-      behavior: 2
       group_id: -1
-      max_vel: 0.45
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -8.124890
         y: -0.368494

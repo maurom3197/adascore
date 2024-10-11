@@ -17,16 +17,26 @@ hunav_loader:
     agent1:
       id: 1
       skin: 4
-      behavior: 2
       group_id: -1
-      max_vel: 0.2
-      radius: 0.35
+      max_vel: 0.8
+      radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -5.0
         y: 3.23
         z: 1.250000
         h: 0.0
-      goal_radius: 0.15
+      goal_radius: 0.25
       cyclic_goals: true
       goals:
         - g0
@@ -42,16 +52,26 @@ hunav_loader:
     agent2:
       id: 2
       skin: 1
-      behavior: 2
       group_id: -1
-      max_vel: 0.4
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -3.0
         y: 4.1
         z: 1.250000
         h: 0.0
-      goal_radius: 0.15
+      goal_radius: 0.25
       cyclic_goals: true
       goals:
         - g0
@@ -67,16 +87,26 @@ hunav_loader:
     agent3:
       id: 3
       skin: 3
-      behavior: 2
       group_id: -1
-      max_vel: 0.3
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: 0.598861
         y: -3.53
         z: 1.250000
         h: 1.57
-      goal_radius: 0.1
+      goal_radius: 0.2
       cyclic_goals: true
       goals:
         - g0
@@ -92,16 +122,26 @@ hunav_loader:
     agent4:
       id: 4
       skin: 3
-      behavior: 2
       group_id: -1
-      max_vel: 0.5
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -4.909480
         y: 0.2
         z: 1.250000
         h: 0.0
-      goal_radius: 0.15
+      goal_radius: 0.25
       cyclic_goals: true
       goals:
         - g0
@@ -117,10 +157,20 @@ hunav_loader:
     agent5:
       id: 5
       skin: 2
-      behavior: 2
       group_id: -1
-      max_vel: 0.4
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -1.467240
         y: -1.510809
@@ -142,16 +192,26 @@ hunav_loader:
     agent6:
       id: 6
       skin: 1
-      behavior: 2
       group_id: -1
-      max_vel: 0.6
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: -3.3
         y: -3.0
         z: 1.250000
         h: 2.8
-      goal_radius: 0.1
+      goal_radius: 0.2
       cyclic_goals: true
       goals:
         - g0
@@ -167,16 +227,26 @@ hunav_loader:
     agent7:
         id: 7
         skin: 2
-        behavior: 2
         group_id: -1
-        max_vel: 0.4
+        max_vel: 0.8
         radius: 0.4
+        behavior: 
+          type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+          configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+          duration: 40.0  # seg
+          once: true
+          vel: 0.4
+          dist: 0.0
+          goal_force_factor: 2.0
+          obstacle_force_factor: 10.0
+          social_force_factor: 5.0
+          other_force_factor: 20.0
         init_pose:
           x: 3.658020
           y: 1.545410
           z: 1.250000
           h: 0.0
-        goal_radius: 0.15
+        goal_radius: 0.25
         cyclic_goals: true
         goals:
           - g0
@@ -202,16 +272,26 @@ hunav_loader:
     agent8:
       id: 8
       skin: 3
-      behavior: 2
       group_id: -1
-      max_vel: 0.4
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: 3.224787
         y: -0.90
         z: 1.250000
         h: 2.615592
-      goal_radius: 0.15
+      goal_radius: 0.25
       cyclic_goals: true
       goals:
         - g0
@@ -237,16 +317,26 @@ hunav_loader:
     agent9:
       id: 9
       skin: 4
-      behavior: 2
       group_id: -1
-      max_vel: 0.5
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: 2.53
         y: -4.0
         z: 1.250000
         h: 1.57
-      goal_radius: 0.15
+      goal_radius: 0.25
       cyclic_goals: true
       goals:
         - g0
@@ -262,16 +352,26 @@ hunav_loader:
     agent10:
       id: 10
       skin: 2
-      behavior: 2
       group_id: -1
-      max_vel: 0.5
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: 4.9
         y: -1.8
         z: 1.250000
         h: 3.14
-      goal_radius: 0.15
+      goal_radius: 0.25
       cyclic_goals: true
       goals:
         - g0
@@ -287,16 +387,26 @@ hunav_loader:
     agent11:
       id: 11
       skin: 2
-      behavior: 2
       group_id: -1
-      max_vel: 0.5
+      max_vel: 0.8
       radius: 0.4
+      behavior: 
+        type: 2 # REGULAR=1, IMPASSIVE=2, SURPRISED=3, SCARED=4, CURIOUS=5, THREATENING=6
+        configuration: 0   # def: 0, custom:1, random_normal:2, random_uniform:3
+        duration: 40.0  # seg
+        once: true
+        vel: 0.4
+        dist: 0.0
+        goal_force_factor: 2.0
+        obstacle_force_factor: 10.0
+        social_force_factor: 5.0
+        other_force_factor: 20.0
       init_pose:
         x: 3.3
         y: -3.9
         z: 1.250000
         h: 3.14
-      goal_radius: 0.15
+      goal_radius: 0.25
       cyclic_goals: true
       goals:
         - g0

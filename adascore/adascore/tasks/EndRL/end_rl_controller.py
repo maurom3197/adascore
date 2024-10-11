@@ -31,11 +31,11 @@ from tf2rl.algos.sac import SAC
 from tf2rl.algos.ppo import PPO
 from tf2rl.experiments.trainer import Trainer
 from tf2rl.experiments.on_policy_trainer import OnPolicyTrainer
-from adascore.tasks.EndRL.environment_end_rl_controller import Pic4rlEnvironmentADASCORE
+from adascore.tasks.EndRL.environment_end_rl_controller import Pic4rlEnvironmentAdascore
 from ament_index_python.packages import get_package_share_directory
 
 
-class EndRLSocialController(Pic4rlEnvironmentADASCORE):
+class EndRLSocialController(Pic4rlEnvironmentAdascore):
     def __init__(self):
         super().__init__()
         # rclpy.logging.set_logger_level('pic4rl_starter', 10)
