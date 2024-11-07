@@ -30,7 +30,7 @@ from tf2rl.algos.td3 import TD3
 from tf2rl.algos.sac import SAC
 from tf2rl.algos.ppo import PPO
 from tf2rl.experiments.tester_real import TesterReal
-from adascore.tasks.SocialForceWindowReal.adascore_environment_social_cotroller import (
+from adascore.tasks.SocialForceWindowReal.adascore_environment_social_controller import (
     Pic4rlEnvironmentAdascore,
 )
 from ament_index_python.packages import get_package_share_directory

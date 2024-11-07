@@ -10,8 +10,14 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(jackal_navigation REQUIRED)
-find_package(hunav_sim REQUIRED)
+find_package(hunav_sim QUIET)
 find_package(std_srvs REQUIRED)
+
+#display a warning if hunav_sim is not found
+
+if(NOT hunav_sim_FOUND)
+  message(WARNING "hunav_sim not found. this is fine for testing in real world, but not for simulation and training")
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

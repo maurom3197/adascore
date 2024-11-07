@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-
 import os
+
+# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import tensorflow as tf
 import traceback
 
@@ -29,15 +30,15 @@ from tf2rl.algos.ddpg import DDPG
 from tf2rl.algos.td3 import TD3
 from tf2rl.algos.sac import SAC
 from tf2rl.algos.ppo import PPO
-from tf2rl.experiments.trainer import Trainer
+from tf2rl.experiments.tester_real import TesterReal
 from tf2rl.experiments.on_policy_trainer import OnPolicyTrainer
-from adascore.tasks.SocialForceWindow.adascore_environment_social_controller import (
+from adascore.tasks.EndRLReal.environment_end_rl_controller import (
     Pic4rlEnvironmentAdascore,
 )
 from ament_index_python.packages import get_package_share_directory
 
 
-class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
+class EndRLSocialController(Pic4rlEnvironmentAdascore):
     def __init__(self):
         super().__init__()
         # rclpy.logging.set_logger_level('pic4rl_starter', 10)
@@ -45,20 +46,15 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
         train_params = self.parameters_declaration()
 
         self.set_parser_list(train_params)
-        self.trainer = self.instantiate_agent()
+        self.tester = self.instantiate_agent()
 
     def instantiate_agent(self):
         """
         ACTION AND OBSERVATION SPACES settings
         """
         action = [
-            [0.5, 3.0],  # social_weight
-            [0.5, 3.0],  # costmap_weight
-            [0.1, 1.0],  # velocity_weight
-            [0.1, 1.0],  # angle_weight
-            [0.1, 1.5],  # distance_weight
-            # [1.0,2.5], # wp_tolerance
-            # [1.5,3.5] # sim_time
+            [self.min_lin_vel, self.max_lin_vel],  # x_speed
+            [self.min_ang_vel, self.max_ang_vel],  # w_speed
         ]
 
         low_action = []
@@ -83,22 +79,12 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
             "action space min values: {}".format(self.action_space.low)
         )
 
-        state = []
-        # Goal Info [angle, distance]
-        state = state + [
+        state = [
+            [0.0, 15.0],  # goal_distance
             [-math.pi, math.pi],  # goal angle or yaw
-            [0.0, 15.0],  # distance
-        ]
-
-        # Controller params at time t-1
-        state = state + [
-            [0.5, 3.0],  # social_weight
-            [0.5, 3.0],  # costmap_weight
-            [0.1, 1.0],  # velocity_weight
-            [0.1, 1.0],  # angle_weight
-            [0.1, 1.5],  # distance_weight
-            # [1.0,2.5], # wp_tolerance
-            # [1.5,3.5] # sim_time
+            [self.min_lin_vel, self.max_lin_vel],  # x_speed
+            # [self.min_lin_vel, self.max_lin_vel], # y_speed
+            [self.min_ang_vel, self.max_ang_vel],  # w_speed
         ]
 
         # Add people state
@@ -132,7 +118,7 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
         )
 
         # Set Epsilon-greedy starting value for exploration policy (minimum 0.05)
-        epsilon = 0.0
+        epsilon = 0.6
 
         self.print_log()
         if self.mode == "testing":
@@ -140,9 +126,9 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
         else:
             self.epsilon = epsilon
 
-        # OFF-POLICY ALGORITHMS
+        # OFF-POLICY ALGORITHM TESTER
         if self.policy_trainer == "off-policy":
-            parser = Trainer.get_argument()
+            parser = TesterReal.get_argument()
             if self.train_policy == "DDPG":
                 self.get_logger().debug("Parsing DDPG parameters...")
                 parser = DDPG.get_argument(parser)
@@ -168,7 +154,7 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
                     epsilon_min=0.05,
                     log_level=self.log_level,
                 )
-                self.get_logger().info("Instanciate DDPG agent...")
+                self.get_logger().info("Instantiate DDPG agent...")
 
             if self.train_policy == "TD3":
                 self.get_logger().debug("Parsing TD3 parameters...")
@@ -179,8 +165,8 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
                     action_dim=self.action_space.high.size,
                     max_action=self.action_space.high,
                     min_action=self.action_space.low,
-                    lr_actor=3e-4,
-                    lr_critic=3e-4,
+                    lr_actor=2e-4,
+                    lr_critic=2e-4,
                     sigma=0.2,
                     tau=0.01,
                     epsilon=self.epsilon,
@@ -225,11 +211,11 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
                     epsilon_min=0.05,
                     log_level=self.log_level,
                 )
-                self.get_logger().info("Instanciate SAC agent...")
+                self.get_logger().info("Instantiate SAC agent...")
 
-            trainer = Trainer(policy, self, args, test_env=None)
+            tester = TesterReal(policy, self, args, test_env=None)
 
-        # ON-POLICY ALGORITHM TRAINER
+        # ON-POLICY ALGORITHM TESTER
         if self.policy_trainer == "on-policy":
             parser = OnPolicyTrainer.get_argument()
 
@@ -257,13 +243,13 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
                     batch_size=self.batch_size,
                     log_level=self.log_level,
                 )
-                self.get_logger().info("Instanciate PPO agent...")
+                self.get_logger().info("Instantiate PPO agent...")
 
-            trainer = OnPolicyTrainer(policy, self, args, test_env=None)
+            tester = TesterReal(policy, self, args, test_env=None)
             # self.get_logger().info('Starting process...')
             # trainer()
 
-        return trainer
+        return tester
 
     def set_parser_list(self, params):
         """ """
@@ -291,10 +277,10 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
 
     def threadFunc(self):
         try:
-            self.trainer()
+            self.tester()
         except Exception:
             self.get_logger().error(
-                f"Error in starting trainer:\n {traceback.format_exc()}"
+                f"Error in starting tester:\n {traceback.format_exc()}"
             )
             return
 
@@ -340,6 +326,10 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
         self.declare_parameters(
             namespace="",
             parameters=[
+                # ("max_lin_vel", rclpy.Parameter.Type.DOUBLE),
+                ("min_lin_vel", rclpy.Parameter.Type.DOUBLE),
+                ("max_ang_vel", rclpy.Parameter.Type.DOUBLE),
+                ("min_ang_vel", rclpy.Parameter.Type.DOUBLE),
                 ("gpu", train_params["--gpu"]),
                 ("batch_size", train_params["--batch-size"]),
                 ("n_warmup", train_params["--n-warmup"]),
@@ -348,6 +338,16 @@ class SocialForceWindowAdascore(Pic4rlEnvironmentAdascore):
 
         self.train_policy = train_params["--policy"]
         self.policy_trainer = train_params["--policy_trainer"]
+        self.min_ang_vel = (
+            self.get_parameter("min_ang_vel").get_parameter_value().double_value
+        )
+        self.min_lin_vel = (
+            self.get_parameter("min_lin_vel").get_parameter_value().double_value
+        )
+        self.max_ang_vel = (
+            self.get_parameter("max_ang_vel").get_parameter_value().double_value
+        )
+        # self.max_lin_vel = self.get_parameter("max_lin_vel").get_parameter_value().double_value
         self.sensor_type = (
             self.get_parameter("sensor").get_parameter_value().string_value
         )
