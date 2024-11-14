@@ -48,7 +48,7 @@ ros2 launch adascore pic4rl.launch.py
 ```
 cd ~/ros2_ws/src
 curl
-https://raw.githubusercontent.com/maurom3197/ada_score.git/humble/adascore.repos | vcs import src
+https://raw.githubusercontent.com/maurom3197/adascore/refs/heads/humble/adascore.repos | vcs import src
 ```
 - install lightsfm ([view the repo](https://github.com/robotics-upo/lightsfm) for more details)
 - install packages required for tf2rl (tf2rl/setup.py)

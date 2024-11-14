@@ -1,8 +1,4 @@
 repositories:
-  # adascore:
-  #   type: git
-  #   url: https://github.com/maurom3197/adascore.git
-  #   version: humble
   hunav/lightsfm:
     type: git
     url: https://github.com/robotics-upo/lightsfm.git
@@ -38,17 +34,5 @@ repositories:
     type: git
     url: https://github.com/PIC4SeR/PIC4rl_gym.git
   
-  # plotjuggler/plotjuggler:
-  #   type: git
-  #   url: https://github.com/facontidavide/PlotJuggler.git
-  #   version: "3.7.1"
-  # plotjuggler/plotjuggler_msgs:
-  #   type: git
-  #   url: https://github.com/PlotJuggler/plotjuggler_msgs.git
-  #   version: ros2
-  # plotjuggler/plotjuggler-ros-plugins:
-  #   type: git
-  #   url: https://github.com/PlotJuggler/plotjuggler-ros-plugins.git
-  #   version: humble
 
   
