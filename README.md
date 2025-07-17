@@ -116,4 +116,8 @@ If you want to use this code for your research, please cite our work ([Adaptive 
 ```
 
 # Acknowledgements
-This work has been realized thanks to a joint effort by researchers at PIC4SeR Centre for Service Robotics at Politecnico di Torino (https://pic4ser.polito.it/) and the Service Robotics Lab of the Pablo de Olavide University, Sevilla (https://robotics.upo.es/).
+This work was partially supported by the projects NHoA (PLEC2021-007868) and NORDIC (TED2021-132476B-I00), funded by MCIN/AEI/10.13039/501100011033 and the European Union NextGenerationEU/PRTR, and partially by the Interdepartmental Centre for Service Robotics at PoliTO PIC4SeR, Turin (https://pic4ser.polito.it/) and the Service Robotics Lab of the Pablo de Olavide University, Sevilla (https://robotics.upo.es/).
+
+<p align="center">
+  <img src=/readme_images/LOGOS_PDC-2022.pdf alt="Logo image" width="550"/>
+</p>
